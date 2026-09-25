@@ -85,7 +85,7 @@ function Index() {
           height={1088}
           className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(140deg,var(--brand)_0%,var(--brand-deep)_100%)] opacity-90" />
+        <div className="absolute inset-0 bg-[linear-gradient(105deg,var(--brand)_0%,var(--brand)_28%,color-mix(in_srgb,var(--brand)_80%,transparent)_58%,color-mix(in_srgb,var(--brand)_45%,transparent)_100%)]" />
 
         <div className="relative mx-auto flex min-h-[92vh] w-full max-w-6xl flex-col px-6 py-8">
           <nav className="flex items-center justify-between">
