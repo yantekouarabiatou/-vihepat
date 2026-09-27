@@ -3,6 +3,7 @@ import { LogOut, HeartPulse } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { ChatWidget } from "@/components/chat-widget";
 import type { ReactNode } from "react";
 
 export function AppShell({ children, title }: { children: ReactNode; title: string }) {
@@ -44,6 +45,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl px-6 py-8">{children}</main>
+      <ChatWidget />
     </div>
   );
 }
