@@ -40,6 +40,13 @@ export function createApp() {
     message: { error: 'Trop de tentatives de connexion' },
   }));
 
+  // Rate limit sur le chat IA (coût par appel)
+  app.use('/api/patients/me/chat', rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    message: { error: "Trop de messages envoyés à l'assistant, réessayez dans quelques minutes" },
+  }));
+
   // Health check
   app.get('/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
 

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import * as patientService from '../services/patient.service';
+import * as chatService from '../services/chat.service';
 import { logAudit } from '../middlewares/audit';
 
 const createRendezVousSchema = z.object({
@@ -12,6 +13,18 @@ const createSignalementSchema = z.object({
   symptome: z.string().min(1).max(150),
   gravite: z.enum(['leger', 'modere', 'severe']),
   notes: z.string().optional(),
+});
+
+const chatSchema = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string().min(1).max(2000),
+      })
+    )
+    .min(1)
+    .max(30),
 });
 
 export async function getRendezVous(req: Request, res: Response) {
@@ -46,4 +59,13 @@ export async function createSignalement(req: Request, res: Response) {
   const result = await patientService.createSignalement(req.user!.userId, data);
   await logAudit(req, 'CREATE_SIGNALEMENT', `signalement:${result.id}`, { gravite: data.gravite });
   res.status(201).json(result);
+}
+
+export async function chat(req: Request, res: Response) {
+  const { messages } = chatSchema.parse(req.body);
+  const result = await chatService.sendChatMessage(req.user!.userId, messages);
+  if (result.signalementCreated) {
+    await logAudit(req, 'CREATE_SIGNALEMENT_CHAT', `user:${req.user!.userId}`);
+  }
+  res.json(result);
 }

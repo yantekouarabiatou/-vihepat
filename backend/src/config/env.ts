@@ -14,6 +14,7 @@ const schema = z.object({
   JWT_REFRESH_SECRET: z.string().min(32),
   JWT_REFRESH_EXPIRES: z.string().default('30d'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  ANTHROPIC_API_KEY: z.string().optional(),
 });
 
 export const env = schema.parse(process.env);

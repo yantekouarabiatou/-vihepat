@@ -1,21 +1,26 @@
-import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
   BellRing, WifiOff, Stethoscope, EyeOff, ShieldCheck, Users,
-  HeartHandshake, Lock, ArrowRight, CheckCircle2, Activity, Globe2,
+  HeartHandshake, Lock, ArrowRight, CheckCircle2, Sparkles, Activity, Globe2,
 } from "lucide-react";
 import heroImage from "@/assets/hero-vihepat.jpg";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ChatWidget } from "@/components/chat-widget";
 
-export function LandingPage() {
-  const { t } = useTranslation();
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "VIHEPAT Suivi intelligent VIH & hépatites virales" },
+      { name: "description", content: "VIHEPAT accompagne les personnes vivant avec le VIH ou une hépatite virale : rappels de traitement, suivi hors ligne, espace soignant sécurisé." },
+    ],
+  }),
+  component: Index,
+});
 
-  useEffect(() => {
-    document.title = "VIHEPAT — Suivi intelligent VIH & hépatites virales";
-  }, []);
+function Index() {
+  const { t } = useTranslation();
 
   const stats = [
     { value: t("stats.pvviH_value"), label: t("stats.pvviH_label"), sub: t("stats.pvviH_sub") },
@@ -63,7 +68,7 @@ export function LandingPage() {
             </Link>
             <div className="flex items-center gap-1.5">
               <LanguageSwitcher variant="glass" />
-              <Link to="/login">
+              <Link to="/auth">
                 <Button
                   size="sm"
                   className="rounded-full bg-white/95 text-[hsl(var(--brand))] hover:bg-white"
@@ -76,7 +81,11 @@ export function LandingPage() {
           </nav>
 
           <div className="flex flex-1 flex-col justify-center py-16">
-            <h1 className="animate-fade-up max-w-3xl text-5xl font-extrabold leading-[1.05] tracking-tight text-primary-foreground sm:text-6xl md:text-7xl">
+            <p className="glass-dark animate-fade-up mb-5 inline-flex w-fit items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-primary-foreground">
+              <Sparkles className="h-4 w-4" />
+              {t("hero.badge")}
+            </p>
+            <h1 className="animate-fade-up delay-100 max-w-3xl text-5xl font-extrabold leading-[1.05] tracking-tight text-primary-foreground sm:text-6xl md:text-7xl">
               {t("hero.title_part1")}
               <br />
               <span className="bg-gradient-to-r from-white via-white to-[hsl(var(--brand-light))] bg-clip-text text-transparent">
@@ -87,7 +96,7 @@ export function LandingPage() {
               {t("hero.subtitle")}
             </p>
             <div className="animate-fade-up delay-300 mt-10 flex flex-wrap gap-4">
-              <Link to="/login">
+              <Link to="/auth">
                 <Button
                   size="lg"
                   className="h-14 rounded-full bg-white px-9 text-base font-semibold text-[hsl(var(--brand))] shadow-[var(--shadow-soft)] transition-all hover:scale-[1.03] hover:bg-white/95"
@@ -96,7 +105,7 @@ export function LandingPage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/login?role=soignant">
+              <Link to="/auth" search={{ role: "soignant" }}>
                 <Button
                   size="lg"
                   variant="outline"
@@ -217,7 +226,7 @@ export function LandingPage() {
                 ))}
               </ul>
               <div className="mt-8">
-                <Link to="/login?role=soignant">
+                <Link to="/auth" search={{ role: "soignant" }}>
                   <Button
                     size="lg"
                     className="h-13 rounded-full bg-white px-8 font-semibold text-[hsl(var(--brand))] transition-all hover:scale-[1.03] hover:bg-white/95"
@@ -301,13 +310,13 @@ export function LandingPage() {
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">{t("cta.subtitle")}</p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Link to="/login">
+            <Link to="/auth">
               <Button size="lg" className="h-13 rounded-full px-8 font-semibold gradient-teal-coral text-white transition-transform hover:scale-[1.03]">
                 <Users className="mr-2 h-5 w-5" />
                 {t("cta.join")}
               </Button>
             </Link>
-            <Link to="/login?role=soignant">
+            <Link to="/auth" search={{ role: "soignant" }}>
               <Button size="lg" variant="outline" className="h-13 rounded-full px-8 font-semibold">
                 {t("cta.caregiver")}
               </Button>
@@ -330,8 +339,8 @@ export function LandingPage() {
             </h4>
             <ul className="mt-3 space-y-2 text-sm text-white/80">
               <li><Link to="/" className="hover:text-white">{t("nav.home")}</Link></li>
-              <li><Link to="/login" className="hover:text-white">{t("nav.login")}</Link></li>
-              <li><Link to="/login?role=soignant" className="hover:text-white">{t("hero.cta_secondary")}</Link></li>
+              <li><Link to="/auth" className="hover:text-white">{t("nav.login")}</Link></li>
+              <li><Link to="/auth" search={{ role: "soignant" }} className="hover:text-white">{t("hero.cta_secondary")}</Link></li>
             </ul>
           </div>
           <div>
@@ -351,7 +360,7 @@ export function LandingPage() {
         </div>
       </footer>
 
-      {/* Widget flottant (signalement de symptôme, patients connectés) */}
+      {/* Chat widget flottant */}
       <ChatWidget />
     </div>
   );

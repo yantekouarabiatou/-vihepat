@@ -12,5 +12,6 @@ r.get('/me/traitements', patientController.getTraitements);
 r.get('/me/observations', patientController.getObservations);
 r.get('/me/signalements', patientController.getSignalements);
 r.post('/me/signalements', patientController.createSignalement);
+r.post('/me/chat', patientController.chat);
 
 export default r;

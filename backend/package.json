@@ -11,10 +11,11 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "sequelize-cli db:migrate",
     "db:rollback": "sequelize-cli db:migrate:undo",
-    "db:seed": "sequelize-cli db:seed:all",
-    "db:reset": "sequelize-cli db:migrate:undo:all && sequelize-cli db:migrate && sequelize-cli db:seed:all"
+    "db:seed": "ts-node --transpile-only src/seed.ts",
+    "db:reset": "sequelize-cli db:migrate:undo:all && sequelize-cli db:migrate && npm run db:seed"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.70.0",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -36,6 +37,7 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.9.0",
     "sequelize-cli": "^6.6.2",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.6.3"
   }

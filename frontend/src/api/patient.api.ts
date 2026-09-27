@@ -48,6 +48,16 @@ export interface Signalement {
   createdAt: string;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ChatResponse {
+  reply: string;
+  signalementCreated: boolean;
+}
+
 export const patientApi = {
   getRendezVous: () => api.get<RendezVous[]>('/patients/me/rendez-vous').then((r) => r.data),
 
@@ -62,4 +72,7 @@ export const patientApi = {
 
   createSignalement: (input: { symptome: string; gravite: Gravite; notes?: string }) =>
     api.post<Signalement>('/patients/me/signalements', input).then((r) => r.data),
+
+  sendChatMessage: (messages: ChatMessage[]) =>
+    api.post<ChatResponse>('/patients/me/chat', { messages }).then((r) => r.data),
 };
