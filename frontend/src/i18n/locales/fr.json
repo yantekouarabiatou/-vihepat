@@ -1,0 +1,123 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "login": "Se connecter",
+    "logout": "Déconnexion",
+    "dashboard": "Tableau de bord"
+  },
+  "hero": {
+    "badge": "Hackathon Technologie & IA · Maroc 2026",
+    "title_part1": "Votre suivi de santé,",
+    "title_part2": "sans rupture.",
+    "subtitle": "VIHEPAT accompagne chaque jour les personnes vivant avec le VIH ou une hépatite virale : traitement, rendez-vous et lien avec l'équipe soignante, où que vous soyez.",
+    "cta_primary": "Commencer",
+    "cta_secondary": "Je suis soignant",
+    "trust1": "Fonctionne hors ligne",
+    "trust2": "Données chiffrées",
+    "trust3": "Discret par design"
+  },
+  "stats": {
+    "pvviH_value": "70 000",
+    "pvviH_label": "PVVIH au Bénin",
+    "pvviH_sub": "à suivre au long cours",
+    "arv_value": "89 %",
+    "arv_label": "sous traitement ARV",
+    "arv_sub": "cascade VIH Bénin 2024",
+    "staff_value": "8,9",
+    "staff_label": "soignants / 10 000 hab.",
+    "staff_sub": "sous le seuil OMS de 23",
+    "net_value": "55–64 %",
+    "net_label": "pénétration internet mobile",
+    "net_sub": "d'où le mode hors ligne"
+  },
+  "steps": {
+    "eyebrow": "Le parcours patient",
+    "title": "Comment ça marche",
+    "subtitle": "Quatre gestes simples pour garder le fil de votre traitement.",
+    "s1_title": "Rappels de traitement",
+    "s1_text": "Des alertes simples et personnalisées pour ne jamais manquer une prise ni un rendez-vous.",
+    "s2_title": "Suivi hors ligne",
+    "s2_text": "L'application fonctionne sans connexion et se synchronise dès que le réseau revient.",
+    "s3_title": "Espace soignant",
+    "s3_text": "Le personnel de santé suit l'observance et intervient au bon moment, en toute sécurité.",
+    "s4_title": "Discrétion",
+    "s4_text": "Icône neutre, aucun signe visible : votre santé reste votre affaire privée."
+  },
+  "trust": {
+    "eyebrow": "Confiance & sécurité",
+    "title": "Une confiance qui se construit dans les détails",
+    "t1_title": "Conçu pour le terrain",
+    "t1_text": "Tout reste accessible hors ligne, même dans les zones à faible couverture réseau.",
+    "t2_title": "Données chiffrées",
+    "t2_text": "Vos informations sont chiffrées de bout en bout et stockées de façon sécurisée.",
+    "t3_title": "Séparation stricte",
+    "t3_text": "Espace patient et espace soignant cloisonnés : chacun ne voit que ce qui le concerne."
+  },
+  "caregiver": {
+    "eyebrow": "Pour les professionnels",
+    "title": "Un espace soignant clair, tracé et sécurisé",
+    "subtitle": "Suivez l'observance de vos patients, saisissez les observations biologiques et intervenez au bon moment. Chaque accès est journalisé.",
+    "bullet1": "Saisie des charges virales, CD4, transaminases",
+    "bullet2": "Tableau de bord patients affectés",
+    "bullet3": "Alertes automatiques en cas de signe d'alerte",
+    "cta": "Accéder à l'espace soignant"
+  },
+  "faq": {
+    "title": "Questions fréquentes",
+    "q1": "VIHEPAT remplace-t-il mon médecin ?",
+    "a1": "Non, jamais. VIHEPAT est un assistant qui accompagne le patient entre deux consultations. Le suivi médical reste assuré par les professionnels de santé.",
+    "q2": "Faut-il une connexion internet permanente ?",
+    "a2": "Non. L'application fonctionne hors ligne et synchronise les données dès que le réseau revient. Conçue pour les zones à faible couverture.",
+    "q3": "Qui peut voir mes données ?",
+    "a3": "Seuls vous et votre soignant référent. Chaque accès est tracé. Les données sont chiffrées et séparées entre espace patient et espace soignant.",
+    "q4": "L'application est-elle discrète ?",
+    "a4": "Oui. Icône neutre, nom discret, notifications silencieuses et code d'accès personnel : la confidentialité est au cœur du design."
+  },
+  "cta": {
+    "title": "Proches et soutien entre pairs",
+    "subtitle": "Un espace bienveillant pour les accompagnants et les groupes de pairs, toujours dans le respect de votre vie privée.",
+    "join": "Rejoindre la communauté",
+    "caregiver": "Espace soignant"
+  },
+  "footer": {
+    "tagline": "Continuité de soin pour le VIH et les hépatites virales. Conçu au Bénin, extensible à tout contexte à ressources limitées.",
+    "nav_title": "Navigation",
+    "contact_title": "Contact",
+    "copyright": "© {{year}} VIHEPAT · Hackathon Technologie & IA, Maroc 2026"
+  },
+  "chat": {
+    "title": "Assistant VIHEPAT",
+    "subtitle": "Posez votre question",
+    "placeholder": "Écrivez votre message...",
+    "send": "Envoyer",
+    "greeting": "Bonjour Je suis l'assistant VIHEPAT. Comment puis-je vous aider ?",
+    "suggestions": "Suggestions",
+    "sug1": "Comment prendre mon traitement ?",
+    "sug2": "Que faire en cas d'oubli ?",
+    "sug3": "Quels sont les signes d'alerte ?",
+    "sug4": "Comment contacter mon soignant ?",
+    "fallback": "Je n'ai pas encore la réponse à cette question. Votre soignant pourra vous aider."
+  },
+  "signalement": {
+    "fab_label": "Signaler un symptôme",
+    "title": "Signaler un symptôme",
+    "subtitle": "Décrivez ce que vous ressentez, votre équipe soignante sera alertée.",
+    "symptome_label": "Symptôme",
+    "symptome_placeholder": "Ex. fièvre, fatigue, nausées…",
+    "gravite_label": "Gravité",
+    "gravite_leger": "Léger",
+    "gravite_modere": "Modéré",
+    "gravite_severe": "Sévère",
+    "notes_label": "Notes (optionnel)",
+    "notes_placeholder": "Détails utiles pour votre soignant…",
+    "submit": "Envoyer le signalement",
+    "success": "Signalement envoyé à votre équipe soignante.",
+    "error": "Impossible d'envoyer le signalement, réessayez.",
+    "history_title": "Mes signalements récents"
+  },
+  "language": {
+    "fr": "Français",
+    "en": "English",
+    "fon": "Fɔngbè"
+  }
+}

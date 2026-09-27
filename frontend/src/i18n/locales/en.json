@@ -1,0 +1,123 @@
+{
+  "nav": {
+    "home": "Home",
+    "login": "Sign in",
+    "logout": "Sign out",
+    "dashboard": "Dashboard"
+  },
+  "hero": {
+    "badge": "Technology & AI Hackathon · Morocco 2026",
+    "title_part1": "Your health follow-up,",
+    "title_part2": "without interruption.",
+    "subtitle": "VIHEPAT supports people living with HIV or viral hepatitis every day: treatment, appointments, and connection with the care team, wherever you are.",
+    "cta_primary": "Get started",
+    "cta_secondary": "I'm a caregiver",
+    "trust1": "Works offline",
+    "trust2": "Encrypted data",
+    "trust3": "Discreet by design"
+  },
+  "stats": {
+    "pvviH_value": "70,000",
+    "pvviH_label": "PLHIV in Benin",
+    "pvviH_sub": "requiring long-term care",
+    "arv_value": "89%",
+    "arv_label": "on ARV treatment",
+    "arv_sub": "HIV cascade Benin 2024",
+    "staff_value": "8.9",
+    "staff_label": "health workers / 10,000",
+    "staff_sub": "below WHO threshold of 23",
+    "net_value": "55–64%",
+    "net_label": "mobile internet penetration",
+    "net_sub": "hence offline mode"
+  },
+  "steps": {
+    "eyebrow": "Patient journey",
+    "title": "How it works",
+    "subtitle": "Four simple steps to keep track of your treatment.",
+    "s1_title": "Treatment reminders",
+    "s1_text": "Simple, personalized alerts so you never miss a dose or an appointment.",
+    "s2_title": "Offline tracking",
+    "s2_text": "The app works without connection and syncs as soon as the network returns.",
+    "s3_title": "Caregiver space",
+    "s3_text": "Health staff monitor adherence and intervene at the right time, securely.",
+    "s4_title": "Discretion",
+    "s4_text": "Neutral icon, no visible signs: your health stays your private matter."
+  },
+  "trust": {
+    "eyebrow": "Trust & security",
+    "title": "Trust built into every detail",
+    "t1_title": "Built for the field",
+    "t1_text": "Everything stays accessible offline, even in areas with poor network coverage.",
+    "t2_title": "Encrypted data",
+    "t2_text": "Your information is end-to-end encrypted and securely stored.",
+    "t3_title": "Strict separation",
+    "t3_text": "Patient and caregiver spaces are separated: everyone only sees what concerns them."
+  },
+  "caregiver": {
+    "eyebrow": "For professionals",
+    "title": "A clear, traceable, secure caregiver space",
+    "subtitle": "Monitor patient adherence, enter lab results, and intervene at the right time. Every access is logged.",
+    "bullet1": "Entry of viral load, CD4, transaminases",
+    "bullet2": "Dashboard of assigned patients",
+    "bullet3": "Automatic alerts on warning signs",
+    "cta": "Access the caregiver space"
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "q1": "Does VIHEPAT replace my doctor?",
+    "a1": "No, never. VIHEPAT is an assistant that supports the patient between consultations. Medical follow-up remains with health professionals.",
+    "q2": "Do I need a permanent internet connection?",
+    "a2": "No. The app works offline and syncs data as soon as the network returns. Designed for low-coverage areas.",
+    "q3": "Who can see my data?",
+    "a3": "Only you and your referring caregiver. Every access is logged. Data is encrypted and separated between patient and caregiver spaces.",
+    "q4": "Is the app discreet?",
+    "a4": "Yes. Neutral icon, discreet name, silent notifications, and a personal access code: confidentiality is at the heart of the design."
+  },
+  "cta": {
+    "title": "Loved ones and peer support",
+    "subtitle": "A caring space for caregivers and peer groups, always respecting your privacy.",
+    "join": "Join the community",
+    "caregiver": "Caregiver space"
+  },
+  "footer": {
+    "tagline": "Continuity of care for HIV and viral hepatitis. Designed in Benin, scalable to any resource-limited setting.",
+    "nav_title": "Navigation",
+    "contact_title": "Contact",
+    "copyright": "© {{year}} VIHEPAT · Technology & AI Hackathon, Morocco 2026"
+  },
+  "chat": {
+    "title": "VIHEPAT Assistant",
+    "subtitle": "Ask your question",
+    "placeholder": "Type your message...",
+    "send": "Send",
+    "greeting": "Hello I'm the VIHEPAT assistant. How can I help you?",
+    "suggestions": "Suggestions",
+    "sug1": "How do I take my treatment?",
+    "sug2": "What if I miss a dose?",
+    "sug3": "What are the warning signs?",
+    "sug4": "How do I contact my caregiver?",
+    "fallback": "I don't have the answer to this question yet. Your caregiver can help you."
+  },
+  "signalement": {
+    "fab_label": "Report a symptom",
+    "title": "Report a symptom",
+    "subtitle": "Describe what you're feeling, your care team will be alerted.",
+    "symptome_label": "Symptom",
+    "symptome_placeholder": "E.g. fever, fatigue, nausea…",
+    "gravite_label": "Severity",
+    "gravite_leger": "Mild",
+    "gravite_modere": "Moderate",
+    "gravite_severe": "Severe",
+    "notes_label": "Notes (optional)",
+    "notes_placeholder": "Helpful details for your caregiver…",
+    "submit": "Send report",
+    "success": "Report sent to your care team.",
+    "error": "Couldn't send the report, please try again.",
+    "history_title": "My recent reports"
+  },
+  "language": {
+    "fr": "Français",
+    "en": "English",
+    "fon": "Fɔngbè"
+  }
+}

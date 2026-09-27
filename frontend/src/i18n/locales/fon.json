@@ -1,0 +1,123 @@
+{
+  "nav": {
+    "home": "Xwé",
+    "login": "Byɔ́",
+    "logout": "Tɔ́n",
+    "dashboard": "Nǔ kpɔ́n"
+  },
+  "hero": {
+    "badge": "Hackathon 2026 · Maroc",
+    "title_part1": "Wɛ nyi ganjɛ́,",
+    "title_part2": "ma ɖó gudo.",
+    "subtitle": "VIHEPAT nɔ kpé nukún ɖó mɛ e ɖó SIDA kpo xomɛ kun kpo lɛ é, hwenu é na ɖó nǔ tɔn lɛ́ɛ kpɔ́n.",
+    "cta_primary": "Bɛ̌",
+    "cta_secondary": "Un nyi dotɔ́",
+    "trust1": "Nɔ wazɔ́n ɖó internet ma ɖí",
+    "trust2": "Nǔ lɛ́ɛ ɖó hwɛndó",
+    "trust3": "Nɔ ɖó akwɛ́"
+  },
+  "stats": {
+    "pvviH_value": "70 000",
+    "pvviH_label": "PVVIH ɖó Bénin",
+    "pvviH_sub": "e ɖó kpɔ́n",
+    "arv_value": "89 %",
+    "arv_label": "ɖó ARV",
+    "arv_sub": "Bénin 2024",
+    "staff_value": "8,9",
+    "staff_label": "dotɔ́ / 10 000",
+    "staff_sub": "OMS 23",
+    "net_value": "55-64 %",
+    "net_label": "internet mobile",
+    "net_sub": "enɛ wu é nɔ wazɔ́n ɖó internet ma ɖí"
+  },
+  "steps": {
+    "eyebrow": "Mɛ e ɖó azɔ̀n é xɔ",
+    "title": "Nɛ̌ é nɔ wazɔ́n gbɔn",
+    "subtitle": "Nǔ ɛnɛ e na kpé nukún ɖó amà wu.",
+    "s1_title": "Amà flínflín",
+    "s1_text": "Nǔ e na flín amà towe",
+    "s2_title": "Nɔ wazɔ́n ɖó internet ma ɖí",
+    "s2_text": "Internet ma ɖí wɛ̀, bo nɔ synchro",
+    "s3_title": "Dotɔ́ xwé",
+    "s3_text": "Dotɔ́ lɛ́ɛ nɔ kpɔ́n amà kpɔ́n",
+    "s4_title": "Nɔ ɖó akwɛ́",
+    "s4_text": "Mɛ ɖé ma na tuùn"
+  },
+  "trust": {
+    "eyebrow": "Xɔ́ntɔn kpo hwɛndó kpo",
+    "title": "Xɔ́ntɔn e jɛ nǔ lɛ́ɛ bǐ mɛ",
+    "t1_title": "E wá sìn ayǐ",
+    "t1_text": "Nǔ lɛ́ɛ bǐ ɖó internet ma ɖí",
+    "t2_title": "Nǔ ɖó hwɛndó",
+    "t2_text": "Nǔ towe lɛ́ɛ ɖó hwɛndó",
+    "t3_title": "Vɔvɔ́",
+    "t3_text": "Mɛ ɖokpó ɖokpó nɔ kpɔ́n nǔ tɔn ɖɔ̀"
+  },
+  "caregiver": {
+    "eyebrow": "Bó ɖó dotɔ́ lɛ́ɛ",
+    "title": "Dotɔ́ xwé e ɖó hwɛndó",
+    "subtitle": "Kpɔ́n amà towe, kpɔ́n nǔ lɛ́ɛ, bo nɔ byɔ́.",
+    "bullet1": "Kpɔ́n charge virale, CD4, transaminases",
+    "bullet2": "Kpɔ́n mɛ e ɖó azɔ̀n é lɛ́ɛ",
+    "bullet3": "Flínflín ɖó nǔ e ɖò vǐ lɛ́ɛ",
+    "cta": "Byɔ́ dotɔ́ xwé"
+  },
+  "faq": {
+    "title": "Nǔ e nɔ byɔ́ lɛ́ɛ",
+    "q1": "VIHEPAT na yì dotɔ́ towe zɔn?",
+    "a1": "Ma, gbɛ̀ ɖé. VIHEPAT nɔ kpé nukún ɖó towe, bo dotɔ́ towe wɛ nɔ kpɔ́n.",
+    "q2": "Un ɖó internet kpɔ́?",
+    "a2": "Ma. É nɔ wazɔ́n ɖó internet ma ɖí.",
+    "q3": "Mɛ̌ na kpɔ́n nǔ ce lɛ́ɛ?",
+    "a3": "Hwɛ̀n towe kpo dotɔ́ towe kpo ɖòkɔ.",
+    "q4": "É ɖó akwɛ́ à?",
+    "a4": "Ɛɛn. Nǔ lɛ́ɛ bǐ ɖó akwɛ́."
+  },
+  "cta": {
+    "title": "Xɔ́ntɔn kpo mɛ e ɖò xɔ́ntɔn kpo",
+    "subtitle": "Xwé e ɖó xɔ́ntɔn",
+    "join": "Byɔ́ xɔ́ntɔn xwé",
+    "caregiver": "Dotɔ́ xwé"
+  },
+  "footer": {
+    "tagline": "VIHEPAT · Bénin · Hackathon 2026",
+    "nav_title": "Xwé",
+    "contact_title": "Kàn",
+    "copyright": "© {{year}} VIHEPAT"
+  },
+  "chat": {
+    "title": "VIHEPAT alɔgɔ́",
+    "subtitle": "Kan byɔ́",
+    "placeholder": "Wlán...",
+    "send": "Sɛ́",
+    "greeting": "Kúabɔ̀ 👋 Un nyi VIHEPAT alɔgɔ́. Nɛ̌ un na gbɔn?",
+    "suggestions": "Nǔ e a na byɔ́",
+    "sug1": "Nɛ̌ un na ɖó amà ce?",
+    "sug2": "Nɛ̌ un na wà nú un flín ma ɖó?",
+    "sug3": "Nǔ tɛ́ lɛ́ɛ wu é nɔ byɔ́?",
+    "sug4": "Nɛ̌ un na kàn dotɔ́ ce?",
+    "fallback": "Un ɖó gbɛ̀ ɖé ǎ. Dotɔ́ towe na gbɔn we."
+  },
+  "signalement": {
+    "fab_label": "Flín dotɔ́",
+    "title": "Flín dotɔ́ towe",
+    "subtitle": "Wlán nǔ e a ɖò kpɔ́n wɛ é, dotɔ́ towe na mɔ.",
+    "symptome_label": "Azɔ̀n",
+    "symptome_placeholder": "É nyí atɔ́ɔ́n, gbɛ̀ ma sɔgbe...",
+    "gravite_label": "Bǔ tɔn",
+    "gravite_leger": "Kpɛví",
+    "gravite_modere": "Titewungbe",
+    "gravite_severe": "Ganjí",
+    "notes_label": "Nǔ ɖevo (ma byɔ́ ǎ)",
+    "notes_placeholder": "Nǔ e na d'alɔ dotɔ́ towe...",
+    "submit": "Sɛ́ flínflín",
+    "success": "É sɛ́ yì dotɔ́ towe.",
+    "error": "É wá ǎ, lɛ vɔ́ tɛ́n.",
+    "history_title": "Flínflín towe lɛ́ɛ"
+  },
+  "language": {
+    "fr": "Français",
+    "en": "English",
+    "fon": "Fɔngbè"
+  }
+}

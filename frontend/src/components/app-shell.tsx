@@ -1,33 +1,17 @@
-import { useNavigate } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { LogOut, HeartPulse } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import type { ReactNode } from "react";
-
-export function useMyRole() {
-  return useQuery({
-    queryKey: ["my-role"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .limit(1)
-        .maybeSingle();
-      return (data?.role ?? "patient") as "patient" | "soignant";
-    },
-  });
-}
 
 export function AppShell({ children, title }: { children: ReactNode; title: string }) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const logout = useAuthStore((s) => s.logout);
 
-  async function handleSignOut() {
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+  function handleSignOut() {
+    logout();
+    navigate("/login", { replace: true });
   }
 
   return (
@@ -45,15 +29,18 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               <span className="block text-xs text-muted-foreground">{title}</span>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-            className="rounded-full text-muted-foreground"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Se déconnecter
-          </Button>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="rounded-full text-muted-foreground"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Se déconnecter
+            </Button>
+          </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl px-6 py-8">{children}</main>
