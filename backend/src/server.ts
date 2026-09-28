@@ -1,16 +1,11 @@
 import { createApp } from './app';
-import { connectDB, sequelize } from './config/database';
+import { connectDB } from './config/database';
 import { env } from './config/env';
+import { verifySmtpConnection } from './services/mail.service';
 
 async function main() {
   await connectDB();
-
-  // ⚠️ En dev uniquement : synchronise les modèles sans migrations
-  // En prod, on utilisera sequelize-cli avec des migrations versionnées.
-  if (env.NODE_ENV === 'development') {
-    await sequelize.sync({ alter: false });
-    console.log('✅ Modèles synchronisés');
-  }
+  void verifySmtpConnection();
 
   const app = createApp();
   app.listen(env.PORT, () => {

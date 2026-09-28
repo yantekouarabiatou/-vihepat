@@ -19,6 +19,19 @@ export interface SoignantRendezVous extends RendezVous {
   patient: { id: number; codePatient: string; user: { nom: string; prenom: string } };
 }
 
+export type CibleCommunique = 'tous' | 'patient';
+
+export interface Communique {
+  id: number;
+  soignantId: number;
+  titre: string;
+  contenu: string;
+  cible: CibleCommunique;
+  patientId: number | null;
+  createdAt: string;
+  patient?: { id: number; user: { nom: string; prenom: string } } | null;
+}
+
 export interface SoignantSignalement extends Signalement {
   patient: { id: number; codePatient: string; user: { nom: string; prenom: string } };
 }
@@ -79,9 +92,58 @@ export interface UpdateTraitementInput {
   notes?: string | null;
 }
 
+export interface CreatePatientInput {
+  email: string;
+  nom: string;
+  prenom: string;
+  pathologie: Pathologie;
+  sexe?: 'M' | 'F';
+  telephone?: string;
+  region?: string;
+  commune?: string;
+  dateNaissance?: string;
+  dateDiagnostic?: string;
+  languePreferee?: string;
+  consentementDonne: boolean;
+  soignantId?: number;
+}
+
+export interface CreatePatientResult {
+  patient: {
+    id: number;
+    codePatient: string;
+    pathologie: string;
+    user: { nom: string; prenom: string; email: string };
+  };
+  motDePasseTemporaire: string;
+}
+
+export interface UpdatePatientInput {
+  nom?: string;
+  prenom?: string;
+  email?: string;
+  pathologie?: Pathologie;
+  sexe?: 'M' | 'F' | null;
+  telephone?: string | null;
+  region?: string | null;
+  commune?: string | null;
+  languePreferee?: string;
+  dateNaissance?: string | null;
+  dateDiagnostic?: string | null;
+}
+
 export const soignantApi = {
   rattacherPatient: (codePatient: string) =>
     api.post<SoignantPatient>('/soignant/patients/rattacher', { codePatient }).then((r) => r.data),
+
+  creerPatient: (input: CreatePatientInput) =>
+    api.post<CreatePatientResult>('/soignant/patients', input).then((r) => r.data),
+
+  updatePatient: (id: number, input: UpdatePatientInput) =>
+    api.patch<PatientDetail>(`/soignant/patients/${id}`, input).then((r) => r.data),
+
+  reinitialiserAcces: (id: number) =>
+    api.post<CreatePatientResult>(`/soignant/patients/${id}/reinitialiser-acces`).then((r) => r.data),
 
   getPatient: (id: number) =>
     api.get<PatientDetail>(`/soignant/patients/${id}`).then((r) => r.data),
@@ -103,8 +165,19 @@ export const soignantApi = {
 
   getRendezVous: () => api.get<SoignantRendezVous[]>('/soignant/rendez-vous').then((r) => r.data),
 
+  createRendezVous: (input: { patientId: number; dateHeure: string; motif?: string }) =>
+    api.post<SoignantRendezVous>('/soignant/rendez-vous', input).then((r) => r.data),
+
+  envoyerRappelRdv: (id: number) =>
+    api.post<SoignantRendezVous>(`/soignant/rendez-vous/${id}/rappel`).then((r) => r.data),
+
   updateRendezVous: (id: number, input: { statut?: StatutRDV; notes?: string }) =>
     api.patch<SoignantRendezVous>(`/soignant/rendez-vous/${id}`, input).then((r) => r.data),
+
+  getCommuniques: () => api.get<Communique[]>('/soignant/communiques').then((r) => r.data),
+
+  createCommunique: (input: { titre: string; contenu: string; cible: CibleCommunique; patientId?: number }) =>
+    api.post<Communique>('/soignant/communiques', input).then((r) => r.data),
 
   getSignalements: (statut?: StatutSignalement) =>
     api

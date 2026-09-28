@@ -74,6 +74,11 @@ export async function createRendezVous(req: Request, res: Response) {
   res.status(201).json(result);
 }
 
+export async function getCommuniques(req: Request, res: Response) {
+  const result = await patientService.getCommuniques(req.user!.userId);
+  res.json(result);
+}
+
 export async function getTraitements(req: Request, res: Response) {
   const result = await patientService.getTraitements(req.user!.userId);
   res.json(result);
@@ -98,7 +103,7 @@ export async function createSignalement(req: Request, res: Response) {
 
 export async function chat(req: Request, res: Response) {
   const { messages } = chatSchema.parse(req.body);
-  const result = await chatService.sendChatMessage(req.user!.userId, messages);
+  const result = await chatService.sendChatMessage(req.user!.userId, req.user?.role ?? 'patient', messages);
   if (result.signalementCreated) {
     await logAudit(req, 'CREATE_SIGNALEMENT_CHAT', `user:${req.user!.userId}`);
   }

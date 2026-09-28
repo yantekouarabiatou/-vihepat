@@ -11,10 +11,11 @@ export interface RendezVousAttributes {
   motif?: string | null;
   statut: StatutRDV;
   notes?: string | null;
+  rappelEnvoyeLe?: Date | null;
 }
 
 type RendezVousCreation = Optional<RendezVousAttributes,
-  'id' | 'soignantId' | 'motif' | 'statut' | 'notes'>;
+  'id' | 'soignantId' | 'motif' | 'statut' | 'notes' | 'rappelEnvoyeLe'>;
 
 export class RendezVous extends Model<RendezVousAttributes, RendezVousCreation> implements RendezVousAttributes {
   declare id: number;
@@ -24,6 +25,7 @@ export class RendezVous extends Model<RendezVousAttributes, RendezVousCreation> 
   declare motif?: string | null;
   declare statut: StatutRDV;
   declare notes?: string | null;
+  declare rappelEnvoyeLe?: Date | null;
 }
 
 RendezVous.init(
@@ -38,6 +40,7 @@ RendezVous.init(
       defaultValue: 'prevu',
     },
     notes: { type: DataTypes.TEXT, allowNull: true },
+    rappelEnvoyeLe: { type: DataTypes.DATE, allowNull: true },
   },
   { sequelize, tableName: 'rendez_vous' }
 );

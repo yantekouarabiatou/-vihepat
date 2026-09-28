@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import type { AlerteExamen, JourObservance } from "@/api/patient.api";
 
 /** Couleur associée à un taux d'observance (repère usuel : ≥ 95 % bonne observance). */
@@ -36,9 +37,10 @@ export function ObservanceBars({ jours }: { jours: JourObservance[] }) {
   );
 }
 
-export function libelleEcheance(a: AlerteExamen): string {
-  if (!a.dernierPrelevement) return "Jamais réalisé";
-  if (a.joursRestants < 0) return `En retard de ${-a.joursRestants} j`;
-  if (a.joursRestants === 0) return "À faire aujourd'hui";
-  return `Dans ${a.joursRestants} j`;
+/** `t` est la fonction de traduction i18next, passée par le composant appelant. */
+export function libelleEcheance(a: AlerteExamen, t: TFunction): string {
+  if (!a.dernierPrelevement) return t("observance.jamais_realise");
+  if (a.joursRestants < 0) return t("observance.en_retard", { jours: -a.joursRestants });
+  if (a.joursRestants === 0) return t("observance.a_faire_aujourdhui");
+  return t("observance.dans_jours", { jours: a.joursRestants });
 }

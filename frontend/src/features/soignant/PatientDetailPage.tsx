@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft, FlaskConical, Pill, Plus, Loader2, ShieldCheck, AlertCircle, CalendarDays, Square, Activity,
+  FileDown, Printer, Edit3, KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -17,35 +19,22 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { DataTable } from "@/components/ui/data-table";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  NIVEAU_STYLES, OBSERVATION_LABELS, OBSERVATION_TYPES, repereObservation, type TypeObservation,
+  NIVEAU_STYLES, OBSERVATION_TYPES, repereObservation, type TypeObservation,
 } from "@/lib/observations";
 import { apiErrorMessage } from "@/lib/api-error";
 import { ObservanceBars, formatTaux, libelleEcheance, tauxStyle } from "@/lib/observance";
+import { telechargerFichePatientPdf, imprimerFichePatient, type PatientCredentialsDoc } from "@/lib/patient-pdf";
 
-const PATHOLOGIE_LABELS: Record<string, string> = {
-  vih: "VIH", vhb: "Hépatite B", vhc: "Hépatite C",
-  vih_vhb: "VIH + VHB", vih_vhc: "VIH + VHC", vhb_vhc: "VHB + VHC",
-};
-const GRAVITE_LABELS: Record<string, string> = { leger: "Léger", modere: "Modéré", severe: "Sévère" };
-const GRAVITE_STYLES: Record<string, string> = {
-  leger: "bg-secondary text-primary",
-  modere: "bg-[hsl(var(--gold)/0.2)] text-[hsl(var(--gold))]",
-  severe: "bg-destructive/15 text-destructive",
-};
-const STATUT_SIGNALEMENT: Record<string, string> = { nouveau: "Nouveau", vu: "Vu", traite: "Traité" };
-const STATUT_RDV: Record<string, string> = {
-  prevu: "Prévu", confirme: "Confirmé", effectue: "Effectué", manque: "Manqué", annule: "Annulé",
-};
+const useT = useTranslation;
 
 const today = () => new Date().toISOString().slice(0, 10);
 
 function formatDate(iso: string | null | undefined, withTime = false) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("fr-FR", {
+  if (!iso) return "-";
+  return new Date(iso).toLocaleDateString(undefined, {
     day: "numeric", month: "short", year: "numeric",
     ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
   });
@@ -79,9 +68,11 @@ function SectionTitle({ icon: Icon, title, action }: {
 }
 
 export function PatientDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const patientId = Number(id);
   const queryClient = useQueryClient();
+  const [resetOpen, setResetOpen] = useState(false);
 
   const { data: patient, isLoading, isError, error } = useQuery({
     queryKey: ["soignant", "patient", patientId],
@@ -90,6 +81,31 @@ export function PatientDetailPage() {
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["soignant", "patient", patientId] });
+
+  const { mutate: reinitialiserAcces, isPending: resetting } = useMutation({
+    mutationFn: () => soignantApi.reinitialiserAcces(patientId),
+    onSuccess: (res) => {
+      setResetOpen(false);
+      toast.success("Nouveaux identifiants générés !");
+      invalidate();
+      const doc: PatientCredentialsDoc = {
+        patient: {
+          prenom: res.patient.user.prenom,
+          nom: res.patient.user.nom,
+          codePatient: res.patient.codePatient,
+          email: res.patient.user.email,
+          pathologie: res.patient.pathologie,
+          telephone: res.patient.telephone,
+          sexe: res.patient.sexe,
+        },
+        motDePasseTemporaire: res.motDePasseTemporaire,
+        structure: "Centre Hospitalier Référent VIHEPAT",
+        dateCreation: new Date().toLocaleDateString("fr-FR"),
+      };
+      telechargerFichePatientPdf(doc);
+    },
+    onError: (err) => toast.error(apiErrorMessage(err, "Erreur lors de la réinitialisation des identifiants")),
+  });
 
   if (isLoading) {
     return (
@@ -106,7 +122,7 @@ export function PatientDetailPage() {
       <AppShell title="Espace soignant">
         <BackLink />
         <p className="mt-10 text-center text-muted-foreground">
-          {apiErrorMessage(error, "Dossier patient introuvable.")}
+          {apiErrorMessage(error, t("patient_detail.dossier_introuvable"))}
         </p>
       </AppShell>
     );
@@ -125,18 +141,84 @@ export function PatientDetailPage() {
           </h1>
           <p className="mt-1 text-muted-foreground">
             <span className="font-mono font-semibold text-foreground">{patient.codePatient}</span>
-            {" · "}{PATHOLOGIE_LABELS[patient.pathologie] ?? patient.pathologie}
-            {a !== null && <> · {a} ans</>}
-            {patient.sexe && <> · {patient.sexe === "F" ? "Femme" : "Homme"}</>}
+            {" · "}{t(`shared.pathologie.${patient.pathologie}`, { defaultValue: patient.pathologie })}
+            {a !== null && <> · {t("patient_detail.age", { age: a })}</>}
+            {patient.sexe && <> · {patient.sexe === "F" ? t("patient_detail.femme") : t("patient_detail.homme")}</>}
             {patient.commune && <> · {patient.commune}</>}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Diagnostic : {formatDate(patient.dateDiagnostic)} · Langue : {patient.languePreferee.toUpperCase()}
+            {t("patient_detail.diagnostic_label")} : {formatDate(patient.dateDiagnostic)} · {t("patient_detail.langue_label")} : {patient.languePreferee.toUpperCase()}
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-xs font-medium text-primary">
-          <ShieldCheck className="h-4 w-4" />
-          Consultation tracée dans le journal d'audit
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const doc: PatientCredentialsDoc = {
+                patient: {
+                  prenom: patient.user.prenom,
+                  nom: patient.user.nom,
+                  codePatient: patient.codePatient,
+                  email: patient.user.email,
+                  pathologie: patient.pathologie,
+                  telephone: patient.telephone,
+                  sexe: patient.sexe,
+                },
+                motDePasseTemporaire: "******** (Initialisé)",
+                structure: "Centre Hospitalier Référent VIHEPAT",
+                dateCreation: new Date(patient.createdAt).toLocaleDateString("fr-FR"),
+              };
+              telechargerFichePatientPdf(doc);
+              toast.success(`Fiche PDF téléchargée pour ${patient.codePatient}`);
+            }}
+            className="rounded-full gap-1.5 text-xs font-semibold"
+          >
+            <FileDown className="h-3.5 w-3.5 text-primary" />
+            Fiche PDF
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const doc: PatientCredentialsDoc = {
+                patient: {
+                  prenom: patient.user.prenom,
+                  nom: patient.user.nom,
+                  codePatient: patient.codePatient,
+                  email: patient.user.email,
+                  pathologie: patient.pathologie,
+                  telephone: patient.telephone,
+                  sexe: patient.sexe,
+                },
+                motDePasseTemporaire: "******** (Initialisé)",
+                structure: "Centre Hospitalier Référent VIHEPAT",
+                dateCreation: new Date(patient.createdAt).toLocaleDateString("fr-FR"),
+              };
+              imprimerFichePatient(doc);
+            }}
+            className="rounded-full gap-1.5 text-xs font-semibold"
+          >
+            <Printer className="h-3.5 w-3.5" />
+            Imprimer
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setResetOpen(true)}
+            className="rounded-full gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-900/50 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+            title="Générer un nouveau mot de passe temporaire et ré-émettre la fiche d'accès PDF"
+          >
+            <KeyRound className="h-3.5 w-3.5" />
+            Réinitialiser accès
+          </Button>
+
+          <div className="flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-xs font-medium text-primary">
+            <ShieldCheck className="h-4 w-4" />
+            {t("patient_detail.tracked_banner")}
+          </div>
         </div>
       </div>
 
@@ -152,27 +234,62 @@ export function PatientDetailPage() {
           <RendezVousSection patient={patient} />
         </div>
       </div>
+
+      {/* Modal confirmation réinitialisation accès */}
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-amber-600 dark:text-amber-400">
+              <KeyRound className="h-5 w-5" />
+              Réinitialiser les identifiants
+            </DialogTitle>
+            <DialogDescription>
+              Générer un <strong>nouveau mot de passe temporaire</strong> pour {patient.user.prenom} {patient.user.nom} ({patient.codePatient}).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs text-amber-900 dark:text-amber-200 leading-relaxed space-y-2">
+            <p>• L'ancien mot de passe du patient deviendra immédiatement caduc.</p>
+            <p>• Une nouvelle <strong>Fiche d'accès PDF officielle</strong> sera générée et téléchargée immédiatement.</p>
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button variant="outline" onClick={() => setResetOpen(false)} className="rounded-full">
+              Annuler
+            </Button>
+            <Button
+              disabled={resetting}
+              onClick={() => reinitialiserAcces()}
+              className="rounded-full font-semibold bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              {resetting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmer & Télécharger la fiche PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
 
 function ObservanceCard({ patient }: { patient: PatientDetail }) {
+  const { t } = useT();
   const { observance, alertesExamens } = patient;
   return (
     <Card>
-      <SectionTitle icon={Activity} title="Observance" />
+      <SectionTitle icon={Activity} title={t("patient_detail.observance_title")} />
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">
         <div className={`rounded-2xl p-3 ${tauxStyle(observance.taux7)}`}>
           <p className="text-xl font-extrabold">{formatTaux(observance.taux7)}</p>
-          <p className="text-xs font-medium">7 jours</p>
+          <p className="text-xs font-medium">{t("patient_detail.jours7")}</p>
         </div>
         <div className={`rounded-2xl p-3 ${tauxStyle(observance.taux30)}`}>
           <p className="text-xl font-extrabold">{formatTaux(observance.taux30)}</p>
-          <p className="text-xs font-medium">30 jours</p>
+          <p className="text-xs font-medium">{t("patient_detail.jours30")}</p>
         </div>
         <div className="rounded-2xl bg-secondary p-3 text-primary">
           <p className="text-xl font-extrabold">{observance.serie}</p>
-          <p className="text-xs font-medium">jours sans oubli</p>
+          <p className="text-xs font-medium">{t("patient_detail.jours_sans_oubli")}</p>
         </div>
       </div>
       <div className="mt-4">
@@ -180,21 +297,21 @@ function ObservanceCard({ patient }: { patient: PatientDetail }) {
       </div>
       {observance.nonRenseignees30 > 0 && (
         <p className="mt-2 text-xs text-muted-foreground">
-          {observance.nonRenseignees30} prise{observance.nonRenseignees30 > 1 ? "s" : ""} non renseignée{observance.nonRenseignees30 > 1 ? "s" : ""} sur 30 jours (comptée{observance.nonRenseignees30 > 1 ? "s" : ""} comme non prise{observance.nonRenseignees30 > 1 ? "s" : ""}).
+          {t("patient_detail.non_renseignees", { count: observance.nonRenseignees30 })}
         </p>
       )}
       {alertesExamens.length > 0 && (
         <div className="mt-4 space-y-2">
-          <h3 className="text-sm font-bold text-foreground">Examens à programmer</h3>
-          {alertesExamens.map((a) => (
-            <div key={a.type} className="flex items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2">
-              <span className="text-sm text-foreground">{a.libelle}</span>
+          <h3 className="text-sm font-bold text-foreground">{t("patient_detail.examens_programmer")}</h3>
+          {alertesExamens.map((al) => (
+            <div key={al.type} className="flex items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2">
+              <span className="text-sm text-foreground">{t(`observations.types.${al.type}`, { defaultValue: al.libelle })}</span>
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                  a.statut === "en_retard" ? "bg-destructive/15 text-destructive" : "bg-[hsl(var(--gold)/0.2)] text-[hsl(var(--gold))]"
+                  al.statut === "en_retard" ? "bg-destructive/15 text-destructive" : "bg-[hsl(var(--gold)/0.2)] text-[hsl(var(--gold))]"
                 }`}
               >
-                {libelleEcheance(a)}
+                {libelleEcheance(al, t)}
               </span>
             </div>
           ))}
@@ -205,10 +322,10 @@ function ObservanceCard({ patient }: { patient: PatientDetail }) {
 }
 
 function BackLink() {
-
+  const { t } = useT();
   return (
     <Link to="/soignant/dashboard" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary">
-      <ArrowLeft className="mr-1 h-4 w-4" /> Retour à la file active
+      <ArrowLeft className="mr-1 h-4 w-4" /> {t("patient_detail.back_link")}
     </Link>
   );
 }
@@ -218,6 +335,7 @@ function BackLink() {
 /* ------------------------------------------------------------------ */
 
 function BilanSection({ patient, onSaved }: { patient: PatientDetail; onSaved: () => void }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
 
   const derniers = useMemo(() => {
@@ -229,7 +347,7 @@ function BilanSection({ patient, onSaved }: { patient: PatientDetail; onSaved: (
   const typesAvecHistorique = useMemo(() => {
     const counts = new Map<string, number>();
     for (const o of patient.observations) counts.set(o.type, (counts.get(o.type) ?? 0) + 1);
-    return Array.from(counts.entries()).filter(([, n]) => n >= 2).map(([t]) => t);
+    return Array.from(counts.entries()).filter(([, n]) => n >= 2).map(([tp]) => tp);
   }, [patient.observations]);
 
   const [typeCourbe, setTypeCourbe] = useState<string | null>(null);
@@ -247,22 +365,24 @@ function BilanSection({ patient, onSaved }: { patient: PatientDetail; onSaved: (
     [courbe, patient.observations],
   );
 
+  const labelObs = (type: string) => t(`observations.types.${type}`, { defaultValue: type });
+
   return (
     <>
       <Card>
         <SectionTitle
           icon={FlaskConical}
-          title="Bilan biologique"
+          title={t("patient_detail.bilan_title")}
           action={
             <Button size="sm" className="rounded-full" onClick={() => setOpen(true)}>
-              <Plus className="mr-1 h-4 w-4" /> Saisir un résultat
+              <Plus className="mr-1 h-4 w-4" /> {t("patient_detail.saisir_resultat")}
             </Button>
           }
         />
 
         {derniers.length === 0 ? (
           <p className="py-10 text-center text-sm text-muted-foreground">
-            Aucun résultat biologique enregistré.
+            {t("patient_detail.aucun_resultat")}
           </p>
         ) : (
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -272,18 +392,18 @@ function BilanSection({ patient, onSaved }: { patient: PatientDetail; onSaved: (
                 <div key={o.id} className="rounded-2xl bg-secondary p-4">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-medium text-muted-foreground">
-                      {OBSERVATION_LABELS[o.type] ?? o.type}
+                      {labelObs(o.type)}
                     </span>
                     {repere && (
                       <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${NIVEAU_STYLES[repere.niveau]}`}>
-                        {repere.label}
+                        {t(`observations.reperes.${repere.label}`, { defaultValue: repere.label })}
                       </span>
                     )}
                   </div>
                   <p className="mt-2 text-2xl font-extrabold text-foreground">
-                    {o.valeur.toLocaleString("fr-FR")} <span className="text-sm font-semibold text-muted-foreground">{o.unite}</span>
+                    {o.valeur.toLocaleString()} <span className="text-sm font-semibold text-muted-foreground">{o.unite}</span>
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">Prélevé le {formatDate(o.datePrelevement)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t("patient_detail.preleve_le", { date: formatDate(o.datePrelevement) })}</p>
                 </div>
               );
             })}
@@ -293,18 +413,18 @@ function BilanSection({ patient, onSaved }: { patient: PatientDetail; onSaved: (
         {courbe && (
           <div className="mt-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-bold text-foreground">Évolution</h3>
+              <h3 className="text-sm font-bold text-foreground">{t("patient_detail.evolution_title")}</h3>
               <div className="flex flex-wrap gap-1">
-                {typesAvecHistorique.map((t) => (
+                {typesAvecHistorique.map((tp) => (
                   <button
-                    key={t}
+                    key={tp}
                     type="button"
-                    onClick={() => setTypeCourbe(t)}
+                    onClick={() => setTypeCourbe(tp)}
                     className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                      t === courbe ? "bg-primary text-primary-foreground" : "bg-secondary text-primary hover:bg-secondary/70"
+                      tp === courbe ? "bg-primary text-primary-foreground" : "bg-secondary text-primary hover:bg-secondary/70"
                     }`}
                   >
-                    {OBSERVATION_LABELS[t] ?? t}
+                    {labelObs(tp)}
                   </button>
                 ))}
               </div>
@@ -317,8 +437,8 @@ function BilanSection({ patient, onSaved }: { patient: PatientDetail; onSaved: (
                   <YAxis tick={{ fontSize: 11 }} width={56} stroke="hsl(var(--muted-foreground))" />
                   <Tooltip
                     formatter={(v, _n, item) => [
-                      `${Number(v).toLocaleString("fr-FR")} ${String(item.payload?.unite ?? "")}`,
-                      OBSERVATION_LABELS[courbe] ?? courbe,
+                      `${Number(v).toLocaleString()} ${String(item.payload?.unite ?? "")}`,
+                      labelObs(courbe),
                     ]}
                     contentStyle={{ borderRadius: 12, fontSize: 12 }}
                   />
@@ -331,32 +451,51 @@ function BilanSection({ patient, onSaved }: { patient: PatientDetail; onSaved: (
 
         {patient.observations.length > 0 && (
           <div className="mt-6">
-            <h3 className="text-sm font-bold text-foreground">Historique des saisies</h3>
-            <div className="mt-2 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="py-2 pr-3 font-semibold">Date</th>
-                    <th className="py-2 pr-3 font-semibold">Examen</th>
-                    <th className="py-2 pr-3 font-semibold">Résultat</th>
-                    <th className="py-2 font-semibold">Saisi par</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {patient.observations.map((o) => (
-                    <tr key={o.id} className="border-t border-border">
-                      <td className="py-2 pr-3 whitespace-nowrap">{formatDate(o.datePrelevement)}</td>
-                      <td className="py-2 pr-3">{OBSERVATION_LABELS[o.type] ?? o.type}</td>
-                      <td className="py-2 pr-3 whitespace-nowrap font-semibold">
-                        {o.valeur.toLocaleString("fr-FR")} {o.unite}
-                      </td>
-                      <td className="py-2 text-muted-foreground">
-                        {o.soignant ? `${o.soignant.user.prenom} ${o.soignant.user.nom}` : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <h3 className="text-sm font-bold text-foreground">{t("patient_detail.historique_title")}</h3>
+            <div className="mt-2">
+              <DataTable
+                data={patient.observations}
+                getRowKey={(o) => o.id}
+                searchPlaceholder={t("patient_detail.historique_search")}
+                emptyText={t("patient_detail.historique_aucun_resultat")}
+                searchText={(o) =>
+                  `${labelObs(o.type)} ${o.soignant ? `${o.soignant.user.prenom} ${o.soignant.user.nom}` : ""} ${formatDate(o.datePrelevement)}`
+                }
+                columns={[
+                  {
+                    key: "date",
+                    header: t("patient_detail.th_date"),
+                    sortValue: (o) => o.datePrelevement ?? "",
+                    render: (o) => <span className="whitespace-nowrap">{formatDate(o.datePrelevement)}</span>,
+                  },
+                  {
+                    key: "examen",
+                    header: t("patient_detail.th_examen"),
+                    sortValue: (o) => labelObs(o.type),
+                    render: (o) => labelObs(o.type),
+                  },
+                  {
+                    key: "resultat",
+                    header: t("patient_detail.th_resultat"),
+                    sortValue: (o) => o.valeur,
+                    render: (o) => (
+                      <span className="whitespace-nowrap font-semibold">
+                        {o.valeur.toLocaleString()} {o.unite}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "saisi_par",
+                    header: t("patient_detail.th_saisi_par"),
+                    sortValue: (o) => (o.soignant ? `${o.soignant.user.prenom} ${o.soignant.user.nom}` : ""),
+                    render: (o) => (
+                      <span className="text-muted-foreground">
+                        {o.soignant ? `${o.soignant.user.prenom} ${o.soignant.user.nom}` : "-"}
+                      </span>
+                    ),
+                  },
+                ]}
+              />
             </div>
           </div>
         )}
@@ -370,6 +509,7 @@ function BilanSection({ patient, onSaved }: { patient: PatientDetail; onSaved: (
 function ObservationDialog({ open, onOpenChange, patientId, onSaved }: {
   open: boolean; onOpenChange: (o: boolean) => void; patientId: number; onSaved: () => void;
 }) {
+  const { t } = useT();
   const [type, setType] = useState<TypeObservation>("charge_virale");
   const [valeur, setValeur] = useState("");
   const [unite, setUnite] = useState("copies/mL");
@@ -394,21 +534,21 @@ function ObservationDialog({ open, onOpenChange, patientId, onSaved }: {
         commentaire: commentaire.trim() || undefined,
       }),
     onSuccess: () => {
-      toast.success("Résultat enregistré");
+      toast.success(t("patient_detail.toast_obs_success"));
       reset();
       onOpenChange(false);
       onSaved();
     },
-    onError: (err) => toast.error(apiErrorMessage(err, "Impossible d'enregistrer le résultat")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("patient_detail.toast_obs_error"))),
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-3xl sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Saisir un résultat biologique</DialogTitle>
+          <DialogTitle>{t("patient_detail.obs_dialog_title")}</DialogTitle>
           <DialogDescription>
-            Réservé aux professionnels habilités. La saisie est signée à votre nom et tracée.
+            {t("patient_detail.obs_dialog_desc")}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -419,46 +559,42 @@ function ObservationDialog({ open, onOpenChange, patientId, onSaved }: {
           className="space-y-4"
         >
           <div className="space-y-2">
-            <Label htmlFor="obs-type">Examen</Label>
-            <Select
+            <Label htmlFor="obs-type">{t("patient_detail.obs_dialog_examen")}</Label>
+            <SearchableSelect
+              id="obs-type"
               value={type}
-              onValueChange={(v) => {
-                const t = v as TypeObservation;
-                setType(t);
-                setUnite(OBSERVATION_TYPES.find((o) => o.value === t)?.unite ?? "");
+              onChange={(v) => {
+                const tp = v as TypeObservation;
+                setType(tp);
+                setUnite(OBSERVATION_TYPES.find((o) => o.value === tp)?.unite ?? "");
               }}
-            >
-              <SelectTrigger id="obs-type" className="h-11 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {OBSERVATION_TYPES.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={OBSERVATION_TYPES.map((o) => ({
+                value: o.value, label: t(`observations.types.${o.value}`, { defaultValue: o.label }),
+              }))}
+              placeholder={t("patient_detail.obs_dialog_examen")}
+            />
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2 space-y-2">
-              <Label htmlFor="obs-valeur">Valeur</Label>
+              <Label htmlFor="obs-valeur">{t("patient_detail.obs_dialog_valeur")}</Label>
               <Input
                 id="obs-valeur"
                 inputMode="decimal"
                 value={valeur}
                 onChange={(e) => setValeur(e.target.value)}
-                placeholder={type === "ag_hbs" ? "1 = positif, 0 = négatif" : "Ex. 450"}
+                placeholder={type === "ag_hbs" ? t("patient_detail.obs_dialog_valeur_placeholder_hbs") : t("patient_detail.obs_dialog_valeur_placeholder")}
                 required
                 pattern="[0-9]+([.,][0-9]+)?"
                 className="h-11 rounded-xl"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="obs-unite">Unité</Label>
+              <Label htmlFor="obs-unite">{t("patient_detail.obs_dialog_unite")}</Label>
               <Input id="obs-unite" value={unite} onChange={(e) => setUnite(e.target.value)} required className="h-11 rounded-xl" />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="obs-date">Date du prélèvement</Label>
+            <Label htmlFor="obs-date">{t("patient_detail.obs_dialog_date")}</Label>
             <Input
               id="obs-date"
               type="date"
@@ -470,13 +606,13 @@ function ObservationDialog({ open, onOpenChange, patientId, onSaved }: {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="obs-commentaire">Commentaire (optionnel)</Label>
+            <Label htmlFor="obs-commentaire">{t("patient_detail.obs_dialog_commentaire")}</Label>
             <Textarea id="obs-commentaire" value={commentaire} onChange={(e) => setCommentaire(e.target.value)} rows={2} className="rounded-xl" />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isPending} className="w-full rounded-full">
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Enregistrer
+              {t("patient_detail.enregistrer")}
             </Button>
           </DialogFooter>
         </form>
@@ -490,15 +626,16 @@ function ObservationDialog({ open, onOpenChange, patientId, onSaved }: {
 /* ------------------------------------------------------------------ */
 
 function TraitementsSection({ patient, onSaved }: { patient: PatientDetail; onSaved: () => void }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
 
   const { mutate: arreter, isPending: arretEnCours, variables: arretId } = useMutation({
     mutationFn: (id: number) => soignantApi.updateTraitement(id, { actif: false }),
     onSuccess: () => {
-      toast.success("Traitement arrêté");
+      toast.success(t("patient_detail.toast_traitement_arrete"));
       onSaved();
     },
-    onError: (err) => toast.error(apiErrorMessage(err, "Impossible de modifier le traitement")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("patient_detail.toast_traitement_error"))),
   });
 
   return (
@@ -506,49 +643,49 @@ function TraitementsSection({ patient, onSaved }: { patient: PatientDetail; onSa
       <Card>
         <SectionTitle
           icon={Pill}
-          title="Traitements"
+          title={t("patient_detail.traitements_title")}
           action={
             <Button variant="ghost" size="sm" className="rounded-full text-primary" onClick={() => setOpen(true)}>
-              <Plus className="mr-1 h-4 w-4" /> Prescrire
+              <Plus className="mr-1 h-4 w-4" /> {t("patient_detail.prescrire")}
             </Button>
           }
         />
         {patient.traitements.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">Aucun traitement enregistré.</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">{t("patient_detail.aucun_traitement")}</p>
         ) : (
           <ul className="mt-4 space-y-3">
-            {patient.traitements.map((t) => (
+            {patient.traitements.map((tr) => (
               <li
-                key={t.id}
-                className={`rounded-2xl border-2 p-4 ${t.actif ? "border-border" : "border-dashed border-border opacity-60"}`}
+                key={tr.id}
+                className={`rounded-2xl border-2 p-4 ${tr.actif ? "border-border" : "border-dashed border-border opacity-60"}`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="min-w-0 break-words font-semibold text-foreground">{t.molecule}</p>
-                  {t.actif ? (
-                    t.heurePrise && (
-                      <span className="shrink-0 rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">{t.heurePrise}</span>
+                  <p className="min-w-0 break-words font-semibold text-foreground">{tr.molecule}</p>
+                  {tr.actif ? (
+                    tr.heurePrise && (
+                      <span className="shrink-0 rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">{tr.heurePrise}</span>
                     )
                   ) : (
-                    <span className="shrink-0 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">Arrêté</span>
+                    <span className="shrink-0 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">{t("patient_detail.arrete_badge")}</span>
                   )}
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {[t.dosage, t.frequence].filter(Boolean).join(" · ")}
+                  {[tr.dosage, tr.frequence].filter(Boolean).join(" · ")}
                 </p>
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    Depuis le {formatDate(t.dateDebut)}
-                    {t.dateFin && <> · fin {formatDate(t.dateFin)}</>}
+                    {t("patient_detail.depuis_le", { date: formatDate(tr.dateDebut) })}
+                    {tr.dateFin && <> · {t("patient_detail.fin_le", { date: formatDate(tr.dateFin) })}</>}
                   </span>
-                  {t.actif && (
+                  {tr.actif && (
                     <Button
                       size="sm"
                       variant="ghost"
                       className="h-7 rounded-full text-destructive"
-                      disabled={arretEnCours && arretId === t.id}
-                      onClick={() => arreter(t.id)}
+                      disabled={arretEnCours && arretId === tr.id}
+                      onClick={() => arreter(tr.id)}
                     >
-                      <Square className="mr-1 h-3 w-3" /> Arrêter
+                      <Square className="mr-1 h-3 w-3" /> {t("patient_detail.arreter_btn")}
                     </Button>
                   )}
                 </div>
@@ -565,6 +702,7 @@ function TraitementsSection({ patient, onSaved }: { patient: PatientDetail; onSa
 function TraitementDialog({ open, onOpenChange, patientId, onSaved }: {
   open: boolean; onOpenChange: (o: boolean) => void; patientId: number; onSaved: () => void;
 }) {
+  const { t } = useT();
   const [molecule, setMolecule] = useState("");
   const [dosage, setDosage] = useState("");
   const [frequence, setFrequence] = useState("1x/jour");
@@ -583,22 +721,22 @@ function TraitementDialog({ open, onOpenChange, patientId, onSaved }: {
         notes: notes.trim() || undefined,
       }),
     onSuccess: () => {
-      toast.success("Traitement ajouté");
+      toast.success(t("patient_detail.toast_traitement_ajoute"));
       setMolecule("");
       setDosage("");
       setNotes("");
       onOpenChange(false);
       onSaved();
     },
-    onError: (err) => toast.error(apiErrorMessage(err, "Impossible d'ajouter le traitement")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("patient_detail.toast_traitement_ajoute_error"))),
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-3xl sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Prescrire un traitement</DialogTitle>
-          <DialogDescription>Le traitement apparaîtra immédiatement dans l'espace du patient.</DialogDescription>
+          <DialogTitle>{t("patient_detail.trait_dialog_title")}</DialogTitle>
+          <DialogDescription>{t("patient_detail.trait_dialog_desc")}</DialogDescription>
         </DialogHeader>
         <form
           onSubmit={(e) => {
@@ -608,44 +746,44 @@ function TraitementDialog({ open, onOpenChange, patientId, onSaved }: {
           className="space-y-4"
         >
           <div className="space-y-2">
-            <Label htmlFor="t-molecule">Molécule(s)</Label>
+            <Label htmlFor="t-molecule">{t("patient_detail.molecule")}</Label>
             <Input
               id="t-molecule"
               value={molecule}
               onChange={(e) => setMolecule(e.target.value)}
-              placeholder="Ex. Ténofovir/Lamivudine/Dolutégravir"
+              placeholder={t("patient_detail.molecule_placeholder")}
               required
               className="h-11 rounded-xl"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="t-dosage">Dosage</Label>
+              <Label htmlFor="t-dosage">{t("patient_detail.dosage")}</Label>
               <Input id="t-dosage" value={dosage} onChange={(e) => setDosage(e.target.value)} placeholder="300/300/50 mg" className="h-11 rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="t-frequence">Fréquence</Label>
+              <Label htmlFor="t-frequence">{t("patient_detail.frequence")}</Label>
               <Input id="t-frequence" value={frequence} onChange={(e) => setFrequence(e.target.value)} required className="h-11 rounded-xl" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="t-heure">Heure de prise</Label>
+              <Label htmlFor="t-heure">{t("patient_detail.heure_prise")}</Label>
               <Input id="t-heure" type="time" value={heurePrise} onChange={(e) => setHeurePrise(e.target.value)} className="h-11 rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="t-debut">Début</Label>
+              <Label htmlFor="t-debut">{t("patient_detail.debut")}</Label>
               <Input id="t-debut" type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} required className="h-11 rounded-xl" />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="t-notes">Consignes (optionnel)</Label>
+            <Label htmlFor="t-notes">{t("patient_detail.consignes")}</Label>
             <Textarea id="t-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="rounded-xl" />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isPending} className="w-full rounded-full">
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Ajouter le traitement
+              {t("patient_detail.ajouter_traitement")}
             </Button>
           </DialogFooter>
         </form>
@@ -659,24 +797,27 @@ function TraitementDialog({ open, onOpenChange, patientId, onSaved }: {
 /* ------------------------------------------------------------------ */
 
 function SignalementsSection({ patient }: { patient: PatientDetail }) {
+  const { t } = useT();
   return (
     <Card>
-      <SectionTitle icon={AlertCircle} title="Signalements" />
+      <SectionTitle icon={AlertCircle} title={t("patient_detail.signalements_title")} />
       {patient.signalements.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">Aucun signalement.</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{t("patient_detail.aucun_signalement")}</p>
       ) : (
         <ul className="mt-4 space-y-3">
           {patient.signalements.map((s) => (
             <li key={s.id} className="rounded-2xl bg-secondary p-4">
               <div className="flex items-center justify-between gap-2">
                 <p className="font-semibold text-foreground">{s.symptome}</p>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${GRAVITE_STYLES[s.gravite] ?? ""}`}>
-                  {GRAVITE_LABELS[s.gravite] ?? s.gravite}
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  s.gravite === "leger" ? "bg-secondary text-primary" : s.gravite === "modere" ? "bg-[hsl(var(--gold)/0.2)] text-[hsl(var(--gold))]" : "bg-destructive/15 text-destructive"
+                }`}>
+                  {t(`shared.gravite.${s.gravite}`, { defaultValue: s.gravite })}
                 </span>
               </div>
               {s.notes && <p className="mt-1 text-sm text-muted-foreground">{s.notes}</p>}
               <p className="mt-1 text-xs text-muted-foreground">
-                {formatDate(s.createdAt, true)} · {STATUT_SIGNALEMENT[s.statut] ?? s.statut}
+                {formatDate(s.createdAt, true)} · {t(`shared.statut_signalement.${s.statut}`, { defaultValue: s.statut })}
               </p>
             </li>
           ))}
@@ -687,21 +828,22 @@ function SignalementsSection({ patient }: { patient: PatientDetail }) {
 }
 
 function RendezVousSection({ patient }: { patient: PatientDetail }) {
+  const { t } = useT();
   return (
     <Card>
-      <SectionTitle icon={CalendarDays} title="Rendez-vous" />
+      <SectionTitle icon={CalendarDays} title={t("patient_detail.rdv_title")} />
       {patient.rendezVous.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">Aucun rendez-vous.</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{t("patient_detail.aucun_rdv")}</p>
       ) : (
         <ul className="mt-4 space-y-3">
           {patient.rendezVous.map((r) => (
             <li key={r.id} className="flex items-center justify-between gap-2 rounded-2xl bg-secondary p-4">
               <div>
-                <p className="font-semibold text-foreground">{r.motif || "Consultation"}</p>
+                <p className="font-semibold text-foreground">{r.motif || t("shared.consultation")}</p>
                 <p className="text-sm text-muted-foreground">{formatDate(r.dateHeure, true)}</p>
               </div>
               <span className="rounded-full bg-background px-2 py-0.5 text-xs font-semibold text-primary">
-                {STATUT_RDV[r.statut] ?? r.statut}
+                {t(`shared.statut_rdv.${r.statut}`, { defaultValue: r.statut })}
               </span>
             </li>
           ))}

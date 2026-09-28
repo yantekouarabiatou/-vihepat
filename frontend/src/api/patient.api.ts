@@ -13,6 +13,16 @@ export interface RendezVous {
   motif: string | null;
   statut: StatutRDV;
   notes: string | null;
+  rappelEnvoyeLe: string | null;
+}
+
+export interface Communique {
+  id: number;
+  titre: string;
+  contenu: string;
+  cible: 'tous' | 'patient';
+  createdAt: string;
+  auteur?: { id: number; structure: string; user: { nom: string; prenom: string } } | null;
 }
 
 export interface Traitement {
@@ -130,10 +140,11 @@ export const patientApi = {
 
   getAccesDossier: () => api.get<AccesDossier[]>('/patients/me/acces').then((r) => r.data),
 
+  getCommuniques: () => api.get<Communique[]>('/patients/me/communiques').then((r) => r.data),
+
   getAlertesExamens: () =>
  api.get<AlerteExamen[]>('/patients/me/alertes-examens').then((r) => r.data),
 
   sendChatMessage: (messages: ChatMessage[]) =>
-
-    api.post<ChatResponse>('/patients/me/chat', { messages }).then((r) => r.data),
+    api.post<ChatResponse>('/chat', { messages }).then((r) => r.data),
 };

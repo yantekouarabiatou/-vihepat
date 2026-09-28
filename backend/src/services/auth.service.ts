@@ -1,13 +1,23 @@
 import bcrypt from 'bcrypt';
-import { User, Patient, Soignant } from '../models';
+import { User, Patient, Soignant, Structure } from '../models';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
+import { sendWelcomeSoignantEmail } from './mail.service';
 
 const SALT_ROUNDS = 12;
 
-function genererCodePatient(): string {
+export function genererCodePatient(): string {
   const annee = new Date().getFullYear();
   const aleatoire = Math.floor(100000 + Math.random() * 900000);
   return `VHP-${annee}-${aleatoire}`;
+}
+
+export async function getStructures() {
+  const structures = await Structure.findAll({
+    where: { actif: true },
+    attributes: ['id', 'nom'],
+    order: [['nom', 'ASC']],
+  });
+  return structures;
 }
 
 export async function registerPatient(input: {
@@ -77,7 +87,8 @@ export async function registerSoignant(input: {
   nom: string;
   prenom: string;
   matricule: string;
-  structure: string;
+  structureId: number;
+  codeInvitation: string;
   specialite?: string;
   telephone?: string;
 }) {
@@ -85,6 +96,18 @@ export async function registerSoignant(input: {
   if (exists) {
     const e: any = new Error('Email déjà utilisé');
     e.status = 409;
+    throw e;
+  }
+
+  const structure = await Structure.findOne({ where: { id: input.structureId, actif: true } });
+  if (!structure) {
+    const e: any = new Error('Structure introuvable');
+    e.status = 404;
+    throw e;
+  }
+  if (structure.codeInvitation !== input.codeInvitation) {
+    const e: any = new Error("Code d'habilitation invalide. Demandez-le à votre structure de santé.");
+    e.status = 403;
     throw e;
   }
 
@@ -99,12 +122,23 @@ export async function registerSoignant(input: {
     actif: true,
   });
 
+  // Le nom de la structure est dénormalisé sur Soignant (affiché partout côté UI) ;
+  // seul le code d'habilitation, propre à chaque Structure, est vérifié plus haut.
   const soignant = await Soignant.create({
     userId: user.id,
     matricule: input.matricule,
-    structure: input.structure,
+    structure: structure.nom,
     specialite: input.specialite ?? null,
     telephone: input.telephone ?? null,
+  });
+
+  // Envoi de l'email de bienvenue pour le soignant (Brevo)
+  void sendWelcomeSoignantEmail({
+    to: user.email,
+    prenom: user.prenom,
+    nom: user.nom,
+    matricule: input.matricule,
+    structureNom: structure.nom,
   });
 
   const payload = { userId: user.id, role: user.role };

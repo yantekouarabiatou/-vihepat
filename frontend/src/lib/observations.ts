@@ -30,20 +30,21 @@ export type NiveauRepere = "ok" | "attention" | "alerte";
  * Charge virale : seuil OMS d'échec virologique à 1000 copies/mL.
  * CD4 : < 200 cellules/mm³ = immunodépression sévère.
  */
+/** `label` est une clé stable ; le composant appelant la traduit via `t(\`observations.reperes.${label}\`)`. */
 export function repereObservation(type: string, valeur: number): { niveau: NiveauRepere; label: string } | null {
   switch (type) {
     case "charge_virale":
-      if (valeur < 50) return { niveau: "ok", label: "Indétectable" };
-      if (valeur < 1000) return { niveau: "attention", label: "Détectable" };
-      return { niveau: "alerte", label: "≥ 1000" };
+      if (valeur < 50) return { niveau: "ok", label: "indetectable" };
+      if (valeur < 1000) return { niveau: "attention", label: "detectable" };
+      return { niveau: "alerte", label: "superieur_1000" };
     case "cd4":
-      if (valeur < 200) return { niveau: "alerte", label: "< 200" };
-      if (valeur < 350) return { niveau: "attention", label: "< 350" };
-      return { niveau: "ok", label: "Satisfaisant" };
+      if (valeur < 200) return { niveau: "alerte", label: "inferieur_200" };
+      if (valeur < 350) return { niveau: "attention", label: "inferieur_350" };
+      return { niveau: "ok", label: "satisfaisant" };
     case "arn_vhc":
       return valeur === 0
-        ? { niveau: "ok", label: "Indétectable" }
-        : { niveau: "attention", label: "Détectable" };
+        ? { niveau: "ok", label: "indetectable" }
+        : { niveau: "attention", label: "detectable" };
     default:
       return null;
   }

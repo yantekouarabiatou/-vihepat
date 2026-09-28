@@ -15,10 +15,16 @@ const schema = z.object({
   JWT_REFRESH_EXPIRES: z.string().default('30d'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   ANTHROPIC_API_KEY: z.string().optional(),
-  // Code d'habilitation remis par la structure de santé : seul un professionnel
-  // qui le connaît peut créer un compte soignant. Laisser vide pour désactiver.
-  SOIGNANT_INVITE_CODE: z.string().optional(),
 
+  // Configuration SMTP (Brevo)
+  MAIL_MAILER: z.string().default('smtp'),
+  MAIL_HOST: z.string().default('smtp-relay.brevo.com'),
+  MAIL_PORT: z.coerce.number().default(587),
+  MAIL_USERNAME: z.string().optional(),
+  MAIL_PASSWORD: z.string().optional(),
+  MAIL_ENCRYPTION: z.string().default('tls'),
+  MAIL_FROM_ADDRESS: z.string().email().default('rabiatouyantekoua@gmail.com'),
+  MAIL_FROM_NAME: z.string().default('VIHEPAT Santé'),
 });
 
 export const env = schema.parse(process.env);

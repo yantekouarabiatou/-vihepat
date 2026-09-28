@@ -3,6 +3,7 @@ import { sequelize } from './config/database';
 import {
   User, Patient, Soignant, Affectation,
   Traitement, RendezVous, Observation, Signalement, PriseMedicament,
+  Structure, GroupeSoutien, MembreGroupe, MessageGroupe, Communique,
 } from './models';
 import { ajouterJours, jourLocal, prisesParJour } from './services/observance.service';
 
@@ -16,7 +17,7 @@ function daysFromNow(days: number): Date {
 }
 
 async function seedUser(input: {
-  email: string; nom: string; prenom: string; role: 'patient' | 'soignant';
+  email: string; nom: string; prenom: string; role: 'patient' | 'soignant' | 'admin';
 }) {
   const passwordHash = await bcrypt.hash(SEED_PASSWORD, SALT_ROUNDS);
   const [user] = await User.findOrCreate({
@@ -29,10 +30,20 @@ async function seedUser(input: {
 async function main() {
   await sequelize.authenticate();
   console.log('✅ MySQL connecté — démarrage du seed');
+  console.log('   (le schéma doit déjà exister : lancer `npm run db:migrate` avant `db:seed`)');
 
-  // Crée les tables manquantes : le seed peut ainsi être lancé avant l'API
-  await sequelize.sync();
-
+  // ---------- Structures de santé (code d'habilitation par structure) ----------
+  const structuresData = [
+    { nom: 'CHU Cotonou', codeInvitation: 'CHU-COTONOU-2026' },
+    { nom: 'Hôpital de Zone Abomey-Calavi', codeInvitation: 'HZ-ABCALAVI-2026' },
+    { nom: 'Centre de Santé Parakou', codeInvitation: 'CS-PARAKOU-2026' },
+  ];
+  const structures: Structure[] = [];
+  for (const s of structuresData) {
+    const [structure] = await Structure.findOrCreate({ where: { nom: s.nom }, defaults: s });
+    structures.push(structure);
+  }
+  console.log(`✅ ${structures.length} structures`);
 
   // ---------- Soignants ----------
   const soignantsData = [
@@ -53,6 +64,19 @@ async function main() {
     soignants.push(soignant);
   }
   console.log(`✅ ${soignants.length} soignants`);
+
+  // ---------- Admin (accès complet à tous les patients, quelle que soit la structure) ----------
+  const adminUser = await seedUser({
+    email: 'admin@vihepat.org', nom: 'Directeur', prenom: 'Admin', role: 'admin',
+  });
+  await Soignant.findOrCreate({
+    where: { userId: adminUser.id },
+    defaults: {
+      userId: adminUser.id, matricule: 'SEED-ADMIN-001', structure: 'Direction VIHEPAT',
+      specialite: 'Coordination', telephone: '+229 90 00 00 00',
+    },
+  });
+  console.log('✅ 1 administrateur');
 
   // ---------- Patients ----------
   const patientsData = [
@@ -241,11 +265,59 @@ async function main() {
   }
   console.log('✅ Prises de médicaments');
 
+  // ---------- Groupes de soutien entre pairs ----------
+  const groupesData = [
+    { nom: 'Vivre avec le VIH au quotidien', description: 'Échanges entre personnes vivant avec le VIH : traitement, quotidien, entraide.', pathologie: 'vih' as const },
+    { nom: 'Hépatites virales B/C : parlons-en', description: 'Un espace pour les patients suivis pour une hépatite B ou C.', pathologie: null },
+    { nom: 'Groupe général VIHEPAT', description: 'Ouvert à tous les patients de la plateforme, quel que soit le suivi.', pathologie: null },
+  ];
+  const groupes: GroupeSoutien[] = [];
+  for (const g of groupesData) {
+    const [groupe] = await GroupeSoutien.findOrCreate({ where: { nom: g.nom }, defaults: g });
+    groupes.push(groupe);
+  }
+  console.log(`✅ ${groupes.length} groupes de soutien`);
+
+  // Quelques adhésions + messages de démo
+  const groupeVih = groupes[0]!;
+  const membresDemo = [patients[0]!, patients[4]!]; // Awa, Grâce (toutes deux VIH)
+  for (const patient of membresDemo) {
+    await MembreGroupe.findOrCreate({
+      where: { groupeId: groupeVih.id, patientId: patient.id },
+      defaults: { groupeId: groupeVih.id, patientId: patient.id },
+    });
+  }
+  const messagesDemoExistants = await MessageGroupe.count({ where: { groupeId: groupeVih.id } });
+  if (messagesDemoExistants === 0) {
+    await MessageGroupe.create({
+      groupeId: groupeVih.id, patientId: membresDemo[0]!.id,
+      contenu: "Bonjour à tous, je débute mon traitement, des conseils pour ne pas oublier la prise du soir ?",
+    });
+    await MessageGroupe.create({
+      groupeId: groupeVih.id, patientId: membresDemo[1]!.id,
+      contenu: "Moi j'ai mis une alarme sur mon téléphone avec un nom discret, ça aide beaucoup !",
+    });
+  }
+  console.log('✅ Adhésions et messages de démo');
+
+  // ---------- Communiqués de démo ----------
+  const communiqueDemoExistant = await Communique.findOne({ where: { titre: 'Journée de dépistage gratuit' } });
+  if (!communiqueDemoExistant) {
+    await Communique.create({
+      soignantId: soignants[0]!.id,
+      titre: 'Journée de dépistage gratuit',
+      contenu: 'Une journée de dépistage gratuit du VIH et des hépatites est organisée le mois prochain au CHU Cotonou. Parlez-en autour de vous.',
+      cible: 'tous',
+    });
+  }
+  console.log('✅ Communiqués de démo');
 
   console.log('\n🎉 Seed terminé.');
   console.log(`   Mot de passe pour tous les comptes seedés : ${SEED_PASSWORD}`);
+  console.log('   Admin     :', adminUser.email);
   console.log('   Soignants :', soignantsData.map((s) => s.email).join(', '));
   console.log('   Patients  :', patientsData.map((p) => p.email).join(', '));
+  console.log('   Codes d\'habilitation :', structuresData.map((s) => `${s.nom} → ${s.codeInvitation}`).join(' | '));
 
   await sequelize.close();
 }

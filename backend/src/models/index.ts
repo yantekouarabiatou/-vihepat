@@ -8,6 +8,11 @@ import { Observation } from './Observation';
 import { Signalement } from './Signalement';
 import { AuditLog } from './AuditLog';
 import { PriseMedicament } from './PriseMedicament';
+import { Structure } from './Structure';
+import { GroupeSoutien } from './GroupeSoutien';
+import { MembreGroupe } from './MembreGroupe';
+import { MessageGroupe } from './MessageGroupe';
+import { Communique } from './Communique';
 
 // User ↔ Patient (1-1)
 User.hasOne(Patient, { foreignKey: 'userId', as: 'patient' });
@@ -50,10 +55,25 @@ Patient.hasMany(PriseMedicament, { foreignKey: 'patientId', as: 'prises' });
 Traitement.hasMany(PriseMedicament, { foreignKey: 'traitementId', as: 'prises' });
 PriseMedicament.belongsTo(Traitement, { foreignKey: 'traitementId', as: 'traitement' });
 
+// GroupeSoutien ↔ MembreGroupe / MessageGroupe (1-N)
+GroupeSoutien.hasMany(MembreGroupe, { foreignKey: 'groupeId', as: 'membres' });
+MembreGroupe.belongsTo(GroupeSoutien, { foreignKey: 'groupeId', as: 'groupe' });
+MembreGroupe.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
+
+GroupeSoutien.hasMany(MessageGroupe, { foreignKey: 'groupeId', as: 'messages' });
+MessageGroupe.belongsTo(GroupeSoutien, { foreignKey: 'groupeId', as: 'groupe' });
+MessageGroupe.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
+
 // AuditLog
 AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// Communique (auteur soignant, cible optionnelle un patient précis)
+Soignant.hasMany(Communique, { foreignKey: 'soignantId', as: 'communiques' });
+Communique.belongsTo(Soignant, { foreignKey: 'soignantId', as: 'auteur' });
+Communique.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
 
 export {
   User, Patient, Soignant, Affectation,
   Traitement, RendezVous, Observation, Signalement, AuditLog, PriseMedicament,
+  Structure, GroupeSoutien, MembreGroupe, MessageGroupe, Communique,
 };

@@ -8,7 +8,7 @@ export function ProtectedRoute({ allowedRoles }: { allowedRoles?: Role[] }) {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {
-    return <Navigate to={role === 'soignant' ? '/soignant/dashboard' : '/dashboard'} replace />;
+    return <Navigate to={role === 'patient' ? '/dashboard' : '/soignant/dashboard'} replace />;
   }
 
   return <Outlet />;

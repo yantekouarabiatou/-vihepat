@@ -26,11 +26,16 @@ export interface RegisterSoignantInput {
   nom: string;
   prenom: string;
   matricule: string;
-  structure: string;
+  structureId: number;
   specialite?: string;
   telephone?: string;
   /** Code d'habilitation remis par la structure de santé */
-  codeInvitation?: string;
+  codeInvitation: string;
+}
+
+export interface Structure {
+  id: number;
+  nom: string;
 }
 
 export interface AuthResponse {
@@ -49,6 +54,8 @@ export interface AuthResponse {
 }
 
 export const authApi = {
+  getStructures: () => api.get<Structure[]>('/auth/structures').then((r) => r.data),
+
   login: (input: LoginInput) =>
     api.post<AuthResponse>('/auth/login', input).then((r) => r.data),
 

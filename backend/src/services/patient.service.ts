@@ -1,7 +1,8 @@
 import { Op } from 'sequelize';
 import {
-  Patient, RendezVous, Traitement, Observation, Signalement, AuditLog, User, Soignant,
+  Patient, RendezVous, Traitement, Observation, Signalement, AuditLog, User, Soignant, Affectation, Communique,
 } from '../models';
+import { sendAlerteMedicaleEmail } from './mail.service';
 
 /** Actions tracées qui concernent le dossier d'un patient. */
 const ACTIONS_DOSSIER = [
@@ -104,16 +105,71 @@ export async function getSignalements(userId: number) {
   });
 }
 
+export async function getCommuniques(userId: number) {
+  const patient = await getPatientOrThrow(userId);
+
+  const [affectations, soignantsAdmin] = await Promise.all([
+    Affectation.findAll({ where: { patientId: patient.id } }),
+    User.findAll({ where: { role: 'admin' }, include: [{ model: Soignant, as: 'soignant', attributes: ['id'] }] }),
+  ]);
+  const soignantIds = affectations.map((a) => a.soignantId);
+  const adminSoignantIds = soignantsAdmin
+    .map((u) => (u as any).soignant?.id)
+    .filter((id): id is number => typeof id === 'number');
+
+  return Communique.findAll({
+    where: {
+      [Op.or]: [
+        { cible: 'patient', patientId: patient.id },
+        { cible: 'tous', soignantId: { [Op.in]: [...soignantIds, ...adminSoignantIds] } },
+      ],
+    },
+    include: [{
+      model: Soignant, as: 'auteur', attributes: ['id', 'structure'],
+      include: [{ model: User, as: 'user', attributes: ['nom', 'prenom'] }],
+    }],
+    order: [['createdAt', 'DESC']],
+    limit: 30,
+  });
+}
+
 export async function createSignalement(
   userId: number,
   input: { symptome: string; gravite: 'leger' | 'modere' | 'severe'; notes?: string }
 ) {
   const patient = await getPatientOrThrow(userId);
-  return Signalement.create({
+  const signalement = await Signalement.create({
     patientId: patient.id,
     symptome: input.symptome,
     gravite: input.gravite,
     notes: input.notes ?? null,
     statut: 'nouveau',
   });
+
+  // Alerte médicale immédiate par email à l'équipe soignante référente en cas d'urgence/sévérité
+  if (input.gravite === 'severe') {
+    void (async () => {
+      try {
+        const affectation = await Affectation.findOne({
+          where: { patientId: patient.id, principal: true },
+          include: [{ model: Soignant, as: 'soignant', include: [{ model: User, as: 'user' }] }],
+        });
+        const soignantUser = (affectation as any)?.soignant?.user;
+        if (soignantUser?.email) {
+          await sendAlerteMedicaleEmail({
+            to: soignantUser.email,
+            soignantNom: `Dr ${soignantUser.prenom} ${soignantUser.nom}`,
+            patientCode: patient.codePatient,
+            gravite: 'Sévère / Alerte',
+            symptome: input.symptome,
+            notes: input.notes,
+          });
+        }
+      } catch (err) {
+        console.warn("Alerte email soignant impossible:", err);
+      }
+    })();
+  }
+
+  return signalement;
 }

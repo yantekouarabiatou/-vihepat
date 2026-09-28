@@ -20,6 +20,18 @@ export function authRequired(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export function authOptional(req: Request, res: Response, next: NextFunction) {
+  const h = req.headers.authorization;
+  if (h?.startsWith('Bearer ')) {
+    try {
+      req.user = verifyAccessToken(h.slice(7));
+    } catch {
+      // Token ignoré en mode optionnel
+    }
+  }
+  next();
+}
+
 export const requireRole = (...roles: string[]) =>
   (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) return res.status(401).json({ error: 'Non authentifié' });
@@ -28,3 +40,13 @@ export const requireRole = (...roles: string[]) =>
     }
     next();
   };
+
+export const requirePermission = (permission: import('../config/permissions').Permission) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) return res.status(401).json({ error: 'Non authentifié' });
+    const { hasPermission } = require('../config/permissions');
+    if (!hasPermission(req.user.role as any, permission)) {
+      return res.status(403).json({ error: `Permission refusée : action non autorisée pour le rôle ${req.user.role}` });
+    }
+    next();
+  };

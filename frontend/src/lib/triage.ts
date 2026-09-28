@@ -37,7 +37,7 @@ export const SYMPTOMES: Symptome[] = [
   { id: "maux_tete", libelle: "Maux de tête", emoji: "🧠" },
   { id: "amaigrissement", libelle: "Perte de poids", emoji: "⚖️" },
   { id: "urines_foncees", libelle: "Urines très foncées", emoji: "🟤" },
-  { id: "autre", libelle: "Autre chose", emoji: "💬" },
+  { id: "autre", libelle: "Autre symptôme", emoji: "💬" },
 ];
 
 export const SIGNES_GRAVES: { id: SigneGraveId; libelle: string }[] = [
@@ -68,6 +68,7 @@ export interface EntreeTriage {
   intensite: Intensite;
   signesGraves: SigneGraveId[];
   precision?: string | undefined;
+  noteVocale?: string | undefined;
   /** Un traitement a démarré il y a moins de 2 mois (risque de réaction au médicament) */
   traitementRecent?: boolean | undefined;
 }
@@ -173,5 +174,6 @@ export function resumeSignalement(e: EntreeTriage, r: ResultatTriage) {
   }
   if (r.raisons.length) lignes.push(`Motifs : ${r.raisons.join(" ; ")}`);
   if (e.precision) lignes.push(`Précision du patient : ${e.precision}`);
+  if (e.noteVocale) lignes.push(`Note vocale enregistrée : ${e.noteVocale}`);
   return { symptome, gravite: NIVEAU_VERS_GRAVITE[r.niveau], notes: lignes.join("\n") };
 }

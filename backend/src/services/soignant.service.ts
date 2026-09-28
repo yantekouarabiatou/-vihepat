@@ -1,9 +1,15 @@
 import { Op } from 'sequelize';
+import bcrypt from 'bcrypt';
 import {
-  Soignant, Patient, User, Affectation, RendezVous, Signalement, Observation, Traitement,
+  Soignant, Patient, User, Affectation, RendezVous, Signalement, Observation, Traitement, Communique,
 } from '../models';
 import type { TypeObservation } from '../models/Observation';
+import type { Pathologie } from '../models/Patient';
 import { getAlertesExamens, getResumeObservance } from './observance.service';
+import { genererCodePatient } from './auth.service';
+import { sendPasswordResetEmail, sendWelcomePatientEmail } from './mail.service';
+
+const SALT_ROUNDS = 12;
 
 function httpError(status: number, message: string) {
   const e: any = new Error(message);
@@ -11,24 +17,57 @@ function httpError(status: number, message: string) {
   return e;
 }
 
-async function getSoignantOrThrow(userId: number) {
-  const soignant = await Soignant.findOne({ where: { userId } });
-  if (!soignant) {
-    const e: any = new Error('Profil soignant introuvable');
-    e.status = 404;
-    throw e;
-  }
-  return soignant;
+/** Mot de passe temporaire lisible, remis en main propre au patient par le soignant/l'admin qui crée son dossier. */
+function genererMotDePasseTemporaire(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  let mdp = '';
+  for (let i = 0; i < 10; i++) mdp += alphabet[Math.floor(Math.random() * alphabet.length)];
+  return mdp;
 }
 
-async function getPatientIds(soignantId: number) {
-  const affectations = await Affectation.findAll({ where: { soignantId } });
+/** Contexte d'accès d'un soignant : un `admin` voit et gère l'ensemble des patients. */
+interface Contexte { soignant?: Soignant | null; admin: boolean; user: User; }
+
+async function getContexte(userId: number): Promise<Contexte> {
+  const [soignant, user] = await Promise.all([
+    Soignant.findOne({ where: { userId } }),
+    User.findByPk(userId),
+  ]);
+  if (!user) throw httpError(404, 'Utilisateur introuvable');
+  const admin = user.role === 'admin';
+  if (!soignant && !admin) {
+    throw httpError(403, 'Profil soignant ou administrateur introuvable');
+  }
+  return { soignant: soignant ?? null, admin, user };
+}
+
+async function getSoignantOrThrow(userId: number): Promise<Soignant> {
+  const ctx = await getContexte(userId);
+  if (!ctx.soignant) {
+    throw httpError(400, 'Cette action nécessite un profil soignant actif');
+  }
+  return ctx.soignant;
+}
+
+async function getPatientIds(ctx: Contexte) {
+  if (ctx.admin) {
+    const tous = await Patient.findAll({ attributes: ['id'] });
+    return tous.map((p) => p.id);
+  }
+  if (!ctx.soignant) return [];
+  const affectations = await Affectation.findAll({ where: { soignantId: ctx.soignant.id } });
   return affectations.map((a) => a.patientId);
 }
 
-/** Vérifie que le patient est bien affecté à ce soignant (séparation des rôles). */
-async function assertPatientAffecte(soignantId: number, patientId: number) {
-  const affectation = await Affectation.findOne({ where: { soignantId, patientId } });
+/** Vérifie que le patient est bien affecté à ce soignant (séparation des rôles) — un admin passe toujours. */
+async function assertPatientAffecte(ctx: Contexte, patientId: number) {
+  if (ctx.admin) {
+    const patient = await Patient.findByPk(patientId);
+    if (!patient) throw httpError(404, 'Patient introuvable');
+    return patient;
+  }
+  if (!ctx.soignant) throw httpError(403, 'Accès refusé');
+  const affectation = await Affectation.findOne({ where: { soignantId: ctx.soignant.id, patientId } });
   if (!affectation) throw httpError(404, 'Patient introuvable ou non affecté');
   return affectation;
 }
@@ -50,9 +89,103 @@ export async function rattacherPatient(userId: number, codePatient: string) {
   return patient;
 }
 
+/**
+ * Création d'un dossier patient directement par le soignant/l'admin (centre de santé) :
+ * utile quand le patient n'a pas encore de compte (pas d'email/smartphone au moment de
+ * l'accueil). Le patient est aussitôt rattaché au soignant qui l'a créé. Le mot de passe
+ * temporaire généré est remis en main propre — il n'existe aucune capacité d'envoi d'email
+ * dans cette version.
+ */
+export async function creerPatient(
+  userId: number,
+  input: {
+    email: string;
+    nom: string;
+    prenom: string;
+    pathologie: Pathologie;
+    sexe?: 'M' | 'F';
+    telephone?: string;
+    region?: string;
+    commune?: string;
+    dateNaissance?: string;
+    dateDiagnostic?: string;
+    languePreferee?: string;
+    consentementDonne: boolean;
+    soignantId?: number;
+  }
+) {
+  const ctx = await getContexte(userId);
+
+  const exists = await User.findOne({ where: { email: input.email } });
+  if (exists) throw httpError(409, 'Email déjà utilisé');
+
+  const motDePasseTemporaire = genererMotDePasseTemporaire();
+  const passwordHash = await bcrypt.hash(motDePasseTemporaire, SALT_ROUNDS);
+
+  const user = await User.create({
+    email: input.email,
+    passwordHash,
+    role: 'patient',
+    nom: input.nom,
+    prenom: input.prenom,
+    actif: true,
+  });
+
+  const patient = await Patient.create({
+    userId: user.id,
+    codePatient: genererCodePatient(),
+    pathologie: input.pathologie,
+    languePreferee: input.languePreferee ?? 'fr',
+    dateNaissance: input.dateNaissance ? new Date(input.dateNaissance) : null,
+    dateDiagnostic: input.dateDiagnostic ? new Date(input.dateDiagnostic) : null,
+    sexe: input.sexe ?? null,
+    telephone: input.telephone ?? null,
+    region: input.region ?? null,
+    commune: input.commune ?? null,
+    consentementDonne: input.consentementDonne,
+    dateConsentement: input.consentementDonne ? new Date() : null,
+  });
+
+  let targetSoignantId = ctx.soignant?.id;
+  if (ctx.admin && input.soignantId) {
+    const s = await Soignant.findByPk(input.soignantId);
+    if (s) targetSoignantId = s.id;
+  }
+  if (!targetSoignantId) {
+    const premierSoignant = await Soignant.findOne();
+    if (premierSoignant) targetSoignantId = premierSoignant.id;
+  }
+
+  if (targetSoignantId) {
+    await Affectation.create({ patientId: patient.id, soignantId: targetSoignantId, principal: true });
+  }
+
+  // Envoi de l'email de bienvenue avec identifiants sécurisés (Brevo)
+  if (user.email) {
+    void sendWelcomePatientEmail({
+      to: user.email,
+      prenom: user.prenom,
+      nom: user.nom,
+      codePatient: patient.codePatient,
+      passwordTemporaire: motDePasseTemporaire,
+      structureNom: ctx.soignant?.structure,
+    });
+  }
+
+  return {
+    patient: {
+      id: patient.id,
+      codePatient: patient.codePatient,
+      pathologie: patient.pathologie,
+      user: { nom: user.nom, prenom: user.prenom, email: user.email },
+    },
+    motDePasseTemporaire,
+  };
+}
+
 export async function getPatientDetail(userId: number, patientId: number) {
-  const soignant = await getSoignantOrThrow(userId);
-  await assertPatientAffecte(soignant.id, patientId);
+  const ctx = await getContexte(userId);
+  await assertPatientAffecte(ctx, patientId);
 
   const patient = await Patient.findByPk(patientId, {
     include: [
@@ -81,6 +214,108 @@ export async function getPatientDetail(userId: number, patientId: number) {
   return { ...patient.toJSON(), observance, alertesExamens };
 }
 
+export async function updatePatient(
+  userId: number,
+  patientId: number,
+  input: {
+    nom?: string;
+    prenom?: string;
+    email?: string;
+    pathologie?: Pathologie;
+    sexe?: 'M' | 'F' | null;
+    telephone?: string | null;
+    region?: string | null;
+    commune?: string | null;
+    languePreferee?: string;
+    dateNaissance?: string | null;
+    dateDiagnostic?: string | null;
+  }
+) {
+  const ctx = await getContexte(userId);
+  await assertPatientAffecte(ctx, patientId);
+
+  const patient = await Patient.findByPk(patientId, {
+    include: [{ model: User, as: 'user' }],
+  });
+  if (!patient) throw httpError(404, 'Patient introuvable');
+
+  const user = (patient as any).user;
+  if (user) {
+    if (input.nom !== undefined) user.nom = input.nom;
+    if (input.prenom !== undefined) user.prenom = input.prenom;
+    if (input.email !== undefined && input.email !== user.email) {
+      const exists = await User.findOne({ where: { email: input.email } });
+      if (exists && exists.id !== user.id) throw httpError(409, 'Email déjà utilisé');
+      user.email = input.email;
+    }
+    await user.save();
+  }
+
+  if (input.pathologie !== undefined) patient.pathologie = input.pathologie;
+  if (input.sexe !== undefined) patient.sexe = input.sexe;
+  if (input.telephone !== undefined) patient.telephone = input.telephone;
+  if (input.region !== undefined) patient.region = input.region;
+  if (input.commune !== undefined) patient.commune = input.commune;
+  if (input.languePreferee !== undefined) patient.languePreferee = input.languePreferee;
+  if (input.dateNaissance !== undefined) {
+    patient.dateNaissance = input.dateNaissance ? new Date(input.dateNaissance) : null;
+  }
+  if (input.dateDiagnostic !== undefined) {
+    patient.dateDiagnostic = input.dateDiagnostic ? new Date(input.dateDiagnostic) : null;
+  }
+
+  await patient.save();
+  return getPatientDetail(userId, patientId);
+}
+
+export async function reinitialiserAccesPatient(userId: number, patientId: number) {
+  const ctx = await getContexte(userId);
+  await assertPatientAffecte(ctx, patientId);
+
+  const patient = await Patient.findByPk(patientId, {
+    include: [{ model: User, as: 'user' }],
+  });
+  if (!patient) throw httpError(404, 'Patient introuvable');
+
+  const user = (patient as any).user;
+  if (!user) throw httpError(404, 'Compte utilisateur associé introuvable');
+
+  const motDePasseTemporaire = genererMotDePasseTemporaire();
+  const passwordHash = await bcrypt.hash(motDePasseTemporaire, SALT_ROUNDS);
+
+  user.passwordHash = passwordHash;
+  user.actif = true;
+  await user.save();
+
+  // Envoi de l'email de réinitialisation avec les nouveaux accès (Brevo)
+  if (user.email) {
+    void sendPasswordResetEmail({
+      to: user.email,
+      prenom: user.prenom,
+      nom: user.nom,
+      codePatient: patient.codePatient,
+      newPassword: motDePasseTemporaire,
+      structureNom: ctx.soignant?.structure,
+    });
+  }
+
+  return {
+    patient: {
+      id: patient.id,
+      codePatient: patient.codePatient,
+      pathologie: patient.pathologie,
+      telephone: patient.telephone,
+      sexe: patient.sexe,
+      user: {
+        id: user.id,
+        nom: user.nom,
+        prenom: user.prenom,
+        email: user.email,
+      },
+    },
+    motDePasseTemporaire,
+  };
+}
 
 export async function createObservation(
   userId: number,
@@ -93,11 +328,12 @@ export async function createObservation(
     commentaire?: string;
   }
 ) {
-  const soignant = await getSoignantOrThrow(userId);
-  await assertPatientAffecte(soignant.id, patientId);
+  const ctx = await getContexte(userId);
+  await assertPatientAffecte(ctx, patientId);
+  const defaultSoignantId = ctx.soignant?.id ?? (await Soignant.findOne())?.id ?? 1;
   return Observation.create({
     patientId,
-    soignantId: soignant.id,
+    soignantId: defaultSoignantId,
     type: input.type,
     valeur: input.valeur,
     unite: input.unite,
@@ -119,8 +355,8 @@ export async function createTraitement(
     notes?: string;
   }
 ) {
-  const soignant = await getSoignantOrThrow(userId);
-  await assertPatientAffecte(soignant.id, patientId);
+  const ctx = await getContexte(userId);
+  await assertPatientAffecte(ctx, patientId);
   return Traitement.create({
     patientId,
     molecule: input.molecule,
@@ -147,10 +383,10 @@ export async function updateTraitement(
     notes?: string | null;
   }
 ) {
-  const soignant = await getSoignantOrThrow(userId);
+  const ctx = await getContexte(userId);
   const traitement = await Traitement.findByPk(traitementId);
   if (!traitement) throw httpError(404, 'Traitement introuvable');
-  await assertPatientAffecte(soignant.id, traitement.patientId);
+  await assertPatientAffecte(ctx, traitement.patientId);
 
   if (input.molecule !== undefined) traitement.molecule = input.molecule;
   if (input.dosage !== undefined) traitement.dosage = input.dosage;
@@ -169,8 +405,8 @@ export async function updateTraitement(
 
 
 export async function getPatients(userId: number, search?: string) {
-  const soignant = await getSoignantOrThrow(userId);
-  const patientIds = await getPatientIds(soignant.id);
+  const ctx = await getContexte(userId);
+  const patientIds = await getPatientIds(ctx);
   if (patientIds.length === 0) return [];
 
   const patients = await Patient.findAll({
@@ -210,8 +446,8 @@ export async function getPatients(userId: number, search?: string) {
 }
 
 export async function getRendezVous(userId: number) {
-  const soignant = await getSoignantOrThrow(userId);
-  const patientIds = await getPatientIds(soignant.id);
+  const ctx = await getContexte(userId);
+  const patientIds = await getPatientIds(ctx);
   if (patientIds.length === 0) return [];
 
   return RendezVous.findAll({
@@ -222,13 +458,48 @@ export async function getRendezVous(userId: number) {
   });
 }
 
+export async function createRendezVous(
+  userId: number,
+  input: { patientId: number; dateHeure: string; motif?: string }
+) {
+  const ctx = await getContexte(userId);
+  await assertPatientAffecte(ctx, input.patientId);
+  const soignantId = ctx.soignant
+    ? ctx.soignant.id
+    : (await Affectation.findOne({ where: { patientId: input.patientId } }))?.soignantId ??
+      ((await Soignant.findOne())?.id ?? 1);
+
+  return RendezVous.create({
+    patientId: input.patientId,
+    soignantId,
+    dateHeure: new Date(input.dateHeure),
+    motif: input.motif ?? null,
+    statut: 'prevu',
+  });
+}
+
+export async function envoyerRappelRdv(userId: number, rendezVousId: number) {
+  const ctx = await getContexte(userId);
+  const patientIds = await getPatientIds(ctx);
+
+  const rdv = await RendezVous.findByPk(rendezVousId);
+  if (!rdv || !patientIds.includes(rdv.patientId)) {
+    const e: any = new Error('Rendez-vous introuvable');
+    e.status = 404;
+    throw e;
+  }
+  rdv.rappelEnvoyeLe = new Date();
+  await rdv.save();
+  return rdv;
+}
+
 export async function updateRendezVous(
   userId: number,
   rendezVousId: number,
   input: { statut?: string; notes?: string }
 ) {
-  const soignant = await getSoignantOrThrow(userId);
-  const patientIds = await getPatientIds(soignant.id);
+  const ctx = await getContexte(userId);
+  const patientIds = await getPatientIds(ctx);
 
   const rdv = await RendezVous.findByPk(rendezVousId);
   if (!rdv || !patientIds.includes(rdv.patientId)) {
@@ -239,14 +510,43 @@ export async function updateRendezVous(
 
   if (input.statut) rdv.statut = input.statut as any;
   if (input.notes !== undefined) rdv.notes = input.notes;
-  rdv.soignantId = soignant.id;
+  if (ctx.soignant) rdv.soignantId = ctx.soignant.id;
   await rdv.save();
   return rdv;
 }
 
+export async function getCommuniques(userId: number) {
+  const ctx = await getContexte(userId);
+  return Communique.findAll({
+    where: ctx.admin ? {} : (ctx.soignant ? { soignantId: ctx.soignant.id } : {}),
+    include: [{ model: Patient, as: 'patient', include: [{ model: User, as: 'user', attributes: ['nom', 'prenom'] }] }],
+    order: [['createdAt', 'DESC']],
+    limit: 50,
+  });
+}
+
+export async function createCommunique(
+  userId: number,
+  input: { titre: string; contenu: string; cible: 'tous' | 'patient'; patientId?: number }
+) {
+  const ctx = await getContexte(userId);
+  if (input.cible === 'patient') {
+    if (!input.patientId) throw httpError(400, 'Patient requis pour un communiqué ciblé');
+    await assertPatientAffecte(ctx, input.patientId);
+  }
+  const defaultSoignantId = ctx.soignant?.id ?? (await Soignant.findOne())?.id ?? 1;
+  return Communique.create({
+    soignantId: defaultSoignantId,
+    titre: input.titre,
+    contenu: input.contenu,
+    cible: input.cible,
+    patientId: input.cible === 'patient' ? input.patientId : null,
+  });
+}
+
 export async function getSignalements(userId: number, statut?: string) {
-  const soignant = await getSoignantOrThrow(userId);
-  const patientIds = await getPatientIds(soignant.id);
+  const ctx = await getContexte(userId);
+  const patientIds = await getPatientIds(ctx);
   if (patientIds.length === 0) return [];
 
   return Signalement.findAll({
@@ -260,8 +560,8 @@ export async function getSignalements(userId: number, statut?: string) {
 }
 
 export async function updateSignalement(userId: number, signalementId: number, statut: 'vu' | 'traite') {
-  const soignant = await getSoignantOrThrow(userId);
-  const patientIds = await getPatientIds(soignant.id);
+  const ctx = await getContexte(userId);
+  const patientIds = await getPatientIds(ctx);
 
   const signalement = await Signalement.findByPk(signalementId);
   if (!signalement || !patientIds.includes(signalement.patientId)) {

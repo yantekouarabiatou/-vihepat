@@ -20,6 +20,9 @@
     --mint: 165 60% 88%;               /* menthe douce */
     --lavender: 260 55% 92%;           /* lavande douce */
     --navy: 210 60% 14%;               /* bleu nuit */
+    --success: 152 55% 38%;            /* vert succès */
+    --info: 210 85% 55%;               /* bleu info */
+    --violet: 262 60% 55%;             /* violet accent (dashboard soignant) */
 
     /* ============ SHADCN TOKENS ============ */
     --background: 190 30% 98%;
@@ -93,6 +96,9 @@
     --sidebar-accent-foreground: 190 20% 96%;
     --sidebar-border: 210 35% 22%;
     --sidebar-ring: 185 70% 55%;
+    --success: 152 50% 48%;
+    --info: 210 80% 65%;
+    --violet: 262 65% 68%;
   }
 
   * {
@@ -244,6 +250,13 @@
   --color-mint: hsl(var(--mint));
   --color-lavender: hsl(var(--lavender));
   --color-navy: hsl(var(--navy));
+  --color-success: hsl(var(--success));
+  --color-info: hsl(var(--info));
+  --color-violet: hsl(var(--violet));
+  /* Tokens dédiés au tableau de bord soignant (radius/ombre spécifiques à cette refonte) */
+  --radius-input: 0.75rem;
+  --radius-card: 1.375rem;
+  --shadow-dash: 0 8px 30px rgba(15, 23, 42, 0.06);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);

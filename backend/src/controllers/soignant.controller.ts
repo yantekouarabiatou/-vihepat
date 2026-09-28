@@ -18,6 +18,34 @@ const rattacherSchema = z.object({
   codePatient: z.string().trim().min(3).max(20),
 });
 
+const createPatientSchema = z.object({
+  email: z.string().trim().email(),
+  nom: z.string().trim().min(1).max(100),
+  prenom: z.string().trim().min(1).max(100),
+  pathologie: z.enum(['vih', 'vhb', 'vhc', 'vih_vhb', 'vih_vhc', 'vhb_vhc']),
+  sexe: z.enum(['M', 'F']).optional(),
+  telephone: z.string().trim().max(30).optional(),
+  region: z.string().trim().max(100).optional(),
+  commune: z.string().trim().max(100).optional(),
+  dateNaissance: z.string().optional(),
+  dateDiagnostic: z.string().optional(),
+  languePreferee: z.string().max(10).optional(),
+  consentementDonne: z.boolean(),
+});
+
+const createRendezVousSchema = z.object({
+  patientId: z.coerce.number().int().positive(),
+  dateHeure: z.string().min(1),
+  motif: z.string().trim().max(200).optional(),
+});
+
+const createCommuniqueSchema = z.object({
+  titre: z.string().trim().min(1).max(150),
+  contenu: z.string().trim().min(1).max(2000),
+  cible: z.enum(['tous', 'patient']),
+  patientId: z.coerce.number().int().positive().optional(),
+});
+
 const TYPES_OBSERVATION = [
   'charge_virale', 'cd4', 'transaminases', 'creatinine',
   'hemoglobine', 'ag_hbs', 'arn_vhc', 'autre',
@@ -65,6 +93,42 @@ export async function rattacherPatient(req: Request, res: Response) {
   res.status(201).json(patient);
 }
 
+export async function creerPatient(req: Request, res: Response) {
+  const data = createPatientSchema.parse(req.body);
+  const result = await soignantService.creerPatient(req.user!.userId, data);
+  await logAudit(req, 'CREATE_PATIENT', `patient:${result.patient.id}`);
+  res.status(201).json(result);
+}
+
+const updatePatientSchema = z.object({
+  nom: z.string().trim().min(1).max(100).optional(),
+  prenom: z.string().trim().min(1).max(100).optional(),
+  email: z.string().trim().email().optional(),
+  pathologie: z.enum(['vih', 'vhb', 'vhc', 'vih_vhb', 'vih_vhc', 'vhb_vhc']).optional(),
+  sexe: z.enum(['M', 'F']).nullable().optional(),
+  telephone: z.string().trim().max(30).nullable().optional(),
+  region: z.string().trim().max(100).nullable().optional(),
+  commune: z.string().trim().max(100).nullable().optional(),
+  languePreferee: z.string().max(10).optional(),
+  dateNaissance: z.string().nullable().optional(),
+  dateDiagnostic: z.string().nullable().optional(),
+});
+
+export async function updatePatient(req: Request, res: Response) {
+  const patientId = idParam.parse(req.params.id);
+  const data = updatePatientSchema.parse(req.body);
+  const result = await soignantService.updatePatient(req.user!.userId, patientId, data);
+  await logAudit(req, 'UPDATE_PATIENT', `patient:${patientId}`, data);
+  res.json(result);
+}
+
+export async function reinitialiserAccesPatient(req: Request, res: Response) {
+  const patientId = idParam.parse(req.params.id);
+  const result = await soignantService.reinitialiserAccesPatient(req.user!.userId, patientId);
+  await logAudit(req, 'RESET_PATIENT_CREDENTIALS', `patient:${patientId}`);
+  res.json(result);
+}
+
 export async function getPatientDetail(req: Request, res: Response) {
   const patientId = idParam.parse(req.params.id);
   const result = await soignantService.getPatientDetail(req.user!.userId, patientId);
@@ -109,6 +173,32 @@ export async function getPatients(req: Request, res: Response) {
 export async function getRendezVous(req: Request, res: Response) {
   const result = await soignantService.getRendezVous(req.user!.userId);
   res.json(result);
+}
+
+export async function createRendezVous(req: Request, res: Response) {
+  const data = createRendezVousSchema.parse(req.body);
+  const result = await soignantService.createRendezVous(req.user!.userId, data);
+  await logAudit(req, 'CREATE_RENDEZ_VOUS', `rendez_vous:${result.id}`, { patientId: data.patientId });
+  res.status(201).json(result);
+}
+
+export async function envoyerRappelRdv(req: Request, res: Response) {
+  const rendezVousId = idParam.parse(req.params.id);
+  const result = await soignantService.envoyerRappelRdv(req.user!.userId, rendezVousId);
+  await logAudit(req, 'RAPPEL_RENDEZ_VOUS', `rendez_vous:${result.id}`);
+  res.json(result);
+}
+
+export async function getCommuniques(req: Request, res: Response) {
+  const result = await soignantService.getCommuniques(req.user!.userId);
+  res.json(result);
+}
+
+export async function createCommunique(req: Request, res: Response) {
+  const data = createCommuniqueSchema.parse(req.body);
+  const result = await soignantService.createCommunique(req.user!.userId, data);
+  await logAudit(req, 'CREATE_COMMUNIQUE', `communique:${result.id}`, { cible: data.cible });
+  res.status(201).json(result);
 }
 
 export async function updateRendezVous(req: Request, res: Response) {

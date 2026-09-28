@@ -8,13 +8,14 @@ import {
 import heroImage from "@/assets/hero-vihepat.jpg";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { InstallButton } from "@/components/install-button";
 import { ChatWidget } from "@/components/chat-widget";
 
 export function LandingPage() {
   const { t } = useTranslation();
 
   useEffect(() => {
-    document.title = "VIHEPAT — Suivi intelligent VIH & hépatites virales";
+    document.title = "VIHEPAT - Suivi intelligent VIH & hépatites virales";
   }, []);
 
   const stats = [
@@ -62,6 +63,7 @@ export function LandingPage() {
               VIHEPAT
             </Link>
             <div className="flex items-center gap-1.5">
+              <InstallButton variant="glass" />
               <LanguageSwitcher variant="glass" />
               <Link to="/login">
                 <Button

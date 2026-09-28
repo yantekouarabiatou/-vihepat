@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Bell, BellOff, Check, X, Flame, Loader2, FlaskConical, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 import { patientApi, type ObservanceResponse, type PriseDuJour, type StatutPrise } from "@/api/patient.api";
@@ -7,6 +8,7 @@ import { ObservanceBars, formatTaux, libelleEcheance, tauxStyle } from "@/lib/ob
 import { useRappelsPrises } from "@/hooks/use-rappels-prises";
 import { estErreurReseau, mettreEnAttente } from "@/lib/offline-queue";
 import { Masque } from "@/components/masque";
+import { ListenButton } from "@/components/listen-button";
 
 const CLE_OBSERVANCE = ["patient", "observance"] as const;
 
@@ -16,6 +18,7 @@ function IconeMoment({ heure }: { heure: string | null }) {
 }
 
 export function ObservanceSection() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: CLE_OBSERVANCE, queryFn: patientApi.getObservance });
   const { data: alertes } = useQuery({ queryKey: ["patient", "alertes-examens"], queryFn: patientApi.getAlertesExamens });
@@ -52,11 +55,11 @@ export function ObservanceSection() {
     },
     onError: (_err, _v, ctx) => {
       if (ctx?.avant) queryClient.setQueryData(CLE_OBSERVANCE, ctx.avant);
-      toast.error("Impossible d'enregistrer, réessayez");
+      toast.error(t("observance.toast_save_error"));
     },
     onSuccess: (res, { statut }) => {
-      if (res.horsLigne) toast("Noté sur votre téléphone, envoi au retour du réseau");
-      else if (statut === "prise") toast.success("Bien noté, bravo !");
+      if (res.horsLigne) toast(t("observance.toast_hors_ligne"));
+      else if (statut === "prise") toast.success(t("observance.toast_bravo"));
     },
     onSettled: (res) => {
       // Hors ligne, on garde l'affichage optimiste au lieu de recharger depuis le cache
@@ -82,9 +85,9 @@ export function ObservanceSection() {
       <section className="min-w-0 rounded-3xl bg-card p-5 shadow-[var(--shadow-card)] sm:p-6 lg:col-span-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="text-lg font-bold text-foreground">Aujourd'hui</h2>
+            <h2 className="text-lg font-bold text-foreground">{t("observance.today_title")}</h2>
             <p className="text-sm text-muted-foreground">
-              {journee.length === 0 ? "Aucune prise prévue" : `${faites} sur ${journee.length} prise${journee.length > 1 ? "s" : ""} faite${faites > 1 ? "s" : ""}`}
+              {journee.length === 0 ? t("observance.no_prise") : t("observance.prises_faites", { faites, total: journee.length })}
             </p>
           </div>
           {rappels.supporte && (
@@ -95,23 +98,23 @@ export function ObservanceSection() {
               onClick={async () => {
                 if (rappels.actif) {
                   rappels.desactiver();
-                  toast("Rappels désactivés");
+                  toast(t("observance.toast_rappels_off"));
                 } else if (await rappels.activer()) {
-                  toast.success("Rappels discrets activés");
+                  toast.success(t("observance.toast_rappels_on"));
                 } else {
-                  toast.error("Autorisez les notifications dans votre navigateur");
+                  toast.error(t("observance.toast_rappels_error"));
                 }
               }}
             >
               {rappels.actif ? <Bell className="mr-1 h-4 w-4" /> : <BellOff className="mr-1 h-4 w-4" />}
-              {rappels.actif ? "Rappels activés" : "Activer les rappels"}
+              {rappels.actif ? t("observance.rappels_actif") : t("observance.rappels_activer")}
             </Button>
           )}
         </div>
 
         {journee.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Votre équipe soignante n'a pas encore enregistré de traitement.
+            {t("observance.no_traitement")}
           </p>
         ) : (
           <ul className="mt-4 space-y-3">
@@ -128,32 +131,35 @@ export function ObservanceSection() {
                     <IconeMoment heure={p.heure} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-foreground">{p.heure ?? "Dans la journée"}</p>
+                    <p className="font-semibold text-foreground">{p.heure ?? t("observance.dans_journee")}</p>
                     <p className="truncate text-sm text-muted-foreground">
                       <Masque>{p.molecule}</Masque>
-                      {p.nbParJour > 1 && ` · prise ${p.rang}/${p.nbParJour}`}
+                      {p.nbParJour > 1 && ` · ${t("observance.prise_rang", { rang: p.rang, total: p.nbParJour })}`}
                     </p>
                   </div>
+                  <ListenButton
+                    text={`${p.heure ?? t("observance.dans_journee")}. ${p.molecule}. ${t("observance.signaler_oubli_title")}`}
+                  />
                   {enCours ? (
                     <Loader2 className="h-5 w-5 animate-spin text-primary" />
                   ) : p.statut === "prise" ? (
                     <span className="flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                      <Check className="h-3.5 w-3.5" /> Pris
+                      <Check className="h-3.5 w-3.5" /> {t("observance.pris_badge")}
                     </span>
                   ) : (
                     <div className="flex shrink-0 gap-1">
                       <Button size="sm" className="rounded-full" onClick={() => declarer({ prise: p, statut: "prise" })}>
-                        <Check className="mr-1 h-4 w-4" /> Pris
+                        <Check className="mr-1 h-4 w-4" /> {t("observance.pris_badge")}
                       </Button>
                       <Button
                         size="sm"
                         variant="ghost"
                         className={`rounded-full ${p.statut === "manquee" ? "text-destructive" : "text-muted-foreground"}`}
                         onClick={() => declarer({ prise: p, statut: "manquee" })}
-                        title="Signaler un oubli"
+                        title={t("observance.signaler_oubli_title")}
                       >
                         <X className="h-4 w-4" />
-                        {p.statut === "manquee" && <span className="ml-1">Oublié</span>}
+                        {p.statut === "manquee" && <span className="ml-1">{t("observance.oublie_badge")}</span>}
                       </Button>
                     </div>
                   )}
@@ -168,29 +174,29 @@ export function ObservanceSection() {
 
         {/* Score */}
         <section className="rounded-3xl bg-card p-6 shadow-[var(--shadow-card)]">
-          <h2 className="text-lg font-bold text-foreground">Ma régularité</h2>
+          <h2 className="text-lg font-bold text-foreground">{t("observance.regularite_title")}</h2>
           <div className="mt-4 grid grid-cols-3 gap-2 text-center">
             <div className={`rounded-2xl p-3 ${tauxStyle(resume.taux7)}`}>
               <p className="text-2xl font-extrabold">{formatTaux(resume.taux7)}</p>
-              <p className="text-xs font-medium">7 jours</p>
+              <p className="text-xs font-medium">{t("observance.jours7")}</p>
             </div>
             <div className={`rounded-2xl p-3 ${tauxStyle(resume.taux30)}`}>
               <p className="text-2xl font-extrabold">{formatTaux(resume.taux30)}</p>
-              <p className="text-xs font-medium">30 jours</p>
+              <p className="text-xs font-medium">{t("observance.jours30")}</p>
             </div>
             <div className="rounded-2xl bg-[hsl(var(--accent-soft))] p-3 text-[hsl(var(--accent))]">
               <p className="flex items-center justify-center gap-1 text-2xl font-extrabold">
                 <Flame className="h-5 w-5" />
                 {resume.serie}
               </p>
-              <p className="text-xs font-medium">jours de suite</p>
+              <p className="text-xs font-medium">{t("observance.jours_suite")}</p>
             </div>
           </div>
           <div className="mt-5">
             <ObservanceBars jours={resume.jours} />
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Chaque prise compte, sans jugement. Un oubli ? Reprenez simplement au prochain horaire et parlez-en à votre équipe soignante.
+            {t("observance.footnote")}
           </p>
         </section>
 
@@ -199,24 +205,24 @@ export function ObservanceSection() {
           <section className="rounded-3xl bg-card p-6 shadow-[var(--shadow-card)]">
             <div className="flex items-center gap-2">
               <FlaskConical className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-bold text-foreground">Examens à prévoir</h2>
+              <h2 className="text-lg font-bold text-foreground">{t("observance.examens_title")}</h2>
             </div>
             <ul className="mt-4 space-y-3">
               {alertes.map((a) => (
                 <li key={a.type} className="flex items-center justify-between gap-2 rounded-2xl bg-secondary p-4">
-                  <span className="text-sm font-medium text-foreground"><Masque>{a.libelle}</Masque></span>
+                  <span className="text-sm font-medium text-foreground"><Masque>{t(`observations.types.${a.type}`, { defaultValue: a.libelle })}</Masque></span>
 
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                       a.statut === "en_retard" ? "bg-destructive/15 text-destructive" : "bg-[hsl(var(--gold)/0.2)] text-[hsl(var(--gold))]"
                     }`}
                   >
-                    {libelleEcheance(a)}
+                    {libelleEcheance(a, t)}
                   </span>
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-xs text-muted-foreground">Demandez un rendez-vous pour organiser votre prélèvement.</p>
+            <p className="mt-3 text-xs text-muted-foreground">{t("observance.examens_footnote")}</p>
           </section>
         )}
       </div>
