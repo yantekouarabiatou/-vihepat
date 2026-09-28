@@ -3,6 +3,7 @@ import { LandingPage } from '../features/marketing/LandingPage';
 import { AuthPage } from '../features/auth/AuthPage';
 import { DashboardPage as PatientDashboardPage } from '../features/patient/DashboardPage';
 import { DashboardPage as SoignantDashboardPage } from '../features/soignant/DashboardPage';
+import { PatientDetailPage } from '../features/soignant/PatientDetailPage';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 
 export const router = createBrowserRouter([
@@ -14,6 +15,10 @@ export const router = createBrowserRouter([
   },
   {
     element: <ProtectedRoute allowedRoles={['soignant']} />,
-    children: [{ path: '/soignant/dashboard', element: <SoignantDashboardPage /> }],
+    children: [
+      { path: '/soignant/dashboard', element: <SoignantDashboardPage /> },
+      { path: '/soignant/patients/:id', element: <PatientDetailPage /> },
+    ],
+
   },
 ]);

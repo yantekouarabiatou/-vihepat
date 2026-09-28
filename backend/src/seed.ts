@@ -2,8 +2,9 @@ import bcrypt from 'bcrypt';
 import { sequelize } from './config/database';
 import {
   User, Patient, Soignant, Affectation,
-  Traitement, RendezVous, Observation, Signalement,
+  Traitement, RendezVous, Observation, Signalement, PriseMedicament,
 } from './models';
+import { ajouterJours, jourLocal, prisesParJour } from './services/observance.service';
 
 const SALT_ROUNDS = 12;
 const SEED_PASSWORD = 'Password123!';
@@ -28,6 +29,10 @@ async function seedUser(input: {
 async function main() {
   await sequelize.authenticate();
   console.log('✅ MySQL connecté — démarrage du seed');
+
+  // Crée les tables manquantes : le seed peut ainsi être lancé avant l'API
+  await sequelize.sync();
+
 
   // ---------- Soignants ----------
   const soignantsData = [
@@ -139,29 +144,52 @@ async function main() {
   }
   console.log('✅ Rendez-vous');
 
-  // ---------- Observations ----------
-  const observationsParPathologie: Record<string, { type: any; valeur: number; unite: string }[]> = {
-    vih: [{ type: 'charge_virale', valeur: 0, unite: 'copies/mL' }, { type: 'cd4', valeur: 620, unite: 'cellules/mm³' }],
-    vih_vhb: [{ type: 'charge_virale', valeur: 0, unite: 'copies/mL' }, { type: 'cd4', valeur: 540, unite: 'cellules/mm³' }],
-    vhb: [{ type: 'ag_hbs', valeur: 1, unite: 'positif' }, { type: 'transaminases', valeur: 32, unite: 'UI/L' }],
-    vhb_vhc: [{ type: 'ag_hbs', valeur: 1, unite: 'positif' }, { type: 'arn_vhc', valeur: 0, unite: 'UI/mL' }],
-    vhc: [{ type: 'arn_vhc', valeur: 0, unite: 'UI/mL' }, { type: 'transaminases', valeur: 28, unite: 'UI/L' }],
+  // ---------- Observations (historique sur 12 mois : J-365, J-180, J-30) ----------
+  type SerieObs = { type: any; unite: string; valeurs: [number, number, number] };
+  const observationsParPathologie: Record<string, SerieObs[]> = {
+    vih: [
+      { type: 'charge_virale', unite: 'copies/mL', valeurs: [12000, 180, 0] },
+      { type: 'cd4', unite: 'cellules/mm³', valeurs: [310, 450, 620] },
+    ],
+    vih_vhb: [
+      { type: 'charge_virale', unite: 'copies/mL', valeurs: [45000, 900, 0] },
+      { type: 'cd4', unite: 'cellules/mm³', valeurs: [240, 390, 540] },
+      { type: 'transaminases', unite: 'UI/L', valeurs: [64, 47, 35] },
+    ],
+    vhb: [
+      { type: 'ag_hbs', unite: 'positif', valeurs: [1, 1, 1] },
+      { type: 'transaminases', unite: 'UI/L', valeurs: [58, 41, 32] },
+    ],
+    vhb_vhc: [
+      { type: 'ag_hbs', unite: 'positif', valeurs: [1, 1, 1] },
+      { type: 'arn_vhc', unite: 'UI/mL', valeurs: [420000, 0, 0] },
+    ],
+    vhc: [
+      { type: 'arn_vhc', unite: 'UI/mL', valeurs: [850000, 1200, 0] },
+      { type: 'transaminases', unite: 'UI/L', valeurs: [72, 45, 28] },
+    ],
   };
+  const joursParDefaut = [-365, -180, -30];
+  // Awa (patient de démo) : dernière charge virale il y a 170 jours → rappel « examen bientôt dû »
+  const joursPrelevementPour = (index: number) => (index === 0 ? [-365, -250, -170] : joursParDefaut);
 
-  for (const patient of patients) {
+  for (const [index, patient] of patients.entries()) {
+    const joursPrelevement = joursPrelevementPour(index);
     const affectation = await Affectation.findOne({ where: { patientId: patient.id } });
     const soignantId = affectation?.soignantId ?? soignants[0]!.id;
-    const observations = observationsParPathologie[patient.pathologie] ?? [];
-    for (const o of observations) {
-      const existing = await Observation.findOne({ where: { patientId: patient.id, type: o.type } });
-      if (!existing) {
+    const series = observationsParPathologie[patient.pathologie] ?? [];
+    for (const s of series) {
+      const existing = await Observation.count({ where: { patientId: patient.id, type: s.type } });
+      if (existing > 0) continue;
+      for (let k = 0; k < joursPrelevement.length; k++) {
         await Observation.create({
-          patientId: patient.id, soignantId, type: o.type, valeur: o.valeur, unite: o.unite,
-          datePrelevement: daysFromNow(-30),
+          patientId: patient.id, soignantId, type: s.type, valeur: s.valeurs[k]!, unite: s.unite,
+          datePrelevement: daysFromNow(joursPrelevement[k]!),
         });
       }
     }
   }
+
   console.log('✅ Observations');
 
   // ---------- Signalements ----------
@@ -182,6 +210,37 @@ async function main() {
     }
   }
   console.log('✅ Signalements');
+
+  // ---------- Prises de médicaments (30 derniers jours, hors aujourd'hui) ----------
+  // Profils d'observance variés pour la démo (Grâce décroche, les autres sont réguliers)
+  const tauxObservance = [0.95, 0.9, 0.86, 0.97, 0.62, 0.8];
+  let graine = 42;
+  const aleatoire = () => {
+    graine = (graine * 16807) % 2147483647;
+    return graine / 2147483647;
+  };
+  const aujourdhui = jourLocal();
+
+  for (const [index, patient] of patients.entries()) {
+    if ((await PriseMedicament.count({ where: { patientId: patient.id } })) > 0) continue;
+    const traitements = await Traitement.findAll({ where: { patientId: patient.id, actif: true } });
+    const taux = tauxObservance[index] ?? 0.9;
+    const lignes = [];
+    for (let j = -30; j <= -1; j++) {
+      const jour = ajouterJours(aujourdhui, j);
+      for (const t of traitements) {
+        for (let rang = 1; rang <= prisesParJour(t.frequence); rang++) {
+          const r = aleatoire();
+          if (r < taux) lignes.push({ patientId: patient.id, traitementId: t.id, datePrevue: jour, rang, statut: 'prise' as const });
+          else if (r < taux + (1 - taux) / 2) lignes.push({ patientId: patient.id, traitementId: t.id, datePrevue: jour, rang, statut: 'manquee' as const });
+          // sinon : prise non renseignée
+        }
+      }
+    }
+    await PriseMedicament.bulkCreate(lignes);
+  }
+  console.log('✅ Prises de médicaments');
+
 
   console.log('\n🎉 Seed terminé.');
   console.log(`   Mot de passe pour tous les comptes seedés : ${SEED_PASSWORD}`);

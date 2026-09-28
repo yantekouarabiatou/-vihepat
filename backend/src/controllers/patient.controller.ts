@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import * as patientService from '../services/patient.service';
 import * as chatService from '../services/chat.service';
+import * as observanceService from '../services/observance.service';
 import { logAudit } from '../middlewares/audit';
 
 const createRendezVousSchema = z.object({
@@ -27,7 +28,36 @@ const chatSchema = z.object({
     .max(30),
 });
 
+const declarerPriseSchema = z.object({
+  traitementId: z.coerce.number().int().positive(),
+  rang: z.coerce.number().int().min(1).max(4).optional(),
+  statut: z.enum(['prise', 'manquee']),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
+export async function getObservance(req: Request, res: Response) {
+  const patient = await patientService.getPatientOrThrow(req.user!.userId);
+  const [journee, resume] = await Promise.all([
+    observanceService.getJournee(patient.id),
+    observanceService.getResumeObservance(patient.id),
+  ]);
+  res.json({ date: observanceService.jourLocal(), journee, resume });
+}
+
+export async function declarerPrise(req: Request, res: Response) {
+  const data = declarerPriseSchema.parse(req.body);
+  const patient = await patientService.getPatientOrThrow(req.user!.userId);
+  const prise = await observanceService.declarerPrise(patient.id, data);
+  res.status(201).json(prise);
+}
+
+export async function getAlertesExamens(req: Request, res: Response) {
+  const patient = await patientService.getPatientOrThrow(req.user!.userId);
+  res.json(await observanceService.getAlertesExamens(patient.id, patient.pathologie));
+}
+
 export async function getRendezVous(req: Request, res: Response) {
+
   const result = await patientService.getRendezVous(req.user!.userId);
   res.json(result);
 }

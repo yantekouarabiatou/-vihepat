@@ -7,6 +7,7 @@ import { RendezVous } from './RendezVous';
 import { Observation } from './Observation';
 import { Signalement } from './Signalement';
 import { AuditLog } from './AuditLog';
+import { PriseMedicament } from './PriseMedicament';
 
 // User ↔ Patient (1-1)
 User.hasOne(Patient, { foreignKey: 'userId', as: 'patient' });
@@ -44,10 +45,15 @@ Observation.belongsTo(Soignant, { foreignKey: 'soignantId', as: 'soignant' });
 Patient.hasMany(Signalement, { foreignKey: 'patientId', as: 'signalements' });
 Signalement.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
 
+// Patient / Traitement ↔ PriseMedicament (1-N)
+Patient.hasMany(PriseMedicament, { foreignKey: 'patientId', as: 'prises' });
+Traitement.hasMany(PriseMedicament, { foreignKey: 'traitementId', as: 'prises' });
+PriseMedicament.belongsTo(Traitement, { foreignKey: 'traitementId', as: 'traitement' });
+
 // AuditLog
 AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 export {
   User, Patient, Soignant, Affectation,
-  Traitement, RendezVous, Observation, Signalement, AuditLog,
+  Traitement, RendezVous, Observation, Signalement, AuditLog, PriseMedicament,
 };

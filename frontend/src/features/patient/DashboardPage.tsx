@@ -12,16 +12,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 
-const OBSERVATION_LABELS: Record<string, string> = {
-  charge_virale: "Charge virale",
-  cd4: "CD4",
-  transaminases: "Transaminases",
-  creatinine: "Créatinine",
-  hemoglobine: "Hémoglobine",
-  ag_hbs: "Ag HBs",
-  arn_vhc: "ARN VHC",
-  autre: "Autre",
-};
+import { OBSERVATION_LABELS } from "@/lib/observations";
+import { ObservanceSection } from "./ObservanceSection";
+
 
 const GRAVITE_LABELS: Record<string, string> = { leger: "Léger", modere: "Modéré", severe: "Sévère" };
 
@@ -113,9 +106,12 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-5">
+      <ObservanceSection />
+
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
         {/* Traitements */}
-        <section className="rounded-3xl bg-card p-6 shadow-[var(--shadow-card)] lg:col-span-3">
+
+        <section className="min-w-0 rounded-3xl bg-card p-6 shadow-[var(--shadow-card)] lg:col-span-3">
           <h2 className="text-lg font-bold text-foreground">Traitements en cours</h2>
           {traitementsLoading ? (
             <div className="flex justify-center py-10">
@@ -129,10 +125,11 @@ export function DashboardPage() {
             <ul className="mt-4 space-y-3">
               {traitements.map((t) => (
                 <li key={t.id} className="rounded-2xl border-2 border-border p-4">
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold text-foreground">{t.molecule}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="min-w-0 break-words font-semibold text-foreground">{t.molecule}</p>
                     {t.heurePrise && (
-                      <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">
+                      <span className="shrink-0 rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">
+
                         {t.heurePrise}
                       </span>
                     )}
@@ -146,7 +143,8 @@ export function DashboardPage() {
           )}
         </section>
 
-        <div className="space-y-6 lg:col-span-2">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
+
           {/* Rendez-vous */}
           <section className="rounded-3xl bg-card p-6 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">

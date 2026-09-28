@@ -1,11 +1,18 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Users, CalendarDays, AlertCircle, Loader2, Search, Check } from "lucide-react";
+import { Users, CalendarDays, AlertCircle, Loader2, Search, Check, UserPlus, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { soignantApi } from "@/api/soignant.api";
 import { AppShell } from "@/components/app-shell";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { apiErrorMessage } from "@/lib/api-error";
+import { formatTaux, tauxStyle } from "@/lib/observance";
 
 const GRAVITE_STYLES: Record<string, string> = {
   leger: "bg-secondary text-primary",
@@ -27,7 +34,22 @@ function initials(nom: string, prenom: string) {
 
 export function DashboardPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [rattacherOpen, setRattacherOpen] = useState(false);
+  const [codePatient, setCodePatient] = useState("");
+
+  const { mutate: rattacher, isPending: rattachement } = useMutation({
+    mutationFn: () => soignantApi.rattacherPatient(codePatient),
+    onSuccess: (patient) => {
+      toast.success("Patient ajouté à votre file active");
+      setRattacherOpen(false);
+      setCodePatient("");
+      queryClient.invalidateQueries({ queryKey: ["soignant"] });
+      navigate(`/soignant/patients/${patient.id}`);
+    },
+    onError: (err) => toast.error(apiErrorMessage(err, "Impossible de rattacher ce patient")),
+  });
 
   const { data: patients, isLoading: patientsLoading } = useQuery({
     queryKey: ["soignant", "patients", search],
@@ -100,19 +122,25 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-5">
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
         {/* Patients */}
-        <section className="rounded-3xl bg-card p-6 shadow-[var(--shadow-card)] lg:col-span-3">
-          <div className="flex items-center justify-between gap-4">
+        <section className="min-w-0 rounded-3xl bg-card p-6 shadow-[var(--shadow-card)] lg:col-span-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-foreground">Patients</h2>
-            <div className="relative w-56">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Rechercher…"
-                className="h-10 rounded-full pl-9"
-              />
+            <div className="flex items-center gap-2">
+              <div className="relative w-40 sm:w-48">
+
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Rechercher…"
+                  className="h-10 rounded-full pl-9"
+                />
+              </div>
+              <Button size="sm" className="h-10 rounded-full" onClick={() => setRattacherOpen(true)}>
+                <UserPlus className="mr-1 h-4 w-4" /> Ajouter
+              </Button>
             </div>
           </div>
           {patientsLoading ? (
@@ -121,29 +149,52 @@ export function DashboardPage() {
             </div>
           ) : !patients || patients.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
-              Aucun patient affecté pour le moment.
+              Aucun patient affecté pour le moment. Ajoutez-en un avec son code patient.
             </p>
           ) : (
             <ul className="mt-4 space-y-3">
               {patients.map((p) => (
-                <li key={p.id} className="flex items-center gap-4 rounded-2xl border-2 border-border p-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-bold text-primary">
-                    {initials(p.user.nom, p.user.prenom)}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-foreground">{p.user.prenom} {p.user.nom}</p>
-                    <p className="text-sm text-muted-foreground">{p.codePatient}</p>
-                  </div>
-                  <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">
-                    {p.pathologie.toUpperCase()}
-                  </span>
+                <li key={p.id}>
+                  <Link
+                    to={`/soignant/patients/${p.id}`}
+                    className="flex items-center gap-4 rounded-2xl border-2 border-border p-4 transition-colors hover:border-primary/40 hover:bg-secondary/40"
+                  >
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-bold text-primary">
+                      {initials(p.user.nom, p.user.prenom)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-foreground">{p.user.prenom} {p.user.nom}</p>
+                      <p className="text-sm text-muted-foreground">{p.codePatient}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">
+                        {p.pathologie.toUpperCase()}
+                      </span>
+                      <div className="flex gap-1">
+                        {!!p.examensEnRetard && (
+                          <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-[11px] font-semibold text-destructive" title="Examens biologiques en retard">
+                            {p.examensEnRetard} examen{p.examensEnRetard > 1 ? "s" : ""}
+                          </span>
+                        )}
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${tauxStyle(p.observance?.taux30)}`}
+                          title="Observance sur 30 jours"
+                        >
+                          Obs. {formatTaux(p.observance?.taux30)}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+
+                  </Link>
                 </li>
               ))}
             </ul>
           )}
         </section>
 
-        <div className="space-y-6 lg:col-span-2">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
+
           {/* Rendez-vous */}
           <section className="rounded-3xl bg-card p-6 shadow-[var(--shadow-card)]">
             <h2 className="text-lg font-bold text-foreground">Rendez-vous à venir</h2>
@@ -222,6 +273,44 @@ export function DashboardPage() {
           </section>
         </div>
       </div>
+
+      <Dialog open={rattacherOpen} onOpenChange={setRattacherOpen}>
+        <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajouter un patient à ma file active</DialogTitle>
+            <DialogDescription>
+              Saisissez le code communiqué par le patient (visible dans son espace).
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              rattacher();
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="codePatient">Code patient</Label>
+              <Input
+                id="codePatient"
+                value={codePatient}
+                onChange={(e) => setCodePatient(e.target.value.toUpperCase())}
+                placeholder="VHP-2026-123456"
+                required
+                autoFocus
+                className="h-11 rounded-xl font-mono tracking-wide"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={rattachement || codePatient.trim().length < 3} className="w-full rounded-full">
+                {rattachement && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Ajouter le patient
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
+

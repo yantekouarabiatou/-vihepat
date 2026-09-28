@@ -8,6 +8,12 @@ const r = Router();
 r.use(authRequired, requireRole('soignant'));
 
 r.get('/patients', catchAsync(soignantController.getPatients));
+r.post('/patients/rattacher', catchAsync(soignantController.rattacherPatient));
+r.get('/patients/:id', catchAsync(soignantController.getPatientDetail));
+r.post('/patients/:id/observations', catchAsync(soignantController.createObservation));
+r.post('/patients/:id/traitements', catchAsync(soignantController.createTraitement));
+r.patch('/traitements/:id', catchAsync(soignantController.updateTraitement));
+
 r.get('/rendez-vous', catchAsync(soignantController.getRendezVous));
 r.patch('/rendez-vous/:id', catchAsync(soignantController.updateRendezVous));
 r.get('/signalements', catchAsync(soignantController.getSignalements));

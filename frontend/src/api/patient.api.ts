@@ -48,6 +48,48 @@ export interface Signalement {
   createdAt: string;
 }
 
+export type StatutPrise = 'prise' | 'manquee';
+
+export interface PriseDuJour {
+  traitementId: number;
+  molecule: string;
+  dosage: string | null;
+  rang: number;
+  nbParJour: number;
+  heure: string | null;
+  statut: StatutPrise | null;
+}
+
+export interface JourObservance {
+  date: string;
+  prevues: number;
+  prises: number;
+  manquees: number;
+}
+
+export interface ResumeObservance {
+  taux7: number | null;
+  taux30: number | null;
+  serie: number;
+  nonRenseignees30: number;
+  jours: JourObservance[];
+}
+
+export interface ObservanceResponse {
+  date: string;
+  journee: PriseDuJour[];
+  resume: ResumeObservance;
+}
+
+export interface AlerteExamen {
+  type: string;
+  libelle: string;
+  dernierPrelevement: string | null;
+  echeance: string;
+  statut: 'en_retard' | 'bientot';
+  joursRestants: number;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -73,6 +115,14 @@ export const patientApi = {
   createSignalement: (input: { symptome: string; gravite: Gravite; notes?: string }) =>
     api.post<Signalement>('/patients/me/signalements', input).then((r) => r.data),
 
+  getObservance: () => api.get<ObservanceResponse>('/patients/me/observance').then((r) => r.data),
+
+  declarerPrise: (input: { traitementId: number; rang: number; statut: StatutPrise; date?: string | undefined }) =>
+    api.post('/patients/me/prises', input).then((r) => r.data),
+
+  getAlertesExamens: () => api.get<AlerteExamen[]>('/patients/me/alertes-examens').then((r) => r.data),
+
   sendChatMessage: (messages: ChatMessage[]) =>
+
     api.post<ChatResponse>('/patients/me/chat', { messages }).then((r) => r.data),
 };

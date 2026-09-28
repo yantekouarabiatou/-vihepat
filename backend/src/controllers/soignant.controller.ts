@@ -12,6 +12,94 @@ const updateSignalementSchema = z.object({
   statut: z.enum(['vu', 'traite']),
 });
 
+const idParam = z.coerce.number().int().positive();
+
+const rattacherSchema = z.object({
+  codePatient: z.string().trim().min(3).max(20),
+});
+
+const TYPES_OBSERVATION = [
+  'charge_virale', 'cd4', 'transaminases', 'creatinine',
+  'hemoglobine', 'ag_hbs', 'arn_vhc', 'autre',
+] as const;
+
+const dateNonFuture = z.string().min(1).refine((v) => {
+  const d = new Date(v);
+  return !Number.isNaN(d.getTime()) && d.getTime() <= Date.now() + 60_000;
+}, { message: 'Date invalide ou dans le futur' });
+
+const createObservationSchema = z.object({
+  type: z.enum(TYPES_OBSERVATION),
+  valeur: z.coerce.number().min(0),
+  unite: z.string().trim().min(1).max(20),
+  datePrelevement: dateNonFuture,
+  commentaire: z.string().max(1000).optional(),
+});
+
+const heure = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Format HH:MM attendu');
+
+const createTraitementSchema = z.object({
+  molecule: z.string().trim().min(1).max(150),
+  dosage: z.string().trim().max(50).optional(),
+  frequence: z.string().trim().min(1).max(50),
+  heurePrise: heure.optional(),
+  dateDebut: z.string().min(1),
+  dateFin: z.string().optional(),
+  notes: z.string().max(1000).optional(),
+});
+
+const updateTraitementSchema = z.object({
+  molecule: z.string().trim().min(1).max(150).optional(),
+  dosage: z.string().trim().max(50).nullable().optional(),
+  frequence: z.string().trim().min(1).max(50).optional(),
+  heurePrise: heure.nullable().optional(),
+  dateFin: z.string().nullable().optional(),
+  actif: z.boolean().optional(),
+  notes: z.string().max(1000).nullable().optional(),
+});
+
+export async function rattacherPatient(req: Request, res: Response) {
+  const { codePatient } = rattacherSchema.parse(req.body);
+  const patient = await soignantService.rattacherPatient(req.user!.userId, codePatient);
+  await logAudit(req, 'RATTACHER_PATIENT', `patient:${patient.id}`);
+  res.status(201).json(patient);
+}
+
+export async function getPatientDetail(req: Request, res: Response) {
+  const patientId = idParam.parse(req.params.id);
+  const result = await soignantService.getPatientDetail(req.user!.userId, patientId);
+  // Traçabilité : chaque consultation de dossier est journalisée
+  await logAudit(req, 'VIEW_PATIENT', `patient:${patientId}`);
+  res.json(result);
+}
+
+export async function createObservation(req: Request, res: Response) {
+  const patientId = idParam.parse(req.params.id);
+  const data = createObservationSchema.parse(req.body);
+  const result = await soignantService.createObservation(req.user!.userId, patientId, data);
+  await logAudit(req, 'CREATE_OBSERVATION', `observation:${result.id}`, {
+    patientId, type: data.type,
+  });
+  res.status(201).json(result);
+}
+
+export async function createTraitement(req: Request, res: Response) {
+  const patientId = idParam.parse(req.params.id);
+  const data = createTraitementSchema.parse(req.body);
+  const result = await soignantService.createTraitement(req.user!.userId, patientId, data);
+  await logAudit(req, 'CREATE_TRAITEMENT', `traitement:${result.id}`, { patientId });
+  res.status(201).json(result);
+}
+
+export async function updateTraitement(req: Request, res: Response) {
+  const traitementId = idParam.parse(req.params.id);
+  const data = updateTraitementSchema.parse(req.body);
+  const result = await soignantService.updateTraitement(req.user!.userId, traitementId, data);
+  await logAudit(req, 'UPDATE_TRAITEMENT', `traitement:${result.id}`, data);
+  res.json(result);
+}
+
+
 export async function getPatients(req: Request, res: Response) {
   const search = typeof req.query.search === 'string' ? req.query.search : undefined;
   const result = await soignantService.getPatients(req.user!.userId, search);

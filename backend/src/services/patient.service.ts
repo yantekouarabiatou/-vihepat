@@ -1,7 +1,8 @@
 import { Op } from 'sequelize';
 import { Patient, RendezVous, Traitement, Observation, Signalement } from '../models';
 
-async function getPatientOrThrow(userId: number) {
+export async function getPatientOrThrow(userId: number) {
+
   const patient = await Patient.findOne({ where: { userId } });
   if (!patient) {
     const e: any = new Error('Profil patient introuvable');
