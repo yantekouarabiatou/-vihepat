@@ -29,9 +29,12 @@ export interface RegisterSoignantInput {
   structure: string;
   specialite?: string;
   telephone?: string;
+  /** Code d'habilitation remis par la structure de santé */
+  codeInvitation?: string;
 }
 
 export interface AuthResponse {
+
   user: {
     id: number;
     email: string;

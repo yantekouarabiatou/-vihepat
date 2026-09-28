@@ -1,5 +1,48 @@
 import { Op } from 'sequelize';
-import { Patient, RendezVous, Traitement, Observation, Signalement } from '../models';
+import {
+  Patient, RendezVous, Traitement, Observation, Signalement, AuditLog, User, Soignant,
+} from '../models';
+
+/** Actions tracées qui concernent le dossier d'un patient. */
+const ACTIONS_DOSSIER = [
+  'VIEW_PATIENT', 'RATTACHER_PATIENT', 'CREATE_OBSERVATION', 'CREATE_TRAITEMENT', 'UPDATE_TRAITEMENT',
+];
+
+/**
+ * Transparence : le patient voit qui a consulté ou modifié son dossier, et quand.
+ */
+export async function getAccesDossier(userId: number) {
+  const patient = await getPatientOrThrow(userId);
+  const logs = await AuditLog.findAll({
+    where: {
+      action: { [Op.in]: ACTIONS_DOSSIER },
+      [Op.or]: [
+        { cible: `patient:${patient.id}` },
+        // Saisies du soignant : l'identifiant du patient est dans les métadonnées JSON
+        { meta: { patientId: patient.id } },
+
+      ],
+    },
+    include: [{
+      model: User, as: 'user', attributes: ['nom', 'prenom', 'role'],
+      include: [{ model: Soignant, as: 'soignant', attributes: ['structure', 'specialite'] }],
+    }],
+    order: [['createdAt', 'DESC']],
+    limit: 50,
+  });
+  return logs.map((l) => {
+    const u = (l as any).user;
+    return {
+      id: l.id,
+      action: l.action,
+      date: (l as any).createdAt as Date,
+      acteur: u
+        ? { nom: u.nom, prenom: u.prenom, role: u.role, structure: u.soignant?.structure ?? null }
+        : null,
+    };
+  });
+}
+
 
 export async function getPatientOrThrow(userId: number) {
 

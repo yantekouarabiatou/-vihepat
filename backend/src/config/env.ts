@@ -15,6 +15,10 @@ const schema = z.object({
   JWT_REFRESH_EXPIRES: z.string().default('30d'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   ANTHROPIC_API_KEY: z.string().optional(),
+  // Code d'habilitation remis par la structure de santé : seul un professionnel
+  // qui le connaît peut créer un compte soignant. Laisser vide pour désactiver.
+  SOIGNANT_INVITE_CODE: z.string().optional(),
+
 });
 
 export const env = schema.parse(process.env);

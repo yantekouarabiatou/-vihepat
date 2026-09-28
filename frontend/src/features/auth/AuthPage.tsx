@@ -47,6 +47,7 @@ export function AuthPage() {
   const [matricule, setMatricule] = useState("");
   const [structure, setStructure] = useState("");
   const [specialite, setSpecialite] = useState("");
+  const [codeInvitation, setCodeInvitation] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,6 +70,7 @@ export function AuthPage() {
         const input: RegisterSoignantInput = {
           email, password, nom, prenom, matricule, structure,
           ...(specialite ? { specialite } : {}),
+          ...(codeInvitation ? { codeInvitation } : {}),
         };
         const res = await authApi.registerSoignant(input);
         setAuth(res.user, res.accessToken, res.refreshToken);
@@ -231,6 +233,21 @@ export function AuthPage() {
                 <div className="space-y-2">
                   <Label htmlFor="specialite">Spécialité (optionnel)</Label>
                   <Input id="specialite" value={specialite} onChange={(e) => setSpecialite(e.target.value)} className="h-12 rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="codeInvitation">Code d'habilitation</Label>
+                  <Input
+                    id="codeInvitation"
+                    value={codeInvitation}
+                    onChange={(e) => setCodeInvitation(e.target.value)}
+                    required
+                    placeholder="Remis par votre structure de santé"
+                    className="h-12 rounded-xl"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Seuls les professionnels habilités peuvent créer un compte soignant.
+                  </p>
+
                 </div>
               </>
             )}

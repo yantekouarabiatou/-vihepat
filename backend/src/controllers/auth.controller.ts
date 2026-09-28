@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import * as authService from '../services/auth.service';
 import { logAudit } from '../middlewares/audit';
+import { env } from '../config/env';
 
 const registerPatientSchema = z.object({
   email: z.string().email(),
@@ -29,6 +30,7 @@ const registerSoignantSchema = z.object({
   structure: z.string().min(1),
   specialite: z.string().optional(),
   telephone: z.string().optional(),
+  codeInvitation: z.string().trim().optional(),
 });
 
 const loginSchema = z.object({
@@ -48,8 +50,13 @@ export async function registerPatient(req: Request, res: Response) {
 }
 
 export async function registerSoignant(req: Request, res: Response) {
-  const data = registerSoignantSchema.parse(req.body);
+  const { codeInvitation, ...data } = registerSoignantSchema.parse(req.body);
+  // Séparation des rôles : seul un professionnel habilité par sa structure crée un compte soignant
+  if (env.SOIGNANT_INVITE_CODE && codeInvitation !== env.SOIGNANT_INVITE_CODE) {
+    return res.status(403).json({ error: "Code d'habilitation invalide. Demandez-le à votre structure de santé." });
+  }
   const result = await authService.registerSoignant(data);
+
   await logAudit(req, 'REGISTER_SOIGNANT', `user:${result.user.id}`, undefined, result.user.id);
   res.status(201).json(result);
 }

@@ -15,6 +15,7 @@ import {
 import { OBSERVATION_LABELS } from "@/lib/observations";
 import { ObservanceSection } from "./ObservanceSection";
 import { TriageDialog } from "./TriageDialog";
+import { Masque } from "@/components/masque";
 
 
 
@@ -75,7 +76,7 @@ export function DashboardPage() {
           <p className="mt-1 text-muted-foreground">
             Code patient : <span className="font-semibold text-foreground">{user?.patient?.codePatient ?? "—"}</span>
             {" · "}
-            {user?.patient?.pathologie?.toUpperCase()}
+            <Masque>{user?.patient?.pathologie?.toUpperCase()}</Masque>
           </p>
         </div>
         <Button className="h-12 rounded-full px-6" onClick={() => setTriageOpen(true)}>
@@ -138,7 +139,7 @@ export function DashboardPage() {
               {traitements.map((t) => (
                 <li key={t.id} className="rounded-2xl border-2 border-border p-4">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="min-w-0 break-words font-semibold text-foreground">{t.molecule}</p>
+                    <p className="min-w-0 break-words font-semibold text-foreground"><Masque>{t.molecule}</Masque></p>
                     {t.heurePrise && (
                       <span className="shrink-0 rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">
 
@@ -147,7 +148,8 @@ export function DashboardPage() {
                     )}
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {[t.dosage, t.frequence].filter(Boolean).join(" · ")}
+                    {t.dosage && <><Masque>{t.dosage}</Masque> · </>}
+                    {t.frequence}
                   </p>
                 </li>
               ))}
@@ -203,10 +205,11 @@ export function DashboardPage() {
                 {observations.map((obs) => (
                   <li key={obs.id} className="flex items-center justify-between rounded-2xl bg-secondary p-4">
                     <span className="text-sm font-medium text-foreground">
-                      {OBSERVATION_LABELS[obs.type] ?? obs.type}
+                      <Masque>{OBSERVATION_LABELS[obs.type] ?? obs.type}</Masque>
                     </span>
                     <span className="text-sm font-bold text-primary">
-                      {obs.valeur} {obs.unite}
+                      <Masque>{obs.valeur} {obs.unite}</Masque>
+
                     </span>
                   </li>
                 ))}

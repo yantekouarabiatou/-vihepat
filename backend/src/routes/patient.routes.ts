@@ -17,6 +17,8 @@ r.post('/me/chat', catchAsync(patientController.chat));
 r.get('/me/observance', catchAsync(patientController.getObservance));
 r.post('/me/prises', catchAsync(patientController.declarerPrise));
 r.get('/me/alertes-examens', catchAsync(patientController.getAlertesExamens));
+r.get('/me/acces', catchAsync(patientController.getAccesDossier));
+
 
 
 export default r;

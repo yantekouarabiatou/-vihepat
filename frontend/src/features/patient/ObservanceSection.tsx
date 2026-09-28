@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ObservanceBars, formatTaux, libelleEcheance, tauxStyle } from "@/lib/observance";
 import { useRappelsPrises } from "@/hooks/use-rappels-prises";
 import { estErreurReseau, mettreEnAttente } from "@/lib/offline-queue";
+import { Masque } from "@/components/masque";
 
 const CLE_OBSERVANCE = ["patient", "observance"] as const;
 
@@ -129,7 +130,7 @@ export function ObservanceSection() {
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-foreground">{p.heure ?? "Dans la journée"}</p>
                     <p className="truncate text-sm text-muted-foreground">
-                      {p.molecule}
+                      <Masque>{p.molecule}</Masque>
                       {p.nbParJour > 1 && ` · prise ${p.rang}/${p.nbParJour}`}
                     </p>
                   </div>
@@ -203,7 +204,8 @@ export function ObservanceSection() {
             <ul className="mt-4 space-y-3">
               {alertes.map((a) => (
                 <li key={a.type} className="flex items-center justify-between gap-2 rounded-2xl bg-secondary p-4">
-                  <span className="text-sm font-medium text-foreground">{a.libelle}</span>
+                  <span className="text-sm font-medium text-foreground"><Masque>{a.libelle}</Masque></span>
+
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                       a.statut === "en_retard" ? "bg-destructive/15 text-destructive" : "bg-[hsl(var(--gold)/0.2)] text-[hsl(var(--gold))]"

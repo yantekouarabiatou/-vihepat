@@ -90,6 +90,13 @@ export interface AlerteExamen {
   joursRestants: number;
 }
 
+export interface AccesDossier {
+  id: number;
+  action: string;
+  date: string;
+  acteur: { nom: string; prenom: string; role: string; structure: string | null } | null;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -121,7 +128,10 @@ export const patientApi = {
   declarerPrise: (input: { traitementId: number; rang: number; statut: StatutPrise; date?: string | undefined }) =>
     api.post('/patients/me/prises', input).then((r) => r.data),
 
-  getAlertesExamens: () => api.get<AlerteExamen[]>('/patients/me/alertes-examens').then((r) => r.data),
+  getAccesDossier: () => api.get<AccesDossier[]>('/patients/me/acces').then((r) => r.data),
+
+  getAlertesExamens: () =>
+ api.get<AlerteExamen[]>('/patients/me/alertes-examens').then((r) => r.data),
 
   sendChatMessage: (messages: ChatMessage[]) =>
 

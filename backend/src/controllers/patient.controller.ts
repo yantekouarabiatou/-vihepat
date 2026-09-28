@@ -51,7 +51,12 @@ export async function declarerPrise(req: Request, res: Response) {
   res.status(201).json(prise);
 }
 
+export async function getAccesDossier(req: Request, res: Response) {
+  res.json(await patientService.getAccesDossier(req.user!.userId));
+}
+
 export async function getAlertesExamens(req: Request, res: Response) {
+
   const patient = await patientService.getPatientOrThrow(req.user!.userId);
   res.json(await observanceService.getAlertesExamens(patient.id, patient.pathologie));
 }
