@@ -5,6 +5,7 @@ import { patientApi, type ObservanceResponse, type PriseDuJour, type StatutPrise
 import { Button } from "@/components/ui/button";
 import { ObservanceBars, formatTaux, libelleEcheance, tauxStyle } from "@/lib/observance";
 import { useRappelsPrises } from "@/hooks/use-rappels-prises";
+import { estErreurReseau, mettreEnAttente } from "@/lib/offline-queue";
 
 const CLE_OBSERVANCE = ["patient", "observance"] as const;
 
@@ -20,8 +21,20 @@ export function ObservanceSection() {
   const rappels = useRappelsPrises(data?.journee, data?.date);
 
   const { mutate: declarer, isPending, variables } = useMutation({
-    mutationFn: (v: { prise: PriseDuJour; statut: StatutPrise }) =>
-      patientApi.declarerPrise({ traitementId: v.prise.traitementId, rang: v.prise.rang, statut: v.statut }),
+    mutationFn: async (v: { prise: PriseDuJour; statut: StatutPrise }) => {
+      const payload = { traitementId: v.prise.traitementId, rang: v.prise.rang, statut: v.statut, date: data?.date ?? "" };
+      try {
+        await patientApi.declarerPrise(payload);
+        return { horsLigne: false };
+      } catch (err) {
+        // Sans réseau : la prise est gardée sur l'appareil et envoyée plus tard
+        if (estErreurReseau(err) && payload.date) {
+          mettreEnAttente({ type: "prise", payload });
+          return { horsLigne: true };
+        }
+        throw err;
+      }
+    },
     // Mise à jour optimiste : la case se coche instantanément, même sur un réseau lent
     onMutate: async ({ prise, statut }) => {
       await queryClient.cancelQueries({ queryKey: CLE_OBSERVANCE });
@@ -40,10 +53,15 @@ export function ObservanceSection() {
       if (ctx?.avant) queryClient.setQueryData(CLE_OBSERVANCE, ctx.avant);
       toast.error("Impossible d'enregistrer, réessayez");
     },
-    onSuccess: (_d, { statut }) => {
-      if (statut === "prise") toast.success("Bien noté, bravo !");
+    onSuccess: (res, { statut }) => {
+      if (res.horsLigne) toast("Noté sur votre téléphone, envoi au retour du réseau");
+      else if (statut === "prise") toast.success("Bien noté, bravo !");
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: CLE_OBSERVANCE }),
+    onSettled: (res) => {
+      // Hors ligne, on garde l'affichage optimiste au lieu de recharger depuis le cache
+      if (!res?.horsLigne) queryClient.invalidateQueries({ queryKey: CLE_OBSERVANCE });
+    },
+
   });
 
   if (isLoading || !data) {

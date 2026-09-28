@@ -35,7 +35,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
+    // Discrétion : on efface les données médicales gardées pour le mode hors ligne
+    if (typeof caches !== 'undefined') void caches.delete('vihepat-api');
     localStorage.removeItem('vihepat_user');
+
     localStorage.removeItem('vihepat_access_token');
     localStorage.removeItem('vihepat_refresh_token');
     set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });

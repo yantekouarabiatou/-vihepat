@@ -37,7 +37,8 @@ Thumbs.db
 
 # PWA
 frontend/dev-dist/
-frontend/public/sw.js
+# frontend/public/sw.js est écrit à la main (mode hors ligne) : il doit être versionné
+
 frontend/public/workbox-*.js
 
 # Bun

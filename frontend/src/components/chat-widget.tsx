@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Stethoscope, Send, Mic, MicOff, Loader2 } from "lucide-react";
+import { MessageCircle, Send, Mic, MicOff, Loader2, CloudOff } from "lucide-react";
+import { useEnLigne } from "@/hooks/use-connexion";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { patientApi, type ChatMessage } from "@/api/patient.api";
@@ -24,6 +25,7 @@ export function ChatWidget() {
   const role = useAuthStore((s) => s.user?.role);
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const enLigne = useEnLigne();
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -86,7 +88,7 @@ export function ChatWidget() {
         aria-label={t("signalement.fab_label")}
         className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full gradient-teal-coral text-white shadow-[var(--shadow-soft)] transition-transform hover:scale-110"
       >
-        <Stethoscope className="h-6 w-6" />
+        <MessageCircle className="h-6 w-6" />
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -96,6 +98,14 @@ export function ChatWidget() {
             <DialogDescription>{t("signalement.subtitle")}</DialogDescription>
           </DialogHeader>
 
+          {!enLigne && (
+            <div className="mx-4 mt-3 flex items-start gap-2 rounded-2xl bg-secondary p-3 text-sm text-foreground">
+              <CloudOff className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span>
+                L'assistant a besoin d'internet. Sans réseau, utilisez le bouton « Signaler un symptôme » : il fonctionne hors ligne.
+              </span>
+            </div>
+          )}
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
             {messages.map((m, i) => (
               <div
@@ -152,8 +162,9 @@ export function ChatWidget() {
                   isListening ? "Je vous écoute…" : t("signalement.symptome_placeholder")
                 }
                 className="h-10 flex-1 rounded-full"
-                disabled={isPending}
+                disabled={isPending || !enLigne}
               />
+
               <Button
                 type="submit"
                 size="icon"

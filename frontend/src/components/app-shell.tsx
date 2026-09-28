@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { LogOut, HeartPulse } from "lucide-react";
+import { LogOut, HeartPulse, CloudOff, RefreshCw } from "lucide-react";
+import { useConnexion } from "@/hooks/use-connexion";
 import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -9,6 +10,7 @@ import type { ReactNode } from "react";
 export function AppShell({ children, title }: { children: ReactNode; title: string }) {
   const navigate = useNavigate();
   const logout = useAuthStore((s) => s.logout);
+  const { enLigne, enAttente } = useConnexion();
 
   function handleSignOut() {
     logout();
@@ -44,7 +46,26 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl px-6 py-8">{children}</main>
+      {(!enLigne || enAttente > 0) && (
+        <div className="border-b border-border/60 bg-secondary">
+          <div className="mx-auto flex w-full max-w-5xl items-center gap-2 px-6 py-2 text-sm text-foreground">
+            {enLigne ? (
+              <RefreshCw className="h-4 w-4 shrink-0 animate-spin text-primary" />
+            ) : (
+              <CloudOff className="h-4 w-4 shrink-0 text-primary" />
+            )}
+            <span>
+              {enLigne
+                ? "Envoi de vos saisies en cours…"
+                : `Mode hors ligne : l'application reste utilisable.${
+                    enAttente > 0 ? ` ${enAttente} saisie${enAttente > 1 ? "s" : ""} en attente d'envoi.` : ""
+                  }`}
+            </span>
+          </div>
+        </div>
+      )}
+      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">{children}</main>
+
       <ChatWidget />
     </div>
   );

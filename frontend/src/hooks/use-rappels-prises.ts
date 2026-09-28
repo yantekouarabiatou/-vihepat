@@ -75,11 +75,18 @@ export function useRappelsPrises(journee: PriseDuJour[] | undefined, date: strin
       if (dues.length === 0) return;
       for (const p of dues) envoyes.current.add(`${p.traitementId}-${p.rang}`);
       ecrire(CLE_ENVOYES, JSON.stringify({ date, cles: Array.from(envoyes.current) }));
-      try {
-        new Notification(TITRE, { body: MESSAGE, silent: true, tag: `rappel-${date}` });
-      } catch {
-        /* certains navigateurs mobiles exigent un service worker : ignoré ici */
+      const options = { body: MESSAGE, silent: true, tag: `rappel-${date}`, icon: "/icons/icon-192.png" };
+      // Sur mobile, les notifications passent par le service worker
+      if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+        void navigator.serviceWorker.ready.then((r) => r.showNotification(TITRE, options)).catch(() => undefined);
+      } else {
+        try {
+          new Notification(TITRE, options);
+        } catch {
+          /* navigateur sans prise en charge : ignoré */
+        }
       }
+
     };
 
     verifier();

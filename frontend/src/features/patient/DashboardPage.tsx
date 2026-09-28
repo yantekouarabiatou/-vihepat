@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pill, CalendarDays, AlertCircle, Plus, Loader2, FlaskConical } from "lucide-react";
+import { Pill, CalendarDays, AlertCircle, Plus, Loader2, FlaskConical, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { patientApi } from "@/api/patient.api";
@@ -14,6 +14,8 @@ import {
 
 import { OBSERVATION_LABELS } from "@/lib/observations";
 import { ObservanceSection } from "./ObservanceSection";
+import { TriageDialog } from "./TriageDialog";
+
 
 
 const GRAVITE_LABELS: Record<string, string> = { leger: "Léger", modere: "Modéré", severe: "Sévère" };
@@ -28,6 +30,7 @@ export function DashboardPage() {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const [rdvOpen, setRdvOpen] = useState(false);
+  const [triageOpen, setTriageOpen] = useState(false);
   const [motif, setMotif] = useState("");
   const [dateHeure, setDateHeure] = useState("");
 
@@ -64,14 +67,23 @@ export function DashboardPage() {
 
   return (
     <AppShell title="Espace patient">
-      <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-        Bonjour {user?.prenom} 👋
-      </h1>
-      <p className="mt-1 text-muted-foreground">
-        Code patient : <span className="font-semibold text-foreground">{user?.patient?.codePatient ?? "—"}</span>
-        {" · "}
-        {user?.patient?.pathologie?.toUpperCase()}
-      </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+            Bonjour {user?.prenom} 👋
+          </h1>
+          <p className="mt-1 text-muted-foreground">
+            Code patient : <span className="font-semibold text-foreground">{user?.patient?.codePatient ?? "—"}</span>
+            {" · "}
+            {user?.patient?.pathologie?.toUpperCase()}
+          </p>
+        </div>
+        <Button className="h-12 rounded-full px-6" onClick={() => setTriageOpen(true)}>
+          <Stethoscope className="mr-2 h-5 w-5" /> Signaler un symptôme
+        </Button>
+      </div>
+      <TriageDialog open={triageOpen} onOpenChange={setTriageOpen} />
+
 
       {/* Stats */}
       <div className="mt-8 grid gap-4 sm:grid-cols-3">

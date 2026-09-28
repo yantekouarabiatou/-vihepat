@@ -112,7 +112,8 @@ export const patientApi = {
 
   getSignalements: () => api.get<Signalement[]>('/patients/me/signalements').then((r) => r.data),
 
-  createSignalement: (input: { symptome: string; gravite: Gravite; notes?: string }) =>
+  createSignalement: (input: { symptome: string; gravite: Gravite; notes?: string | undefined }) =>
+
     api.post<Signalement>('/patients/me/signalements', input).then((r) => r.data),
 
   getObservance: () => api.get<ObservanceResponse>('/patients/me/observance').then((r) => r.data),
