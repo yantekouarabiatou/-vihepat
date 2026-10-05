@@ -15,6 +15,10 @@ build/
 */.env
 */.env.local
 
+# Voix de l'équipe (données personnelles) : jamais versionnées, seuls les résultats le sont
+ia/data/enregistrements/brut/
+ia/data/enregistrements/audio/
+
 # Python (évaluation IA)
 ia/.venv/
 __pycache__/

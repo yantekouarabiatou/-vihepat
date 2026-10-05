@@ -70,6 +70,11 @@ from vihepat_ia.triage_rules import evaluer_triage, niveau_depuis_extraction, NI
 from vihepat_ia.baseline_mots_cles import extraire as extraire_mots_cles
 from vihepat_ia import gemini as G
 
+import warnings
+# Petits sous-groupes (ex. une langue sans alerte) : métriques indéfinies affichées NaN, sans avertissement
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="numpy")
+warnings.filterwarnings("ignore", module="sklearn")
+
 GRAINE = 42
 rng = np.random.default_rng(GRAINE)
 pd.set_option("display.max_colwidth", 120)
@@ -226,9 +231,12 @@ def metriques(g, p):
             "kappa pondéré": cohen_kappa_score(go, po, weights="quadratic")}
 
 def bootstrap(g, p, n=2000):
+    import warnings
     g, p = np.asarray(g), np.asarray(p)
-    tirages = [metriques(g[i], p[i]) for i in (rng.integers(0, len(g), len(g)) for _ in range(n))]
-    return {m: np.percentile([t[m] for t in tirages], [2.5, 97.5]) for m in tirages[0]}
+    with warnings.catch_warnings():  # tirages sans aucune alerte (petits sous-groupes) : métrique indéfinie, ignorée
+        warnings.simplefilter("ignore")
+        tirages = [metriques(g[i], p[i]) for i in (rng.integers(0, len(g), len(g)) for _ in range(n))]
+    return {m: np.nanpercentile([t[m] for t in tirages], [2.5, 97.5]) for m in tirages[0]}
 
 tab, ic = {}, {}
 for k in NOMS:
@@ -349,6 +357,64 @@ for k, modele in MODELES.items():
 audio = pd.DataFrame(lignes).set_index("modèle"); audio
 """)
 
+md(r"""
+## 8 bis. Vraies voix : français avec accent béninois, et fon
+
+Des membres de l'équipe (locuteurs `L1`, `L2`… ; aucun nom n'est conservé) ont redit 30 messages du jeu (10 par niveau, tirés au hasard avec une graine fixe : `scripts/preparer_enregistrements.py`) :
+- en **français**, en lisant la phrase avec leur accent : on peut mesurer le WER ;
+- en **fon**, en traduisant tout le sens (négations et détails hors sujet compris) : l'annotation du message reste valable, on mesure donc la priorité et les champs. **Pas de WER en fon** : il faudrait une transcription de référence écrite par un locuteur, et la graphie du fon varie.
+
+Enregistrements faits au téléphone (notes WhatsApp, mémos vocaux), convertis en WebM/Opus comme dans l'application (`scripts/importer_enregistrements.py`). Même prompt `extraction-v1`, non modifié pour le fon.
+""")
+code(r"""
+man_f = IA / "data" / "enregistrements" / "manifeste.json"
+cache_reel = IA / "resultats" / f"{MODELES['C']}__reel.jsonl"
+if REFAIRE_APPELS and man_f.exists():
+    G.evaluer([{"id": m["fichier"]} for m in json.loads(man_f.read_text(encoding="utf-8"))], MODELES["C"], cache_reel,
+              modalite="audio", dossier_audio=IA / "data" / "enregistrements" / "audio")
+
+reel = pd.DataFrame()
+if not (man_f.exists() and cache_reel.exists()):
+    print("Pas encore de vraies notes vocales évaluées : voir ia/data/enregistrements/README.md")
+else:
+    ok_reel, journal_reel = G.charger(cache_reel)
+    lignes = []
+    for m in json.loads(man_f.read_text(encoding="utf-8")):
+        r, v = ok_reel.get(m["fichier"]), df.loc[m["vignette"]]
+        x = r["extraction"] if r else {}
+        lignes.append({**m, "ok": r is not None, "niveau_or": v.niveau_or,
+                       "pred": niveau_depuis_extraction(x, v.traitement_recent) if r else None,
+                       "pred_texte": v.pred_C, "langue_detectee": x.get("langue"), "transcription": x.get("transcription"),
+                       "symp_or": v.symptomes, "symp": x.get("symptomes", []), "graves_or": v.signes_graves,
+                       "graves": x.get("signes_graves", []), "latence_ms": r["latence_ms"] if r else None})
+    reel = pd.DataFrame(lignes)
+    resume = []
+    for langue, g in reel.groupby("langue"):
+        g_ok = g[g.ok]
+        m = metriques(g_ok.niveau_or.values, g_ok.pred.values); b = bootstrap(g_ok.niveau_or.values, g_ok.pred.values)
+        ligne = {"langue": langue, "notes": len(g), "locuteurs": g.locuteur.nunique(), "analysées": len(g_ok),
+                 "exactitude": f"{m['exactitude']:.3f} [{b['exactitude'][0]:.2f}–{b['exactitude'][1]:.2f}]",
+                 "mêmes messages en texte": round(np.mean(g_ok.pred_texte == g_ok.niveau_or), 3),
+                 "sous-triage": round(m["sous-triage"], 3), "rappel alerte": round(m["rappel alerte"], 3),
+                 "F1 symptômes": round(prf(g_ok.symp_or, g_ok.symp)[2], 3), "rappel signes graves": round(prf(g_ok.graves_or, g_ok.graves)[1], 3),
+                 "langue détectée": dict(Counter(g_ok.langue_detectee)),
+                 "latence médiane (s)": round(g_ok.latence_ms.median() / 1000, 2)}
+        if langue == "fr":
+            ligne["WER"] = round(jiwer.wer([df.texte[v] for v in g_ok.vignette], list(g_ok.transcription),
+                                           reference_transform=norm, hypothesis_transform=norm), 3)
+        resume.append(ligne)
+    vraies_voix = pd.DataFrame(resume).set_index("langue")
+    display(vraies_voix)
+    print("Taux de réussite des appels :", round(pd.DataFrame(journal_reel).ok.mean(), 3))
+""")
+code(r"""
+# Transcriptions produites à partir du fon : à faire relire par un locuteur fon (la machine peut « inventer » une traduction)
+if len(reel) and (reel.langue == "fon").any():
+    display(reel[reel.langue == "fon"][["fichier", "niveau_or", "pred", "langue_detectee", "transcription"]])
+    erreurs_fon = reel[(reel.langue == "fon") & reel.ok & (reel.pred.map(lambda p: ORDRE.get(p, 0)) < reel.niveau_or.map(ORDRE))]
+    print(f"Sous-triages en fon : {len(erreurs_fon)}"); display(erreurs_fon[["fichier", "niveau_or", "pred", "transcription"]])
+""")
+
 md("## 9. Latence et coût mesurés")
 md(r"""
 Prix officiels relevés le **05/10/2026** sur https://ai.google.dev/gemini-api/docs/pricing (palier payant ; un palier gratuit existe pour les deux modèles) :
@@ -413,7 +479,7 @@ Les chiffres ci-dessus sont produits par l'exécution de ce notebook ; le résum
 2. **Annotation par l'équipe**, sans double annotation ni validation médicale : l'accord inter-annotateurs n'est pas mesuré.
 3. **Moteur de règles non validé cliniquement** : on mesure la compréhension du message, pas la pertinence médicale des seuils.
 4. **Audio de synthèse** (accent de France, sans bruit) : WER et exactitude audio sont des plafonds.
-5. **Fon non évalué** : aucune note en fon dans ce jeu. Nous ne revendiquons donc aucune performance en fon. Le notebook est prêt à l'accepter (déposer `data/audio_fon/*.webm` + annotations).
+5. **Fon** : mesuré seulement sur les notes de la section 8 bis (quelques locuteurs de l'équipe, messages fictifs). Aucun chiffre en fon n'est revendiqué au-delà de ce qui y est affiché ; les transcriptions fon doivent être relues par un locuteur.
 6. **Petit échantillon** : intervalles de confiance larges (voir section 6) ; les écarts non significatifs au test de McNemar ne doivent pas être présentés comme des gains.
 7. **Modèle « latest » mouvant** : on fixe des versions précises (`gemini-3.8-flash`, `gemini-3.5-flash-lite`), et chaque réponse garde la version servie.
 
@@ -436,6 +502,7 @@ lignes = [f"# Résultats de l'évaluation (généré le {time.strftime('%d/%m/%Y
           "## Priorité d'alerte (IC 95 % bootstrap)", "", affiche.to_markdown(), "",
           "## Fiabilité de l'API pendant la mesure", "", fiabilite.to_markdown(), "",
           "## Audio (voix de synthèse, 42 messages)", "", audio.to_markdown() if len(audio) else "_non exécuté_", "",
+          "## Vraies voix (fon, français accent béninois)", "", vraies_voix.to_markdown() if len(reel) else "_pas encore d'enregistrements_", "",
           "## Latence et coût", "", couts.to_markdown(), "",
           "## Extraction champ par champ", "", extraction.to_markdown()]
 (IA / "RESULTATS.md").write_text("\n".join(lignes), encoding="utf-8")

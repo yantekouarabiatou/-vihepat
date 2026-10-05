@@ -92,7 +92,7 @@ Mesures du 05/10/2026, prompt `extraction-v1`, 165 messages fictifs annotés (70
 |---|---|---|
 | Texte | 2,5 s | 3,8 s |
 | Audio | 3,5 s | 32,2 s (quelques réponses très lentes : d'où le délai de 20 s puis la bascule de secours dans l'API) |
-| Mots-clés / TF-IDF (local) | 0,2 ms / 0,8 ms | — |
+| Mots-clés / TF-IDF (local) | moins de 3 ms (varie selon les exécutions) | — |
 
 **Coût** (prix officiels relevés le 05/10/2026 : Flash-Lite 0,30 $ / M tokens en entrée, 2,50 $ / M en sortie) : ~544 tokens en entrée et ~104 en sortie par message, soit **0,42 $ pour 1 000 messages texte** et **0,44 $ pour 1 000 notes vocales**. Le palier gratuit suffit pour une démonstration, mais pas pour la production (confidentialité, voir `ETHIQUE.md`).
 

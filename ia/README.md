@@ -32,6 +32,9 @@ python scripts/construire_notebook.py          # régénère le .ipynb depuis le
 .venv/Scripts/python -m jupyter nbconvert --to notebook --execute --inplace VIHEPAT_evaluation_IA.ipynb
 ```
 
+### Ajouter de vraies voix (fon, français)
+Voir [`data/enregistrements/README.md`](data/enregistrements/README.md) : fiche à lire, envoi des fichiers, import, consentement.
+
 ### Refaire les appels Gemini
 ```bash
 export GEMINI_API_KEY=...        # ne jamais la versionner
@@ -48,6 +51,7 @@ Relançable : les messages déjà traités sont sautés, chaque échec est journ
 |---|---|
 | `data/vignettes.jsonl` | 165 messages fictifs annotés (voir « Guide d'annotation ») |
 | `data/audio/*.webm` | 42 messages lus par 3 voix de synthèse fr-FR, en WebM/Opus (format envoyé par Chrome) |
+| `data/enregistrements/` | vraies voix de l'équipe (fon, français) : protocole, fiche des 30 messages, manifeste ; audios non versionnés |
 | `data/parite_ts.json` | 5 000 cas évalués par le moteur TypeScript, pour vérifier le portage Python |
 | `vihepat_ia/triage_rules.py` | portage Python du moteur de règles de l'application |
 | `vihepat_ia/baseline_mots_cles.py` | modèle A |
