@@ -15,6 +15,10 @@ const schema = z.object({
   JWT_REFRESH_EXPIRES: z.string().default('30d'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   ANTHROPIC_API_KEY: z.string().optional(),
+  // Note vocale : transcription + structuration (https://aistudio.google.com/apikey)
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default('gemini-3.5-flash-lite'),
+  GEMINI_FALLBACK_MODEL: z.string().default('gemini-3.8-flash'),
 
   // Configuration SMTP (Brevo)
   MAIL_MAILER: z.string().default('smtp'),

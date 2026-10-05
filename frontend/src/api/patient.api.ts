@@ -117,6 +117,21 @@ export interface ChatResponse {
   signalementCreated: boolean;
 }
 
+/** Analyse d'une note vocale : transcription + champs structurés (Gemini) puis priorité (moteur de règles). */
+export interface TriageVocalReponse {
+  extraction: {
+    transcription: string;
+    langue: 'fr' | 'fon' | 'mixte' | 'autre';
+    symptomes: string[];
+    duree: 'aujourdhui' | 'quelques_jours' | 'plus_semaine' | 'inconnue';
+    intensite: 'leger' | 'gene' | 'fort' | 'inconnue';
+    signes_graves: string[];
+    precision?: string;
+  };
+  triage: { niveau: 'banal' | 'a_surveiller' | 'alerte'; raisons: string[]; urgence: boolean };
+  mesures: { modele: string; latenceTotaleMs: number; promptVersion: string };
+}
+
 export const patientApi = {
   getRendezVous: () => api.get<RendezVous[]>('/patients/me/rendez-vous').then((r) => r.data),
 
@@ -132,6 +147,9 @@ export const patientApi = {
   createSignalement: (input: { symptome: string; gravite: Gravite; notes?: string | undefined }) =>
 
     api.post<Signalement>('/patients/me/signalements', input).then((r) => r.data),
+
+  triageVocal: (input: { audioBase64: string; mimeType: string; traitementRecent: boolean }) =>
+    api.post<TriageVocalReponse>('/patients/me/triage-vocal', input, { timeout: 45000 }).then((r) => r.data),
 
   getObservance: () => api.get<ObservanceResponse>('/patients/me/observance').then((r) => r.data),
 

@@ -15,7 +15,13 @@ build/
 */.env
 */.env.local
 
+# Python (évaluation IA)
+ia/.venv/
+__pycache__/
+.ipynb_checkpoints/
+
 # Logs
+backend/logs/
 *.log
 npm-debug.log*
 yarn-error.log*

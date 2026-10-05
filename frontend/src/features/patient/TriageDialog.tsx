@@ -322,6 +322,10 @@ export function TriageDialog({
   const timerRef = useRef<number | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
+  // Analyse de la note vocale par le serveur (transcription + pré-remplissage)
+  const [analyse, setAnalyse] = useState<"idle" | "en_cours" | "ok" | "echec">("idle");
+  const [transcriptionVocale, setTranscriptionVocale] = useState<string | null>(null);
+
   // Reconnaissance vocale (Speech-To-Text)
   const lang = i18n.language === "en" ? "en-US" : "fr-FR";
   const {
@@ -363,6 +367,48 @@ export function TriageDialog({
     setAudioBlob(null);
     setRecordingDuration(0);
     setIsRecordingAudio(false);
+    setAnalyse("idle");
+    setTranscriptionVocale(null);
+  }
+
+  function blobVersBase64(blob: Blob) {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  /**
+   * Envoie la note au serveur, qui la transcrit et en extrait les champs du formulaire.
+   * Le formulaire est seulement pré-rempli : le patient vérifie, et la priorité
+   * finale est recalculée par le moteur de règles embarqué au moment d'envoyer.
+   */
+  async function analyserNoteVocale() {
+    if (!audioBlob) return;
+    setAnalyse("en_cours");
+    try {
+      const r = await patientApi.triageVocal({
+        audioBase64: await blobVersBase64(audioBlob),
+        mimeType: audioBlob.type || "audio/webm",
+        traitementRecent,
+      });
+      const x = r.extraction;
+      const reconnus = x.symptomes.filter((id): id is SymptomeId => SYMPTOMES.some((s) => s.id === id));
+      setSymptomes(reconnus.length ? reconnus : ["autre"]);
+      if (x.duree !== "inconnue") setDuree(x.duree);
+      if (x.intensite !== "inconnue") setIntensite(x.intensite);
+      setSignesGraves(x.signes_graves.filter((id): id is SigneGraveId => SIGNES_GRAVES.some((g) => g.id === id)));
+      setPrecision((x.precision?.trim() || x.transcription).slice(0, 300));
+      setTranscriptionVocale(x.transcription);
+      setAnalyse("ok");
+      setEtape("details");
+    } catch {
+      // Hors ligne, serveur indisponible ou Gemini en échec : le formulaire reste utilisable
+      setAnalyse("echec");
+      toast.info(t("triage.analyse_echec"));
+    }
   }
 
   function reinitialiser() {
@@ -414,7 +460,8 @@ export function TriageDialog({
         if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
       };
       mr.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        // Le format dépend du navigateur (webm/opus sur Chrome, mp4/aac sur Safari)
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
         stream.getTracks().forEach((track) => track.stop());
@@ -453,9 +500,11 @@ export function TriageDialog({
   }
 
   async function terminer() {
-    const noteVocale = audioBlob
-      ? `Enregistrement vocal patient (${formatDuration(recordingDuration)})`
-      : undefined;
+    const noteVocale = transcriptionVocale
+      ? `Transcription (${formatDuration(recordingDuration)}) : ${transcriptionVocale}`
+      : audioBlob
+        ? `Enregistrement vocal patient (${formatDuration(recordingDuration)})`
+        : undefined;
 
     const entree = {
       symptomes,
@@ -765,6 +814,28 @@ export function TriageDialog({
                     </Button>
                   </div>
                 )}
+
+                {audioUrl && !isRecordingAudio && navigator.onLine && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => void analyserNoteVocale()}
+                    disabled={analyse === "en_cours"}
+                    className="w-full rounded-full gap-1.5 text-xs h-9"
+                  >
+                    {analyse === "en_cours" ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>{t("triage.analyse_en_cours")}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5" />
+                        <span>{t("triage.analyser_audio")}</span>
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             )}
 
@@ -781,6 +852,16 @@ export function TriageDialog({
         {/* ================= ÉTAPE 2 : DÉTAILS ================= */}
         {etape === "details" && (
           <div className="space-y-4 pt-1">
+            {analyse === "ok" && transcriptionVocale && (
+              <div className="rounded-2xl border border-primary/30 bg-primary/[0.04] p-3 text-xs space-y-1">
+                <p className="font-semibold text-primary flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {t("triage.transcription")}
+                </p>
+                <p className="italic text-foreground">« {transcriptionVocale} »</p>
+                <p className="text-muted-foreground">{t("triage.analyse_ok")}</p>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-foreground">
                 {t("triage.step2_depuis_quand")}
