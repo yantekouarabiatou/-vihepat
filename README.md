@@ -56,6 +56,8 @@ Résultats mesurés sur 165 messages fictifs annotés (détails, intervalles de 
 
 Audio (voix de synthèse) : taux d'erreur de mots 4,9 %, latence médiane 3,5 s, ~0,44 $ pour 1 000 notes.
 
+[![Ouvrir dans Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yantekouarabiatou/-vihepat/blob/feat/circuit-soignant/ia/VIHEPAT_evaluation_IA.ipynb)
+
 - Notebook reproductible (Colab) : [`ia/VIHEPAT_evaluation_IA.ipynb`](ia/VIHEPAT_evaluation_IA.ipynb), avec [`ia/README.md`](ia/README.md) et [`ia/requirements.txt`](ia/requirements.txt)
 - Prompt, paramètres, latence, coûts, gestion des erreurs : [`docs/IA.md`](docs/IA.md)
 - Biais, confidentialité, limites : [`docs/ETHIQUE.md`](docs/ETHIQUE.md)

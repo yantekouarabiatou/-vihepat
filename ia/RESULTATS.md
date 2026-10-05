@@ -1,4 +1,4 @@
-# Résultats de l'évaluation (généré le 05/10/2026 16:53 par le notebook)
+# Résultats de l'évaluation (généré le 05/10/2026 17:08 par le notebook)
 
 Jeu : 165 messages fictifs ({'banal': 49, 'a_surveiller': 46, 'alerte': 70}), 165 évalués pour les modèles A · mots-clés, B · TF-IDF, C · Gemini Flash-Lite. Prompt `extraction-v1`.
 
@@ -33,8 +33,8 @@ _pas encore d'enregistrements_
 |:-----------------------------------|----:|----------------------:|----------:|----------------:|----------------:|----------------------:|-------------------------:|
 | ('gemini-3.5-flash-lite', 'texte') | 165 |              2.48     |      3.83 |             544 |             104 |                     0 |                    0.422 |
 | ('gemini-3.5-flash-lite', 'audio') |  42 |              3.45     |     32.17 |             655 |              98 |                     0 |                    0.443 |
-| ('A · mots-clés', 'texte')         | 165 |              0.000488 |    nan    |             nan |             nan |                   nan |                    0     |
-| ('B · TF-IDF', 'texte')            | 165 |              0.002436 |    nan    |             nan |             nan |                   nan |                    0     |
+| ('A · mots-clés', 'texte')         | 165 |              0.001693 |    nan    |             nan |             nan |                   nan |                    0     |
+| ('B · TF-IDF', 'texte')            | 165 |              0.000993 |    nan    |             nan |             nan |                   nan |                    0     |
 
 ## Extraction champ par champ
 

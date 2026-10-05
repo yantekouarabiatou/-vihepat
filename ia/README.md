@@ -14,13 +14,14 @@ Les résultats chiffrés de la dernière exécution sont dans [`RESULTATS.md`](R
 ## Reproduire
 
 ### Sur Google Colab
-1. Ouvrir `ia/VIHEPAT_evaluation_IA.ipynb` dans Colab (Fichier → Ouvrir un notebook → GitHub).
+[![Ouvrir dans Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yantekouarabiatou/-vihepat/blob/feat/circuit-soignant/ia/VIHEPAT_evaluation_IA.ipynb)
+
+1. Cliquer sur le bouton ci-dessus (ou, dans Colab : Fichier → Ouvrir un notebook → GitHub → `yantekouarabiatou/-vihepat`, branche `feat/circuit-soignant`).
 2. *(Facultatif)* Ajouter la clé dans les secrets Colab sous le nom `GEMINI_API_KEY` (icône 🔑) et passer `REFAIRE_APPELS = True`.
 3. Exécution → Tout exécuter. La première cellule clone le dépôt et installe `requirements.txt`.
 
 Sans clé, tous les chiffres sont recalculés à partir des réponses Gemini enregistrées dans `resultats/` : on obtient exactement les mêmes valeurs. Avec une clé, les appels manquants sont refaits (les réponses de Gemini peuvent alors varier légèrement).
 
-> Si le dépôt GitHub est privé, Colab ne pourra pas le cloner : téléverser le dossier `ia/` et `backend/src/ia/extraction.json` à la main, ou rendre le dépôt public.
 
 ### En local
 ```bash

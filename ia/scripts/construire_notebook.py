@@ -13,6 +13,8 @@ code = lambda s: C.append(nbf.v4.new_code_cell(s.strip()))
 md(r"""
 # VIHEPAT : évaluation de la chaîne « note vocale → priorité d'alerte »
 
+[![Ouvrir dans Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yantekouarabiatou/-vihepat/blob/feat/circuit-soignant/ia/VIHEPAT_evaluation_IA.ipynb)
+
 **Question.** Le patient décrit ses symptômes à voix haute. Pour prévenir la bonne équipe au bon moment, l'application doit classer ce message en **banal / à surveiller / alerte**. Quelle méthode classe le mieux, et pour quel coût ?
 
 **Ce que nous comparons** sur le même jeu de 165 messages :
@@ -37,12 +39,12 @@ import sys, os, subprocess
 from pathlib import Path
 
 EN_COLAB = "google.colab" in sys.modules
-DEPOT = "https://github.com/yantekouarabiatou/exact-screenshot.git"
+DEPOT = "https://github.com/yantekouarabiatou/-vihepat.git"
 BRANCHE = "feat/circuit-soignant"
 
-if EN_COLAB and not Path("exact-screenshot").exists():
-    subprocess.run(["git", "clone", "--depth", "1", "-b", BRANCHE, DEPOT], check=True)
-IA = next(p for p in [Path.cwd(), Path.cwd() / "ia", Path("exact-screenshot/ia")] if (p / "vihepat_ia").exists()).resolve()
+if EN_COLAB and not Path("vihepat").exists():
+    subprocess.run(["git", "clone", "--depth", "1", "-b", BRANCHE, DEPOT, "vihepat"], check=True)
+IA = next(p for p in [Path.cwd(), Path.cwd() / "ia", Path("vihepat/ia")] if (p / "vihepat_ia").exists()).resolve()
 if EN_COLAB:
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r", str(IA / "requirements.txt")], check=True)
 sys.path.insert(0, str(IA))
