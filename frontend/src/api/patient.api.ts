@@ -128,6 +128,8 @@ export interface TriageVocalReponse {
     signes_graves: string[];
     precision?: string;
   };
+  /** Faux si la langue n'est pas comprise de façon fiable (fon) : ne pas pré-remplir. */
+  utilisable: boolean;
   triage: { niveau: 'banal' | 'a_surveiller' | 'alerte'; raisons: string[]; urgence: boolean };
   mesures: { modele: string; latenceTotaleMs: number; promptVersion: string };
 }
@@ -165,4 +167,10 @@ export const patientApi = {
 
   sendChatMessage: (messages: ChatMessage[]) =>
     api.post<ChatResponse>('/chat', { messages }).then((r) => r.data),
+
+  /** Note vocale du chatbot -> texte (vide si la langue n'est pas comprise de façon fiable, ex. fon). */
+  transcrireAudio: (input: { audioBase64: string; mimeType: string }) =>
+    api
+      .post<{ transcription: string; langue: 'fr' | 'fon' | 'mixte' | 'autre'; utilisable: boolean }>('/chat/transcrire', input, { timeout: 45000 })
+      .then((r) => r.data),
 };

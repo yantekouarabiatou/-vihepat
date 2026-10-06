@@ -1,0 +1,74 @@
+[
+ {
+  "fichier": "fon_L1_V098",
+  "vignette": "V098",
+  "langue": "fon",
+  "locuteur": "L1",
+  "duree_s": 5.6,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fon_L1_V103",
+  "vignette": "V103",
+  "langue": "fon",
+  "locuteur": "L1",
+  "duree_s": 8.4,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fon_L1_V126",
+  "vignette": "V126",
+  "langue": "fon",
+  "locuteur": "L1",
+  "duree_s": 3.6,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fon_L1_V148",
+  "vignette": "V148",
+  "langue": "fon",
+  "locuteur": "L1",
+  "duree_s": 7.8,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fr_L1_V055",
+  "vignette": "V055",
+  "langue": "fr",
+  "locuteur": "L1",
+  "duree_s": 6.5,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fr_L1_V098",
+  "vignette": "V098",
+  "langue": "fr",
+  "locuteur": "L1",
+  "duree_s": 4.8,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fr_L1_V103",
+  "vignette": "V103",
+  "langue": "fr",
+  "locuteur": "L1",
+  "duree_s": 5.5,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fr_L1_V126",
+  "vignette": "V126",
+  "langue": "fr",
+  "locuteur": "L1",
+  "duree_s": 4.5,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fr_L1_V148",
+  "vignette": "V148",
+  "langue": "fr",
+  "locuteur": "L1",
+  "duree_s": 4.8,
+  "source": ".ogg"
+ }
+]

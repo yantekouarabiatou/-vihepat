@@ -15,6 +15,8 @@
     "db:reset": "sequelize-cli db:migrate:undo:all && sequelize-cli db:migrate && npm run db:seed",
     "ia:audio": "ts-node --transpile-only scripts/triage-audio.ts",
     "ia:parite": "ts-node --transpile-only scripts/export-parite.ts",
+    "prod:installer": "npm install --omit=dev --no-audit --no-fund",
+    "prod:verifier-base": "node scripts/verifier-base.js",
     "ia:sync-triage": "node -e \"const f=require('fs');if(f.readFileSync('src/ia/triage.ts','utf8')!==f.readFileSync('../frontend/src/lib/triage.ts','utf8')){console.error('triage.ts diverge entre backend et frontend');process.exit(1)}console.log('triage.ts identique')\""
   },
   "dependencies": {

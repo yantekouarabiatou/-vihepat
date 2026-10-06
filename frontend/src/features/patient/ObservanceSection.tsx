@@ -87,7 +87,7 @@ export function ObservanceSection() {
           <div>
             <h2 className="text-lg font-bold text-foreground">{t("observance.today_title")}</h2>
             <p className="text-sm text-muted-foreground">
-              {journee.length === 0 ? t("observance.no_prise") : t("observance.prises_faites", { faites, total: journee.length })}
+              {journee.length === 0 ? t("observance.no_prise") : t("observance.prises_faites", { faites, total: journee.length, count: journee.length })}
             </p>
           </div>
           {rappels.supporte && (

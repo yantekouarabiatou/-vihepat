@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { env } from '../config/env';
 import * as patientService from './patient.service';
 import type { Gravite } from '../models/Signalement';
+import { genererContenu, geminiConfigure, type GeminiTour } from '../ia/gemini.client';
 
 const client = env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }) : null;
 
@@ -176,13 +177,95 @@ async function generateSmartFallback(
   };
 }
 
+/** Ajoutée à la réponse quand un signalement est créé : sert aussi à ne pas en créer un second. */
+const CONFIRMATION_SIGNALEMENT = '✅ Votre signalement a été transmis à votre équipe soignante.';
+
+const CONSIGNE_JSON_GEMINI = `
+
+Format de réponse : un objet JSON.
+- « reponse » : ton message au patient (1 à 3 phrases, français simple).
+- « signalement » : rempli UNIQUEMENT quand le symptôme est assez clair pour être transmis à l'équipe soignante (symptôme, gravité, notes utiles), sinon null. Un seul signalement par conversation : si l'historique contient déjà « Votre signalement a été transmis », mets null.`;
+
+const SCHEMA_GEMINI_PATIENT = {
+  type: 'OBJECT',
+  properties: {
+    reponse: { type: 'STRING' },
+    signalement: {
+      type: 'OBJECT',
+      nullable: true,
+      properties: {
+        symptome: { type: 'STRING' },
+        gravite: { type: 'STRING', enum: ['leger', 'modere', 'severe'] },
+        notes: { type: 'STRING' },
+      },
+      required: ['symptome', 'gravite'],
+    },
+  },
+  required: ['reponse'],
+};
+const SCHEMA_GEMINI_PUBLIC = { type: 'OBJECT', properties: { reponse: { type: 'STRING' } }, required: ['reponse'] };
+
+/** Historique du widget -> conversation Gemini : commence et finit par l'utilisateur, rôles alternés. */
+function versTours(history: ChatTurn[]): GeminiTour[] {
+  const tours: GeminiTour[] = [];
+  for (const h of history) {
+    const role = h.role === 'assistant' ? 'model' : 'user';
+    if (!tours.length && role === 'model') continue; // message d'accueil du widget
+    const dernier = tours[tours.length - 1];
+    if (dernier && dernier.role === role) dernier.parts.push({ text: h.content });
+    else tours.push({ role, parts: [{ text: h.content }] });
+  }
+  return tours;
+}
+
+/** Chat avec Gemini quand aucune clé Anthropic n'est configurée. */
+async function sendChatGemini(userId: number | null | undefined, role: string | null | undefined, history: ChatTurn[]): Promise<ChatResult> {
+  const isPatient = role === 'patient' && !!userId;
+  const contents = versTours(history);
+  if (!contents.length || contents[contents.length - 1]!.role !== 'user') {
+    return { reply: 'Message bien reçu.', signalementCreated: false };
+  }
+  const g = await genererContenu({
+    system: (isPatient ? SYSTEM_PROMPT_PATIENT : SYSTEM_PROMPT_PUBLIC)
+      .replace(/utilise l'outil "file_signalement" pour l'enregistrer/g, "remplis le champ « signalement » pour l'enregistrer")
+      .replace(/enregistre le signalement/g, 'remplis le champ « signalement »') + CONSIGNE_JSON_GEMINI,
+    contents,
+    schema: isPatient ? SCHEMA_GEMINI_PATIENT : SCHEMA_GEMINI_PUBLIC,
+    temperature: 0.3,
+    responseMimeType: 'application/json',
+  });
+  const r = JSON.parse(g.text) as { reponse?: string; signalement?: { symptome: string; gravite: Gravite; notes?: string } | null };
+  let reply = (r.reponse ?? '').trim() || 'Message bien reçu.';
+  let signalementCreated = false;
+
+  const dejaSignale = history.some((h) => h.role === 'assistant' && h.content.includes(CONFIRMATION_SIGNALEMENT));
+  const s = r.signalement;
+  if (isPatient && s && !dejaSignale && s.symptome?.trim() && ['leger', 'modere', 'severe'].includes(s.gravite)) {
+    await patientService.createSignalement(userId!, {
+      symptome: s.symptome.trim().slice(0, 150),
+      gravite: s.gravite,
+      notes: `${s.notes?.trim() ? `${s.notes.trim()}\n` : ''}Signalement proposé par l'assistant conversationnel (Gemini).`,
+    });
+    signalementCreated = true;
+    reply = `${reply}\n\n${CONFIRMATION_SIGNALEMENT}`;
+  }
+  return { reply, signalementCreated };
+}
+
 export async function sendChatMessage(
   userId?: number | null,
   role?: string | null,
   history: ChatTurn[] = []
 ): Promise<ChatResult> {
-  // Si la clé Anthropic n'est pas renseignée, basculer sur l'assistant médical embarqué
+  // Sans clé Anthropic : Gemini si configuré, sinon l'assistant médical embarqué
   if (!client) {
+    if (geminiConfigure()) {
+      try {
+        return await sendChatGemini(userId, role, history);
+      } catch (error) {
+        console.warn('Échec du chat Gemini, utilisation du fallback médical :', (error as Error).message);
+      }
+    }
     return generateSmartFallback(userId, role, history);
   }
 

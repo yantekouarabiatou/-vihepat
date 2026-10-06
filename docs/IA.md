@@ -26,6 +26,8 @@ Le patient enregistre une note vocale dans le formulaire « Comment vous sentez-
 
 Essai sans base de données : `cd backend && npm run ia:audio -- note.wav`.
 
+Le chatbot a aussi un bouton micro : `POST /api/chat/transcrire` (prompt `backend/src/ia/transcription.json`, ouvert aux visiteurs, 15 notes / 15 min) renvoie le texte, que la personne relit dans la zone de saisie avant d'envoyer. Aucun texte n'est renvoyé si la note est en fon.
+
 ## 2. Le prompt
 
 Fichier unique : `backend/src/ia/extraction.json` (version `extraction-v1`), lu à la fois par l'API et par le notebook d'évaluation : ce qui est mesuré est exactement ce qui tourne.
@@ -57,6 +59,7 @@ Le prompt a été figé avant la première exécution sur le jeu d'évaluation. 
 | Modèle principal surchargé (429/5xx) ou > 20 s | **bascule automatique** sur le modèle de secours (1 seul essai de plus) | rien, la réponse arrive un peu plus tard |
 | Les deux modèles échouent | 502 / 504 avec un code | « L'analyse automatique n'a pas marché. Remplissez simplement le formulaire. » |
 | Réponse vide, bloquée, JSON illisible ou hors schéma | rejet (zod), 502 | idem |
+| Note en fon ou autre langue (`utilisable: false`) | extraction ignorée, rien n'est pré-rempli | « Je ne comprends pas encore bien le fon à l'oral… » + pictogrammes |
 | Hors ligne | le bouton n'est pas proposé | triage embarqué, signalement mis en file d'attente |
 | Audio > 5 Mo / type non audio | 413 / 400 | message d'erreur |
 | Abus | rate limit 20 analyses / 15 min / IP | message « réessayez dans quelques minutes » |

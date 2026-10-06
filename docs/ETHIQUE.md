@@ -12,6 +12,7 @@ VIHEPAT **oriente**, il ne **diagnostique** pas. L'IA sert à comprendre ce que 
 4. **Toujours une solution sans IA** : hors ligne, sans clé API, ou si Gemini échoue, le formulaire à pictogrammes et le triage embarqué fonctionnent seuls.
 5. **Urgences** : les signes de gravité affichent immédiatement la consigne d'aller au centre de santé, sans attendre une réponse du soignant ; les idées suicidaires reçoivent un message spécifique.
 6. **Pas de conseil thérapeutique** : aucune modification de traitement n'est proposée.
+7. **Langue non comprise = pas de pré-remplissage** : sur nos vraies notes en fon, Gemini reconnaît la langue mais invente des symptômes et ne détecte aucune alerte (0/4, `ia/RESULTATS.md`). Quand la note est détectée en fon (ou autre langue que le français), le triage ne pré-remplit rien et le chatbot n'insère aucun texte : le patient est orienté vers les pictogrammes, et le signalement indique au soignant qu'une note vocale en fon a été laissée.
 
 ## Biais identifiés
 

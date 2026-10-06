@@ -14,6 +14,11 @@ build/
 .env.*.local
 */.env
 */.env.local
+# Toute variante (.env.prod, .env.production…) contient des secrets ; seuls les exemples sont versionnés
+.env.*
+*/.env.*
+!.env.example
+!*/.env.example
 
 # Voix de l'équipe (données personnelles) : jamais versionnées, seuls les résultats le sont
 ia/data/enregistrements/brut/

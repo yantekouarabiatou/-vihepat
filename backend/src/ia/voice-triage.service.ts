@@ -30,6 +30,12 @@ export type Extraction = z.infer<typeof extractionSchema>;
 
 export interface ResultatTriageVocal {
   extraction: Extraction;
+  /**
+   * Faux quand la note n'est pas détectée en français, seule langue comprise de façon fiable. Mesuré sur nos
+   * enregistrements (ia/RESULTATS.md, section vraies voix) : en fon, les symptômes extraits sont
+   * inventés et aucune alerte n'est détectée. Le formulaire ne doit alors pas être pré-rempli.
+   */
+  utilisable: boolean;
   entree: EntreeTriage;
   triage: ResultatTriage;
   mesures: {
@@ -89,6 +95,8 @@ export async function trierNoteVocale(params: {
 
   return {
     extraction,
+    // Seul le français est fiable : une note en fon est parfois classée « mixte » (voir transcription.service.ts)
+    utilisable: extraction.langue === 'fr',
     entree,
     triage,
     mesures: {

@@ -10,6 +10,10 @@ import { errorHandler } from './middlewares/errorHandler';
 export function createApp() {
   const app = express();
 
+  // Derrière le proxy de l'hébergeur : l'IP réelle du visiteur est dans X-Forwarded-For.
+  // Sans ce réglage, les limites anti-abus seraient communes à tous les utilisateurs.
+  app.set('trust proxy', 1);
+
   // Sécurité
   app.use(helmet());
   app.use(cors({
@@ -18,7 +22,7 @@ export function createApp() {
   }));
 
   // Parsing (la note vocale arrive en base64 : limite plus large sur cette seule route)
-  app.use('/api/patients/me/triage-vocal', express.json({ limit: '8mb' }));
+  app.use(['/api/patients/me/triage-vocal', '/api/chat/transcrire'], express.json({ limit: '8mb' }));
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true }));
 
@@ -55,8 +59,16 @@ export function createApp() {
     message: { error: "Trop d'analyses vocales, réessayez dans quelques minutes" },
   }));
 
+  // Transcription vocale du chatbot : ouverte aux visiteurs, donc plus limitée
+  app.use('/api/chat/transcrire', rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 15,
+    message: { error: 'Trop de notes vocales, réessayez dans quelques minutes' },
+  }));
+
   // Health check
-  app.get('/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
+  // /api/health : l'API est servie sous /api en production (application Node.js de cPanel)
+  app.get(['/health', '/api/health'], (_req, res) => res.json({ ok: true, ts: Date.now() }));
 
   // Routes API
   app.use('/api', routes);

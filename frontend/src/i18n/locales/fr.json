@@ -301,6 +301,7 @@
     "analyse_en_cours": "Analyse de votre note…",
     "analyse_ok": "Votre note a été comprise. Vérifiez et corrigez si besoin avant d'envoyer.",
     "analyse_echec": "L'analyse automatique n'a pas marché. Remplissez simplement le formulaire.",
+    "analyse_langue": "Je ne comprends pas encore bien le fon à l'oral. Choisissez vos symptômes avec les images ci-dessus : votre équipe soignante saura que vous avez laissé une note vocale.",
     "transcription": "Ce que nous avons compris",
     "audio_non_supporte": "La reconnaissance vocale n'est pas disponible sur ce navigateur.",
     "autre_symptome_title": "Décrivez vos propres symptômes",

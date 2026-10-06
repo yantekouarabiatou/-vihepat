@@ -16,12 +16,14 @@ import {
   Bot,
   User,
   ShieldCheck,
+  Square,
 } from "lucide-react";
 import { useEnLigne } from "@/hooks/use-connexion";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { patientApi, type ChatMessage } from "@/api/patient.api";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
+import { useAudioRecorder, blobVersBase64 } from "@/hooks/use-audio-recorder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -96,6 +98,43 @@ export function ChatWidget() {
     if (transcript) setInput(transcript);
   }, [transcript]);
 
+  // Note vocale (MediaRecorder + transcription serveur) ; la dictée du navigateur reste en secours
+  const enregistreur = useAudioRecorder(60);
+  const [transcription, setTranscription] = useState(false);
+
+  async function noteVocale() {
+    if (enregistreur.isRecording) {
+      enregistreur.stop();
+      return;
+    }
+    let blob: Blob | null;
+    try {
+      const fin = enregistreur.start();
+      setInput("");
+      blob = await fin;
+    } catch {
+      toast.error("Impossible d'accéder au microphone. Autorisez-le dans votre navigateur.");
+      return;
+    }
+    if (!blob) return;
+    setTranscription(true);
+    try {
+      const r = await patientApi.transcrireAudio({ audioBase64: await blobVersBase64(blob), mimeType: blob.type || "audio/webm" });
+      if (r.utilisable) {
+        // Le texte n'est pas envoyé tout seul : la personne le relit et le corrige avant d'appuyer sur Envoyer
+        setInput(r.transcription);
+      } else if (r.langue === "fon" || r.langue === "autre") {
+        toast.info("Je ne comprends pas encore bien le fon à l'oral. Écrivez votre message, ou parlez en français.");
+      } else {
+        toast.info("Je n'ai rien entendu. Réessayez en parlant plus près du micro.");
+      }
+    } catch {
+      toast.error("La note vocale n'a pas pu être transcrite. Vous pouvez écrire votre message.");
+    } finally {
+      setTranscription(false);
+    }
+  }
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
@@ -152,6 +191,7 @@ export function ChatWidget() {
     const text = (customText ?? input).trim();
     if (!text || isPending) return;
     if (isListening) stopListening();
+    if (enregistreur.isRecording) enregistreur.cancel();
 
     const next: ChatMessage[] = [...messages, { role: "user", content: text }];
     setMessages(next);
@@ -333,7 +373,34 @@ export function ChatWidget() {
               }}
               className="flex items-center gap-2"
             >
-              {micSupported && (
+              {enregistreur.isSupported ? (
+                <Button
+                  type="button"
+                  variant={enregistreur.isRecording ? "default" : "outline"}
+                  size={enregistreur.isRecording ? "sm" : "icon"}
+                  onClick={() => void noteVocale()}
+                  disabled={transcription || isPending || !enLigne}
+                  aria-label={enregistreur.isRecording ? "Arrêter et transcrire la note vocale" : "Enregistrer une note vocale"}
+                  title={enregistreur.isRecording ? "Arrêter et transcrire" : "Enregistrer une note vocale"}
+                  className={cn(
+                    "h-10 shrink-0 rounded-full",
+                    enregistreur.isRecording ? "animate-pulse gap-1.5 bg-rose-500 px-3 text-white hover:bg-rose-600" : "w-10"
+                  )}
+                >
+                  {transcription ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : enregistreur.isRecording ? (
+                    <>
+                      <Square className="h-3 w-3 fill-current" />
+                      <span className="text-xs tabular-nums">
+                        {Math.floor(enregistreur.duration / 60)}:{String(enregistreur.duration % 60).padStart(2, "0")}
+                      </span>
+                    </>
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                </Button>
+              ) : micSupported && (
                 <Button
                   type="button"
                   variant={isListening ? "default" : "outline"}
@@ -354,7 +421,11 @@ export function ChatWidget() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={
-                  isListening
+                  enregistreur.isRecording
+                    ? "Je vous écoute… appuyez sur ■ pour terminer"
+                    : transcription
+                    ? "Transcription de votre note vocale…"
+                    : isListening
                     ? "Je vous écoute..."
                     : role === "patient"
                     ? "Décrivez ce que vous ressentez..."

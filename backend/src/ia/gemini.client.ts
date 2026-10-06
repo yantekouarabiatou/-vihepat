@@ -14,9 +14,17 @@ export type GeminiPart =
   | { text: string }
   | { inlineData: { mimeType: string; data: string } };
 
+export interface GeminiTour {
+  role: 'user' | 'model';
+  parts: GeminiPart[];
+}
+
 export interface GeminiRequest {
   system: string;
-  parts: GeminiPart[];
+  /** Message unique de l'utilisateur… */
+  parts?: GeminiPart[];
+  /** …ou conversation complète (doit commencer et finir par un tour « user »). */
+  contents?: GeminiTour[];
   schema?: unknown;
   temperature?: number;
   responseMimeType?: string;
@@ -77,7 +85,7 @@ export async function genererContenu(req: GeminiRequest): Promise<GeminiResult> 
 
   const body = {
     systemInstruction: { parts: [{ text: req.system }] },
-    contents: [{ role: 'user', parts: req.parts }],
+    contents: req.contents ?? [{ role: 'user', parts: req.parts ?? [] }],
     generationConfig: {
       temperature: req.temperature ?? 0,
       responseMimeType: req.responseMimeType ?? 'text/plain',

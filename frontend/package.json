@@ -1,7 +1,6 @@
 {
   "name": "vihepat-frontend",
   "private": true,
-  "sideEffects": false,
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -323,7 +323,7 @@ export function TriageDialog({
   const chunksRef = useRef<Blob[]>([]);
 
   // Analyse de la note vocale par le serveur (transcription + pré-remplissage)
-  const [analyse, setAnalyse] = useState<"idle" | "en_cours" | "ok" | "echec">("idle");
+  const [analyse, setAnalyse] = useState<"idle" | "en_cours" | "ok" | "echec" | "langue">("idle");
   const [transcriptionVocale, setTranscriptionVocale] = useState<string | null>(null);
 
   // Reconnaissance vocale (Speech-To-Text)
@@ -395,6 +395,12 @@ export function TriageDialog({
         traitementRecent,
       });
       const x = r.extraction;
+      if (!r.utilisable) {
+        // Note en fon (ou autre langue) : les symptômes extraits ne sont pas fiables, on ne pré-remplit rien
+        setAnalyse("langue");
+        toast.info(t("triage.analyse_langue"));
+        return;
+      }
       const reconnus = x.symptomes.filter((id): id is SymptomeId => SYMPTOMES.some((s) => s.id === id));
       setSymptomes(reconnus.length ? reconnus : ["autre"]);
       if (x.duree !== "inconnue") setDuree(x.duree);
@@ -502,7 +508,9 @@ export function TriageDialog({
   async function terminer() {
     const noteVocale = transcriptionVocale
       ? `Transcription (${formatDuration(recordingDuration)}) : ${transcriptionVocale}`
-      : audioBlob
+      : analyse === "langue"
+        ? `Note vocale du patient en fon (${formatDuration(recordingDuration)}), non transcrite : à rappeler si besoin`
+        : audioBlob
         ? `Enregistrement vocal patient (${formatDuration(recordingDuration)})`
         : undefined;
 
@@ -815,7 +823,13 @@ export function TriageDialog({
                   </div>
                 )}
 
-                {audioUrl && !isRecordingAudio && navigator.onLine && (
+                {analyse === "langue" && (
+                  <p className="rounded-xl bg-[hsl(var(--gold)/0.15)] px-3 py-2 text-xs text-foreground">
+                    {t("triage.analyse_langue")}
+                  </p>
+                )}
+
+                {audioUrl && !isRecordingAudio && navigator.onLine && analyse !== "langue" && (
                   <Button
                     type="button"
                     size="sm"

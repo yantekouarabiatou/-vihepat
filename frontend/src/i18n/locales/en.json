@@ -301,6 +301,7 @@
     "analyse_en_cours": "Analysing your memo…",
     "analyse_ok": "Your memo was understood. Check and correct it if needed before sending.",
     "analyse_echec": "Automatic analysis failed. Please just fill in the form.",
+    "analyse_langue": "I can't reliably understand spoken Fon yet. Please pick your symptoms with the pictures above: your care team will know you left a voice memo.",
     "transcription": "What we understood",
     "audio_non_supporte": "Voice recognition is not supported in this browser.",
     "autre_symptome_title": "Describe your own symptoms",

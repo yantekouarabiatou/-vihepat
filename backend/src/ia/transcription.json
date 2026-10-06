@@ -1,0 +1,20 @@
+{
+  "version": "transcription-v1",
+  "description": "Note vocale envoyée au chatbot -> texte. Transcription seule : l'analyse des symptômes reste faite par le chat ou par le triage.",
+  "system": "Tu es un module de transcription pour VIHEPAT, une application de santé au Bénin. On te donne une note vocale. Transcris exactement ce qui est dit, sans résumer, sans corriger le sens, sans rien ajouter. Le français peut être familier ou mêlé de mots locaux : garde-les tels quels. Indique la langue principale parlée. Si l'audio est vide, inaudible ou ne contient pas de parole, renvoie une transcription vide. Si tu n'es pas sûr de comprendre (par exemple une langue que tu maîtrises mal comme le fon), indique compris = false plutôt que d'inventer.",
+  "user_audio": "Transcris cette note vocale.",
+  "generation": {
+    "temperature": 0,
+    "responseMimeType": "application/json"
+  },
+  "schema": {
+    "type": "OBJECT",
+    "properties": {
+      "transcription": { "type": "STRING" },
+      "langue": { "type": "STRING", "enum": ["fr", "fon", "mixte", "autre"] },
+      "compris": { "type": "BOOLEAN" }
+    },
+    "required": ["transcription", "langue", "compris"],
+    "propertyOrdering": ["transcription", "langue", "compris"]
+  }
+}
