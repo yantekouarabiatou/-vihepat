@@ -82,12 +82,26 @@ assert notes, "Aucune note : téléversez audios_fon.zip"
 """)
 
 md(r"""
-## 2. Reconnaissance vocale (MMS) puis traduction (NLLB-200)
+## 2. Reconnaissance vocale (MMS) puis traduction (NLLB-200, plusieurs tailles)
 
-Les deux modèles sont chargés l'un après l'autre (mémoire). Les sorties intermédiaires sont gardées : on pourra dire **où** la chaîne casse (reconnaissance ou traduction).
+MMS ne tourne qu'une fois. La traduction est essayée avec plusieurs tailles de NLLB : le premier essai (600M) a montré que **la traduction est le maillon faible** (phrases inventées au ton biblique), alors que le texte fon de MMS semble plausible.
+
+Une variante dont tous les résultats sont déjà en cache n'est **pas** recalculée : ses chiffres restent ceux mesurés.
 """)
 code(r"""
-from vihepat_ia.fon_pipeline import TranscripteurFon, TraducteurFonFr, charger_audio_16k, chronometre
+from vihepat_ia.fon_pipeline import TranscripteurFon, TraducteurFonFr, NLLB_VARIANTES, charger_audio_16k, chronometre
+
+TESTER_3_3B = False  # True : ajoute la variante 3,3 milliards (17 Go à télécharger, peut saturer Colab gratuit)
+VARIANTES = ["nllb-600M", "nllb-1.3B"] + (["nllb-3.3B"] if TESTER_3_3B else [])
+fichier_cache = lambda k: IA / "resultats" / ("fon_mms_nllb.jsonl" if k == "nllb-600M" else f"fon_mms_{k}.jsonl")
+
+def lire_cache(k):
+    f = fichier_cache(k)
+    dernier = {}
+    if f.exists():
+        for l in f.read_text(encoding="utf-8").splitlines():
+            x = json.loads(l); dernier[x["id"]] = x
+    return dernier
 
 lignes = []
 asr = TranscripteurFon(DEVICE)
@@ -98,44 +112,57 @@ for f in notes:
                    "texte_fon": texte_fon, "ms_mms": round(ms)})
 del asr; torch.cuda.empty_cache() if DEVICE == "cuda" else None
 
-trad = TraducteurFonFr(DEVICE)
-for l in lignes:
-    l["texte_fr"], ms = chronometre(trad, l["texte_fon"]) if l["texte_fon"] else ("", 0)
-    l["ms_nllb"] = round(ms)
-del trad
+traductions = {}  # variante -> {id: (texte_fr, ms)}
+for k in VARIANTES:
+    cache = lire_cache(k)
+    if all(cache.get(l["id"], {}).get("ok") for l in lignes):
+        traductions[k] = {i: (r["texte_fr"], r.get("ms_nllb")) for i, r in cache.items()}
+        print(f"{k} : déjà mesuré, repris du cache"); continue
+    trad = TraducteurFonFr(DEVICE, NLLB_VARIANTES[k])
+    traductions[k] = {l["id"]: chronometre(trad, l["texte_fon"]) if l["texte_fon"] else ("", 0) for l in lignes}
+    del trad; torch.cuda.empty_cache() if DEVICE == "cuda" else None
+    print(f"{k} : traduit")
 
-pd.set_option("display.max_colwidth", 110)
-df = pd.DataFrame(lignes)
-df["phrase de la fiche"] = df.vignette.map(lambda v: vignettes[v]["texte"])
-df[["id", "texte_fon", "texte_fr", "phrase de la fiche"]]
+pd.set_option("display.max_colwidth", 90)
+df = pd.DataFrame([{"id": l["id"], "fiche": vignettes[l["vignette"]]["texte"], "texte_fon (MMS)": l["texte_fon"],
+                    **{k: traductions[k][l["id"]][0] for k in VARIANTES}} for l in lignes])
+df
 """)
 
 md(r"""
 ## 3. Extraction (Gemini, texte) puis moteur de règles
 
-Même prompt `extraction-v1` que l'application, cette fois sur la **traduction française**. Résultats mis en cache dans `resultats/fon_mms_nllb.jsonl`.
+Même prompt `extraction-v1` que l'application, sur chaque **traduction française**. Un fichier de résultats par variante dans `resultats/`.
 """)
 code(r"""
 from vihepat_ia import gemini as G
 from vihepat_ia.triage_rules import niveau_depuis_extraction, ORDRE
 
-CACHE = IA / "resultats" / "fon_mms_nllb.jsonl"
-deja = {json.loads(l)["id"]: json.loads(l) for l in CACHE.read_text(encoding="utf-8").splitlines()} if CACHE.exists() else {}
 cle = os.environ.get("GEMINI_API_KEY")
-with CACHE.open("a", encoding="utf-8") as out:
-    for l in lignes:
-        if l["id"] in deja and deja[l["id"]].get("ok") and deja[l["id"]].get("texte_fr") == l["texte_fr"]:
-            continue
-        if not cle:
-            print("Pas de clé Gemini : étape sautée (ajoutez GEMINI_API_KEY dans les secrets Colab)"); break
-        r = G.appeler("gemini-3.5-flash-lite", [{"text": G.PROMPT["user_text"] + (l["texte_fr"] or "(vide)")}], cle)
-        r.update(l, prompt=G.PROMPT["version"], modeles="mms-1b-all:fon + nllb-200-distilled-600M + gemini-3.5-flash-lite",
-                 horodatage=time.strftime("%Y-%m-%dT%H:%M:%S"))
-        out.write(json.dumps(r, ensure_ascii=False) + "\n"); deja[l["id"]] = r
-        print(l["id"], "ok" if r["ok"] else r.get("erreur")); time.sleep(4)
+resultats = {}
+for k in VARIANTES:
+    deja = lire_cache(k)
+    with fichier_cache(k).open("a", encoding="utf-8") as out:
+        for l in lignes:
+            texte_fr, ms = traductions[k][l["id"]]
+            if deja.get(l["id"], {}).get("ok") and deja[l["id"]].get("texte_fr") == texte_fr:
+                continue
+            if not cle:
+                print("Pas de clé Gemini : étape sautée (ajoutez GEMINI_API_KEY dans les secrets Colab)"); break
+            r = G.appeler("gemini-3.5-flash-lite", [{"text": G.PROMPT["user_text"] + (texte_fr or "(vide)")}], cle)
+            r.update(l, texte_fr=texte_fr, ms_nllb=round(ms or 0), prompt=G.PROMPT["version"],
+                     modeles=f"mms-1b-all:fon + {NLLB_VARIANTES[k].split('/')[-1]} + gemini-3.5-flash-lite",
+                     horodatage=time.strftime("%Y-%m-%dT%H:%M:%S"))
+            out.write(json.dumps(r, ensure_ascii=False) + "\n"); deja[l["id"]] = r
+            print(k, l["id"], "ok" if r["ok"] else r.get("erreur")); time.sleep(4)
+    resultats[k] = deja
 """)
 
-md("## 4. Résultat : MMS + NLLB + Gemini contre Gemini seul, sur les mêmes notes")
+md(r"""
+## 4. Résultat : chaque variante contre Gemini seul, sur les mêmes notes
+
+« Bien classée » ne suffit pas : on vérifie aussi que **la bonne raison** a été trouvée (le signe de gravité ou le symptôme attendu), pour ne pas compter les réussites par hasard.
+""")
 code(r"""
 direct = {}
 f_direct = IA / "resultats" / "gemini-3.5-flash-lite__reel.jsonl"
@@ -144,25 +171,24 @@ if f_direct.exists():
         x = json.loads(l)
         if x["ok"]: direct[x["id"]] = x
 
-res = []
-for l in lignes:
-    v = vignettes[l["vignette"]]; attendu = niveau_depuis_extraction(v, v["traitement_recent"])
-    r = deja.get(l["id"], {})
-    via = niveau_depuis_extraction(r["extraction"], v["traitement_recent"]) if r.get("ok") else None
-    d = direct.get(l["id"])
-    seul = niveau_depuis_extraction(d["extraction"], v["traitement_recent"]) if d else None
-    res.append({"note": l["id"], "attendu": attendu, "Gemini seul": seul, "MMS+NLLB+Gemini": via,
-                "symptômes attendus": v["symptomes"] + v["signes_graves"],
-                "symptômes trouvés (MMS+NLLB)": (r["extraction"]["symptomes"] + r["extraction"]["signes_graves"]) if r.get("ok") else None})
-res = pd.DataFrame(res); display(res)
-
-for col in ["Gemini seul", "MMS+NLLB+Gemini"]:
-    ok = res.dropna(subset=[col])
-    if len(ok):
-        juste = (ok[col] == ok.attendu).sum()
-        sous = sum(ORDRE[p] < ORDRE[a] for p, a in zip(ok[col], ok.attendu))
-        print(f"{col:17} : {juste}/{len(ok)} bien classées, {sous} alerte(s) sous-estimée(s)")
-print(f"Temps moyen : MMS {df.ms_mms.mean():.0f} ms, NLLB {df.ms_nllb.mean():.0f} ms par note ({DEVICE})")
+sources = {"Gemini seul": direct, **{f"MMS+{k}+Gemini": resultats[k] for k in VARIANTES}}
+tableau, bilan = [], []
+for nom, src in sources.items():
+    juste = bonne_raison = sous = n = 0
+    for l in lignes:
+        v = vignettes[l["vignette"]]; attendu = niveau_depuis_extraction(v, v["traitement_recent"])
+        r = src.get(l["id"])
+        if not (r and r.get("ok")): continue
+        x = r["extraction"]; p = niveau_depuis_extraction(x, v["traitement_recent"]); n += 1
+        cles_attendues = set(v["signes_graves"]) or set(v["symptomes"]) - {"autre"}
+        raison = bool(cles_attendues & (set(x["signes_graves"]) | set(x["symptomes"])))
+        juste += p == attendu; bonne_raison += (p == attendu and raison); sous += ORDRE[p] < ORDRE[attendu]
+        tableau.append({"note": l["id"], "méthode": nom, "attendu": attendu, "obtenu": p, "bonne raison": raison,
+                        "trouvé": x["symptomes"] + x["signes_graves"]})
+    bilan.append({"méthode": nom, "notes": n, "bien classées": juste, "dont pour la bonne raison": bonne_raison,
+                  "alertes sous-estimées": sous})
+display(pd.DataFrame(bilan).set_index("méthode"))
+pd.DataFrame(tableau).pivot(index="note", columns="méthode", values="obtenu")
 """)
 
 md(r"""
@@ -172,12 +198,14 @@ md(r"""
 - **Si le texte fon de MMS est déjà faux** : la reconnaissance vocale est le maillon faible (MMS a surtout été entraîné sur des lectures de textes religieux, très différentes d'un patient qui parle au téléphone).
 - **À faire relire par une personne qui parle fon** : la colonne `texte_fon`, pour dire si MMS a bien entendu.
 
-Pour rapatrier les résultats dans le dépôt : téléchargez `resultats/fon_mms_nllb.jsonl` (cellule suivante) et déposez-le dans `ia/resultats/` sur le PC de l'équipe.
+Pour rapatrier les résultats dans le dépôt : la cellule suivante télécharge les fichiers `resultats/fon_mms_*.jsonl` ; déposez-les dans `ia/resultats/` sur le PC de l'équipe.
 """)
 code(r"""
-if EN_COLAB and CACHE.exists():
+if EN_COLAB:
     from google.colab import files
-    files.download(str(CACHE))
+    for k in VARIANTES:
+        if fichier_cache(k).exists():
+            files.download(str(fichier_cache(k)))
 """)
 
 nb = nbf.v4.new_notebook(cells=C, metadata={"kernelspec": {"name": "python3", "display_name": "Python 3", "language": "python"},

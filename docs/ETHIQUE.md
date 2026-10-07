@@ -39,7 +39,7 @@ Le VIH et les hépatites sont des pathologies stigmatisées : une fuite peut exc
 
 1. Aucune donnée réelle de patient : performance réelle inconnue.
 2. Échantillon de 165 messages, annotation sans double lecture ni médecin.
-3. Audio de synthèse uniquement ; fon non évalué.
+3. Vraies voix encore peu nombreuses (1 locuteur, 18 notes) ; en fon, aucune méthode testée n'est assez fiable : Gemini seul 0/9, MMS + NLLB-200 3/9 (`docs/IA.md`).
 4. Dépendance à un service externe (disponibilité mesurée dans le notebook : surcharges 503 observées pendant les tests).
 5. Le moteur de règles n'est pas un dispositif médical validé.
 

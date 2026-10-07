@@ -15,6 +15,12 @@ import numpy as np
 
 MMS = "facebook/mms-1b-all"
 NLLB = "facebook/nllb-200-distilled-600M"
+# Variantes de traduction comparées (06-07/10/2026) ; la 3.3B pèse 17 Go et peut saturer Colab gratuit
+NLLB_VARIANTES = {
+    "nllb-600M": "facebook/nllb-200-distilled-600M",
+    "nllb-1.3B": "facebook/nllb-200-distilled-1.3B",
+    "nllb-3.3B": "facebook/nllb-200-3.3B",
+}
 
 
 def charger_audio_16k(chemin):
@@ -41,11 +47,14 @@ class TranscripteurFon:
 
 
 class TraducteurFonFr:
-    def __init__(self, device):
+    def __init__(self, device, modele=NLLB):
+        import torch
         from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
         self.device = device
-        self.tok = AutoTokenizer.from_pretrained(NLLB, src_lang="fon_Latn")
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(NLLB).to(device)
+        self.tok = AutoTokenizer.from_pretrained(modele, src_lang="fon_Latn")
+        # Demi-précision sur GPU : divise la mémoire par deux (indispensable pour les grosses variantes)
+        dtype = torch.float16 if device == "cuda" else torch.float32
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(modele, torch_dtype=dtype, low_cpu_mem_usage=True).to(device)
 
     def __call__(self, texte):
         import torch

@@ -99,6 +99,19 @@ Mesures du 05/10/2026, prompt `extraction-v1`, 165 messages fictifs annotés (70
 
 **Coût** (prix officiels relevés le 05/10/2026 : Flash-Lite 0,30 $ / M tokens en entrée, 2,50 $ / M en sortie) : ~544 tokens en entrée et ~104 en sortie par message, soit **0,42 $ pour 1 000 messages texte** et **0,44 $ pour 1 000 notes vocales**. Le palier gratuit suffit pour une démonstration, mais pas pour la production (confidentialité, voir `ETHIQUE.md`).
 
+**Le fon (vraies voix, 1 locuteur, 9 notes « alerte », 06-07/10/2026)**
+
+| Méthode | Bien classées | Pour la bonne raison | Alertes ratées |
+|---|---|---|---|
+| Gemini seul (audio fon) | 0 / 9 | 0 | 9 |
+| MMS (reconnaissance fon) + NLLB-200 600M (traduction) + Gemini + règles | 3 / 9 | 2 | 6 |
+| Les mêmes messages dits en français, Gemini seul | 9 / 9 | 9 | 0 |
+
+- Gemini **reconnaît** le fon (9/9 détectés « fon ») mais ne le **comprend** pas : transcriptions inventées.
+- Avec MMS + NLLB (notebook `ia/VIHEPAT_fon_MMS_NLLB.ipynb`, Colab GPU, ~0,3 s MMS + 1 à 3 s NLLB par note), le texte fon produit par MMS paraît plausible (à faire valider par un locuteur), mais **la traduction est le maillon faible** : phrases inventées au registre biblique (« élevé dans la montagne », « airain »), probablement héritées des données d'entraînement de ces modèles.
+- Conséquence dans l'application : une note détectée en fon n'est **jamais** utilisée (pas de pré-remplissage, pas de texte dans le chat) ; le patient passe par les pictogrammes. 6 alertes ratées sur 9 seraient dangereuses.
+- Suite prévue : NLLB 1,3 et 3,3 milliards de paramètres (déjà prévus dans le notebook), relecture des sorties MMS par un locuteur, plus de notes et de locuteurs.
+
 **Piste d'amélioration (non évaluée)** : ajouter les signes de gravité détectés par les mots-clés à ceux de Gemini (union), puisque les deux méthodes ne ratent pas les mêmes. Ce réglage a été imaginé après lecture des erreurs : il devra être mesuré sur de **nouveaux** messages pour ne pas sur-ajuster au jeu de test.
 
 ## 5. Éthique

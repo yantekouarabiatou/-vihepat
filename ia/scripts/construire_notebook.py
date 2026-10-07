@@ -417,6 +417,49 @@ if len(reel) and (reel.langue == "fon").any():
     print(f"Sous-triages en fon : {len(erreurs_fon)}"); display(erreurs_fon[["fichier", "niveau_or", "pred", "transcription"]])
 """)
 
+md(r"""
+## 8 ter. Piste fon : reconnaissance MMS + traduction NLLB-200, puis notre chaîne
+
+Gemini seul ne comprend pas le fon (section 8 bis). On a testé des modèles spécialisés qui couvrent le fon : **MMS** (Meta, reconnaissance vocale, adaptateur « fon ») puis **NLLB-200** (Meta, traduction fon → français), avant l'extraction Gemini et le moteur de règles habituels. Exécuté sur Colab GPU : notebook `VIHEPAT_fon_MMS_NLLB.ipynb`, résultats dans `resultats/fon_mms_*.jsonl`.
+
+« Pour la bonne raison » : le niveau est juste **et** le signe de gravité (ou symptôme) attendu a été trouvé, pour ne pas compter les réussites par hasard.
+""")
+code(r"""
+fichiers_fon = sorted((IA / "resultats").glob("fon_mms_*.jsonl"))
+fon_pistes = pd.DataFrame()
+if not fichiers_fon:
+    print("Piste fon pas encore exécutée (VIHEPAT_fon_MMS_NLLB.ipynb sur Colab)")
+else:
+    def dernier_par_id(f):
+        d = {}
+        for l in f.read_text(encoding="utf-8").splitlines():
+            x = json.loads(l); d[x["id"]] = x
+        return d
+    sources = {"Gemini seul (audio)": {k: v for k, v in (G.charger(cache_reel)[0] if cache_reel.exists() else {}).items() if k.startswith("fon_")}}
+    for f in fichiers_fon:
+        d = dernier_par_id(f)
+        nom = next(iter(d.values()))["modeles"].replace("gemini-3.5-flash-lite", "Gemini")
+        sources[nom] = d
+    ids = sorted(set.intersection(*(set(s) for s in sources.values())))
+    lignes = []
+    for nom, src in sources.items():
+        juste = raison_ok = sous = 0
+        for i in ids:
+            r = src[i]
+            if not r.get("ok"): continue
+            v = df.loc[i.split("_")[-1]]; x = r["extraction"]; p = niveau_depuis_extraction(x, v.traitement_recent)
+            cles = set(v.signes_graves) or set(v.symptomes) - {"autre"}
+            raison = bool(cles & (set(x["signes_graves"]) | set(x["symptomes"])))
+            juste += p == v.niveau_or; raison_ok += p == v.niveau_or and raison; sous += ORDRE[p] < ORDRE[v.niveau_or]
+        lignes.append({"méthode": nom, "notes fon": len(ids), "bien classées": juste, "pour la bonne raison": raison_ok,
+                       "alertes sous-estimées": sous})
+    fon_pistes = pd.DataFrame(lignes).set_index("méthode")
+    display(fon_pistes)
+    exemple = dernier_par_id(fichiers_fon[0])
+    display(pd.DataFrame([{"note": i, "fiche": df.texte[i.split("_")[-1]], "MMS (fon)": exemple[i]["texte_fon"],
+                           "traduction": exemple[i]["texte_fr"]} for i in ids]))
+""")
+
 md("## 9. Latence et coût mesurés")
 md(r"""
 Prix officiels relevés le **05/10/2026** sur https://ai.google.dev/gemini-api/docs/pricing (palier payant ; un palier gratuit existe pour les deux modèles) :
@@ -505,6 +548,7 @@ lignes = [f"# Résultats de l'évaluation (généré le {time.strftime('%d/%m/%Y
           "## Fiabilité de l'API pendant la mesure", "", fiabilite.to_markdown(), "",
           "## Audio (voix de synthèse, 42 messages)", "", audio.to_markdown() if len(audio) else "_non exécuté_", "",
           "## Vraies voix (fon, français accent béninois)", "", vraies_voix.to_markdown() if len(reel) else "_pas encore d'enregistrements_", "",
+          "## Piste fon : MMS + NLLB-200 puis Gemini (Colab)", "", fon_pistes.to_markdown() if len(fon_pistes) else "_non exécutée_", "",
           "## Latence et coût", "", couts.to_markdown(), "",
           "## Extraction champ par champ", "", extraction.to_markdown()]
 (IA / "RESULTATS.md").write_text("\n".join(lignes), encoding="utf-8")
