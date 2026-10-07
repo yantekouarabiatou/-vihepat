@@ -36,8 +36,12 @@ import sys, os, subprocess, json, time, zipfile, re
 from pathlib import Path
 
 EN_COLAB = "google.colab" in sys.modules
-if EN_COLAB and not Path("vihepat").exists():
-    subprocess.run(["git", "clone", "--depth", "1", "https://github.com/yantekouarabiatou/-vihepat.git", "vihepat"], check=True)
+if EN_COLAB:
+    # Toujours la dernière version du dépôt, même si la session Colab en garde une ancienne copie
+    if Path("vihepat").exists():
+        subprocess.run(["git", "-C", "vihepat", "pull", "--ff-only"], check=True)
+    else:
+        subprocess.run(["git", "clone", "--depth", "1", "https://github.com/yantekouarabiatou/-vihepat.git", "vihepat"], check=True)
 IA = next(p for p in [Path.cwd(), Path.cwd() / "ia", Path("vihepat/ia")] if (p / "vihepat_ia").exists()).resolve()
 sys.path.insert(0, str(IA))
 if EN_COLAB:

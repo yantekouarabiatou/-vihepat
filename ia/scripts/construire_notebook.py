@@ -42,8 +42,12 @@ EN_COLAB = "google.colab" in sys.modules
 DEPOT = "https://github.com/yantekouarabiatou/-vihepat.git"
 BRANCHE = "feat/circuit-soignant"
 
-if EN_COLAB and not Path("vihepat").exists():
-    subprocess.run(["git", "clone", "--depth", "1", "-b", BRANCHE, DEPOT, "vihepat"], check=True)
+if EN_COLAB:
+    # Toujours la dernière version du dépôt, même si la session Colab en garde une ancienne copie
+    if Path("vihepat").exists():
+        subprocess.run(["git", "-C", "vihepat", "pull", "--ff-only"], check=True)
+    else:
+        subprocess.run(["git", "clone", "--depth", "1", "-b", BRANCHE, DEPOT, "vihepat"], check=True)
 IA = next(p for p in [Path.cwd(), Path.cwd() / "ia", Path("vihepat/ia")] if (p / "vihepat_ia").exists()).resolve()
 if EN_COLAB:
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r", str(IA / "requirements.txt")], check=True)

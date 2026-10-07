@@ -1,4 +1,4 @@
-# Résultats de l'évaluation (généré le 07/10/2026 09:02 par le notebook)
+# Résultats de l'évaluation (généré le 07/10/2026 09:24 par le notebook)
 
 Jeu : 165 messages fictifs ({'banal': 49, 'a_surveiller': 46, 'alerte': 70}), 165 évalués pour les modèles A · mots-clés, B · TF-IDF, C · Gemini Flash-Lite. Prompt `extraction-v1`.
 
@@ -41,10 +41,10 @@ Jeu : 165 messages fictifs ({'banal': 49, 'a_surveiller': 46, 'alerte': 70}), 16
 
 |                                    |   n |   latence médiane (s) |   p95 (s) |   tokens entrée |   tokens sortie |   tokens raisonnement |   coût / 1 000 notes ($) |
 |:-----------------------------------|----:|----------------------:|----------:|----------------:|----------------:|----------------------:|-------------------------:|
-| ('gemini-3.5-flash-lite', 'texte') | 165 |              2.48     |      3.83 |             544 |             104 |                     0 |                    0.422 |
-| ('gemini-3.5-flash-lite', 'audio') |  42 |              3.45     |     32.17 |             655 |              98 |                     0 |                    0.443 |
-| ('A · mots-clés', 'texte')         | 165 |              0.001073 |    nan    |             nan |             nan |                   nan |                    0     |
-| ('B · TF-IDF', 'texte')            | 165 |              0.000587 |    nan    |             nan |             nan |                   nan |                    0     |
+| ('gemini-3.5-flash-lite', 'texte') | 165 |               2.48    |      3.83 |             544 |             104 |                     0 |                    0.422 |
+| ('gemini-3.5-flash-lite', 'audio') |  42 |               3.45    |     32.17 |             655 |              98 |                     0 |                    0.443 |
+| ('A · mots-clés', 'texte')         | 165 |               0.00061 |    nan    |             nan |             nan |                   nan |                    0     |
+| ('B · TF-IDF', 'texte')            | 165 |               0.00082 |    nan    |             nan |             nan |                   nan |                    0     |
 
 ## Extraction champ par champ
 
