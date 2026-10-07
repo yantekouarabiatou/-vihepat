@@ -1,5 +1,29 @@
 [
  {
+  "fichier": "fon_L1_V016",
+  "vignette": "V016",
+  "langue": "fon",
+  "locuteur": "L1",
+  "duree_s": 6.8,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fon_L1_V039",
+  "vignette": "V039",
+  "langue": "fon",
+  "locuteur": "L1",
+  "duree_s": 8.0,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fon_L1_V097",
+  "vignette": "V097",
+  "langue": "fon",
+  "locuteur": "L1",
+  "duree_s": 8.6,
+  "source": ".ogg"
+ },
+ {
   "fichier": "fon_L1_V098",
   "vignette": "V098",
   "langue": "fon",
@@ -13,6 +37,14 @@
   "langue": "fon",
   "locuteur": "L1",
   "duree_s": 8.4,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fon_L1_V125",
+  "vignette": "V125",
+  "langue": "fon",
+  "locuteur": "L1",
+  "duree_s": 10.5,
   "source": ".ogg"
  },
  {
@@ -32,11 +64,35 @@
   "source": ".ogg"
  },
  {
+  "fichier": "fon_L1_V161",
+  "vignette": "V161",
+  "langue": "fon",
+  "locuteur": "L1",
+  "duree_s": 8.6,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fr_L1_V039",
+  "vignette": "V039",
+  "langue": "fr",
+  "locuteur": "L1",
+  "duree_s": 5.0,
+  "source": ".ogg"
+ },
+ {
   "fichier": "fr_L1_V055",
   "vignette": "V055",
   "langue": "fr",
   "locuteur": "L1",
   "duree_s": 6.5,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fr_L1_V097",
+  "vignette": "V097",
+  "langue": "fr",
+  "locuteur": "L1",
+  "duree_s": 5.7,
   "source": ".ogg"
  },
  {
@@ -56,6 +112,14 @@
   "source": ".ogg"
  },
  {
+  "fichier": "fr_L1_V125",
+  "vignette": "V125",
+  "langue": "fr",
+  "locuteur": "L1",
+  "duree_s": 10.0,
+  "source": ".ogg"
+ },
+ {
   "fichier": "fr_L1_V126",
   "vignette": "V126",
   "langue": "fr",
@@ -69,6 +133,14 @@
   "langue": "fr",
   "locuteur": "L1",
   "duree_s": 4.8,
+  "source": ".ogg"
+ },
+ {
+  "fichier": "fr_L1_V161",
+  "vignette": "V161",
+  "langue": "fr",
+  "locuteur": "L1",
+  "duree_s": 7.5,
   "source": ".ogg"
  }
 ]
