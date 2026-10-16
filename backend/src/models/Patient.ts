@@ -17,10 +17,13 @@ export interface PatientAttributes {
   languePreferee: string;
   consentementDonne: boolean;
   dateConsentement?: Date | null;
+  /** Le patient accepte que ses confirmations de rappel soient visibles par l'équipe soignante */
+  partageConfirmations: boolean;
 }
 
 type PatientCreation = Optional<PatientAttributes,
-  'id' | 'dateNaissance' | 'sexe' | 'telephone' | 'region' | 'commune' | 'dateDiagnostic' | 'dateConsentement'>;
+  'id' | 'dateNaissance' | 'sexe' | 'telephone' | 'region' | 'commune' | 'dateDiagnostic' | 'dateConsentement'
+  | 'partageConfirmations'>;
 
 export class Patient extends Model<PatientAttributes, PatientCreation> implements PatientAttributes {
   declare id: number;
@@ -36,6 +39,7 @@ export class Patient extends Model<PatientAttributes, PatientCreation> implement
   declare languePreferee: string;
   declare consentementDonne: boolean;
   declare dateConsentement?: Date | null;
+  declare partageConfirmations: boolean;
 }
 
 Patient.init(
@@ -56,6 +60,7 @@ Patient.init(
     languePreferee: { type: DataTypes.STRING(10), defaultValue: 'fr' },
     consentementDonne: { type: DataTypes.BOOLEAN, defaultValue: false },
     dateConsentement: { type: DataTypes.DATE, allowNull: true },
+    partageConfirmations: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   },
   { sequelize, tableName: 'patients' }
 );

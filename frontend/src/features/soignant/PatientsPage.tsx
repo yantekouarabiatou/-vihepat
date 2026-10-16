@@ -55,20 +55,14 @@ import {
 import { useAuthStore } from "@/store/auth.store";
 import { apiErrorMessage } from "@/lib/api-error";
 import { formatTaux, tauxStyle } from "@/lib/observance";
+import { localeAffichage } from "@/lib/date-locale";
 import {
   telechargerFichePatientPdf,
   imprimerFichePatient,
   type PatientCredentialsDoc,
 } from "@/lib/patient-pdf";
 
-const PATHOLOGIE_OPTIONS = [
-  { value: "vih", label: "VIH" },
-  { value: "vhb", label: "Hépatite B" },
-  { value: "vhc", label: "Hépatite C" },
-  { value: "vih_vhb", label: "VIH + Hépatite B" },
-  { value: "vih_vhc", label: "VIH + Hépatite C" },
-  { value: "vhb_vhc", label: "Hépatite B + C" },
-];
+const PATHOLOGIES = ["vih", "vhb", "vhc", "vih_vhb", "vih_vhc", "vhb_vhc"] as const;
 
 const PATHOLOGIE_COLORS: Record<string, string> = {
   vih: "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-900",
@@ -80,7 +74,9 @@ const PATHOLOGIE_COLORS: Record<string, string> = {
 };
 
 export function PatientsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = localeAffichage(i18n.resolvedLanguage);
+  const PATHOLOGIE_OPTIONS = PATHOLOGIES.map((v) => ({ value: v, label: t(`shared.pathologie.${v}`) }));
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -220,7 +216,7 @@ export function PatientsPage() {
       setModalNouveauOpen(false);
       resetNouveauForm();
       queryClient.invalidateQueries({ queryKey: ["soignant", "patients"] });
-      toast.success(`Dossier patient créé avec succès : ${res.patient.codePatient}`);
+      toast.success(t("patients.toast_cree", { code: res.patient.codePatient }));
 
       // Préparation automatique de la fiche d'accès PDF téléchargeable
       const docData: PatientCredentialsDoc = {
@@ -242,7 +238,7 @@ export function PatientsPage() {
       // Déclencher le téléchargement immédiat du PDF
       telechargerFichePatientPdf(docData);
     },
-    onError: (err) => toast.error(apiErrorMessage(err, "Erreur lors de la création du patient")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("patients.erreur_creation"))),
   });
 
   // Mutation Modification Patient
@@ -264,23 +260,23 @@ export function PatientsPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Dossier patient mis à jour avec succès !");
+      toast.success(t("patients.toast_modifie"));
       setPatientEnModification(null);
       queryClient.invalidateQueries({ queryKey: ["soignant", "patients"] });
     },
-    onError: (err) => toast.error(apiErrorMessage(err, "Erreur lors de la mise à jour du patient")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("patients.erreur_modification"))),
   });
 
   // Mutation Rattachement Patient
   const { mutate: rattacherPatient, isPending: attachingPatient } = useMutation({
     mutationFn: () => soignantApi.rattacherPatient(codeRattacher.trim()),
     onSuccess: (p) => {
-      toast.success(`Patient ${p.codePatient} rattaché à votre file active !`);
+      toast.success(t("patients.toast_rattache", { code: p.codePatient }));
       setModalRattacherOpen(false);
       setCodeRattacher("");
       queryClient.invalidateQueries({ queryKey: ["soignant", "patients"] });
     },
-    onError: (err) => toast.error(apiErrorMessage(err, "Erreur lors du rattachement du patient")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("patients.erreur_rattachement"))),
   });
 
   // Mutation Réinitialisation Accès & Nouveau mot de passe
@@ -288,7 +284,7 @@ export function PatientsPage() {
     mutationFn: (patientId: number) => soignantApi.reinitialiserAcces(patientId),
     onSuccess: (res: CreatePatientResult) => {
       setPatientEnReinitialisation(null);
-      toast.success(`Accès réinitialisés avec succès pour le patient ${res.patient.codePatient}`);
+      toast.success(t("patients.toast_reinit", { code: res.patient.codePatient }));
       queryClient.invalidateQueries({ queryKey: ["soignant", "patients"] });
 
       const docData: PatientCredentialsDoc = {
@@ -307,26 +303,26 @@ export function PatientsPage() {
       setFichePdfData(docData);
       telechargerFichePatientPdf(docData);
     },
-    onError: (err) => toast.error(apiErrorMessage(err, "Erreur lors de la réinitialisation des accès")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("fiche.erreur_reinit"))),
   });
 
   // Export CSV / Excel du répertoire des patients
   function exporterPatientsCsv() {
     if (!patientsFiltres || patientsFiltres.length === 0) {
-      toast.info("Aucun patient à exporter avec les filtres actuels.");
+      toast.info(t("patients.export_vide"));
       return;
     }
 
     const headers = [
-      "Code Patient",
-      "Nom",
-      "Prenom",
-      "Email",
-      "Pathologie",
-      "Observance 30j (%)",
-      "Observance 7j (%)",
-      "Examens en retard",
-      "Date d admission",
+      t("patients.csv_code"),
+      t("auth.last_name"),
+      t("auth.first_name"),
+      t("auth.email"),
+      t("patients.col_pathologie"),
+      t("patients.csv_observance30"),
+      t("patients.csv_observance7"),
+      t("patients.csv_examens_retard"),
+      t("patients.col_admission"),
     ];
 
     const rows = patientsFiltres.map((p) => [
@@ -338,7 +334,7 @@ export function PatientsPage() {
       p.observance?.taux30 !== null && p.observance?.taux30 !== undefined ? `${p.observance.taux30}%` : "N/A",
       p.observance?.taux7 !== null && p.observance?.taux7 !== undefined ? `${p.observance.taux7}%` : "N/A",
       p.examensEnRetard ?? 0,
-      new Date(p.createdAt).toLocaleDateString("fr-FR"),
+      new Date(p.createdAt).toLocaleDateString(locale),
     ]);
 
     const csvContent =
@@ -360,7 +356,7 @@ export function PatientsPage() {
       URL.revokeObjectURL(url);
     }, 1000);
 
-    toast.success(`Export CSV généré avec succès (${patientsFiltres.length} dossiers)`);
+    toast.success(t("patients.toast_export", { count: patientsFiltres.length }));
   }
 
   function resetNouveauForm() {
@@ -412,20 +408,20 @@ export function PatientsPage() {
   }
 
   return (
-    <AppShell title="Gestion des Patients">
+    <AppShell title={t("sidebar.section_patients")}>
       {/* ===================== EN-TÊTE DE LA PAGE ===================== */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
-              Répertoire & Gestion des Patients
+              {t("patients.titre")}
             </h1>
             <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-              {patients.length} dossiers
+              {t("patients.nb_dossiers", { count: patients.length })}
             </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Suivi des dossiers actifs, enregistrement de nouveaux patients et génération des fiches d'accès sécurisées.
+            {t("patients.sous_titre")}
           </p>
         </div>
 
@@ -436,7 +432,7 @@ export function PatientsPage() {
             className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-3.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
             <Globe className="h-3.5 w-3.5" />
-            Site public
+            {t("app_shell.site_public")}
           </Link>
 
           {!estAdmin && (
@@ -447,7 +443,7 @@ export function PatientsPage() {
               className="rounded-full gap-1.5 text-xs font-semibold"
             >
               <Link2 className="h-3.5 w-3.5" />
-              Rattacher un patient
+              {t("patients.rattacher")}
             </Button>
           )}
 
@@ -456,10 +452,10 @@ export function PatientsPage() {
             size="sm"
             onClick={exporterPatientsCsv}
             className="rounded-full gap-1.5 text-xs font-semibold"
-            title="Exporter le répertoire des patients au format CSV / Excel"
+            title={t("patients.exporter_tooltip")}
           >
             <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-            Exporter (CSV / Excel)
+            {t("patients.exporter")}
           </Button>
 
           <Button
@@ -468,7 +464,7 @@ export function PatientsPage() {
             className="rounded-full gap-2 shadow-sm font-semibold"
           >
             <UserPlus className="h-4 w-4" />
-            Nouveau patient
+            {t("sidebar.patients_nouveau")}
           </Button>
         </div>
       </div>
@@ -477,20 +473,20 @@ export function PatientsPage() {
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-[var(--shadow-card)]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Patients</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("patients.kpi_total")}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Users className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-foreground">{stats.total}</span>
-            <span className="text-xs text-muted-foreground">inscrits dans la file</span>
+            <span className="text-xs text-muted-foreground">{t("patients.kpi_total_sub")}</span>
           </div>
         </div>
 
         <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-[var(--shadow-card)]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Bonne Observance</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("patients.kpi_observance")}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <Activity className="h-4 w-4" />
             </div>
@@ -503,27 +499,27 @@ export function PatientsPage() {
 
         <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-[var(--shadow-card)]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Examens Requis</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("patients.kpi_examens")}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
               <AlertCircle className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">{stats.alertesExamens}</span>
-            <span className="text-xs text-muted-foreground">bilans en retard</span>
+            <span className="text-xs text-muted-foreground">{t("patients.kpi_examens_sub")}</span>
           </div>
         </div>
 
         <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-[var(--shadow-card)]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Sécurité & RGPD</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("patients.kpi_securite")}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400">
               <ShieldCheck className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-sm font-bold text-sky-600 dark:text-sky-400">100 % Authentifiés</span>
-            <span className="text-xs text-muted-foreground">Fiches sécurisées</span>
+            <span className="text-sm font-bold text-sky-600 dark:text-sky-400">{t("patients.kpi_securite_valeur")}</span>
+            <span className="text-xs text-muted-foreground">{t("patients.kpi_securite_sub")}</span>
           </div>
         </div>
       </div>
@@ -537,7 +533,8 @@ export function PatientsPage() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher par nom, prénom, code (VHP-...), email..."
+              placeholder={t("patients.recherche")}
+              aria-label={t("patients.recherche")}
               className="h-10 pl-10 rounded-xl"
             />
           </div>
@@ -546,33 +543,32 @@ export function PatientsPage() {
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
               <Filter className="h-3.5 w-3.5" />
-              <span>Filtres :</span>
+              <span>{t("patients.filtres")}</span>
             </div>
 
             <select
+              aria-label={t("patients.col_pathologie")}
               value={filtrePathologie}
               onChange={(e) => setFiltrePathologie(e.target.value)}
               className="h-10 rounded-xl border border-input bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <option value="all">Toutes pathologies</option>
-              <option value="vih">VIH</option>
-              <option value="vhb">Hépatite B</option>
-              <option value="vhc">Hépatite C</option>
-              <option value="vih_vhb">VIH + Hépatite B</option>
-              <option value="vih_vhc">VIH + Hépatite C</option>
-              <option value="vhb_vhc">Hépatite B + C</option>
+              <option value="all">{t("patients.filtre_toutes_pathologies")}</option>
+              {PATHOLOGIE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
             </select>
 
             <select
+              aria-label={t("patients.col_observance")}
               value={filtreObservance}
               onChange={(e) => setFiltreObservance(e.target.value)}
               className="h-10 rounded-xl border border-input bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <option value="all">Toute observance</option>
-              <option value="good">Bonne observance (≥ 80%)</option>
-              <option value="moderate">Modérée (50-79%)</option>
-              <option value="low">À risque (&lt; 50%)</option>
-              <option value="none">Non renseignée</option>
+              <option value="all">{t("patients.filtre_obs_toutes")}</option>
+              <option value="good">{t("patients.filtre_obs_bonne")}</option>
+              <option value="moderate">{t("patients.filtre_obs_moderee")}</option>
+              <option value="low">{t("patients.filtre_obs_risque")}</option>
+              <option value="none">{t("patients.filtre_obs_aucune")}</option>
             </select>
           </div>
         </div>
@@ -581,7 +577,7 @@ export function PatientsPage() {
         {(search || filtrePathologie !== "all" || filtreObservance !== "all") && (
           <div className="flex items-center justify-between border-t border-border/40 pt-2 text-xs text-muted-foreground">
             <span>
-              {patientsFiltres.length} résultat{patientsFiltres.length > 1 ? "s" : ""} trouvé{patientsFiltres.length > 1 ? "s" : ""}
+              {t("patients.resultats", { count: patientsFiltres.length })}
             </span>
             <button
               onClick={() => {
@@ -591,7 +587,7 @@ export function PatientsPage() {
               }}
               className="font-semibold text-primary hover:underline"
             >
-              Réinitialiser les filtres
+              {t("patients.reinit_filtres")}
             </button>
           </div>
         )}
@@ -602,18 +598,18 @@ export function PatientsPage() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-            <p className="text-sm">Chargement du répertoire des patients...</p>
+            <p className="text-sm">{t("patients.chargement")}</p>
           </div>
         ) : patientsFiltres.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground px-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary mb-3">
               <Users className="h-7 w-7 text-muted-foreground" />
             </div>
-            <h3 className="text-base font-bold text-foreground">Aucun patient correspondant</h3>
+            <h3 className="text-base font-bold text-foreground">{t("patients.vide_titre")}</h3>
             <p className="mt-1 text-sm max-w-md">
               {search || filtrePathologie !== "all" || filtreObservance !== "all"
-                ? "Modifiez vos filtres de recherche pour afficher les dossiers patients."
-                : "Vous n'avez pas encore de patient dans votre file active. Enregistrez un nouveau patient pour commencer."}
+                ? t("patients.vide_filtres")
+                : t("patients.vide_aucun")}
             </p>
             <Button
               size="sm"
@@ -621,7 +617,7 @@ export function PatientsPage() {
               className="mt-4 rounded-full gap-2 font-semibold"
             >
               <UserPlus className="h-4 w-4" />
-              Créer un premier patient
+              {t("patients.creer_premier")}
             </Button>
           </div>
         ) : (
@@ -629,12 +625,12 @@ export function PatientsPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-border/70 bg-secondary/40 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  <th className="py-3.5 pl-6 pr-4">Patient & Identifiant</th>
-                  <th className="px-4 py-3.5">Pathologie</th>
-                  <th className="px-4 py-3.5">Observance (30j)</th>
-                  <th className="px-4 py-3.5">Examens de suivi</th>
-                  <th className="px-4 py-3.5">Date d'admission</th>
-                  <th className="py-3.5 pl-4 pr-6 text-right">Actions</th>
+                  <th className="py-3.5 pl-6 pr-4">{t("patients.col_patient")}</th>
+                  <th className="px-4 py-3.5">{t("patients.col_pathologie")}</th>
+                  <th className="px-4 py-3.5">{t("patients.col_observance")}</th>
+                  <th className="px-4 py-3.5">{t("patients.col_examens")}</th>
+                  <th className="px-4 py-3.5">{t("patients.col_admission")}</th>
+                  <th className="py-3.5 pl-4 pr-6 text-right">{t("patients.col_actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
@@ -661,6 +657,14 @@ export function PatientsPage() {
                             >
                               {p.user.prenom} {p.user.nom}
                             </Link>
+                            {p.rappelsARegarder && (
+                              <span
+                                className="mt-0.5 inline-flex items-center rounded-full bg-[hsl(var(--gold)/0.18)] px-2 py-0.5 text-[10px] font-semibold text-foreground"
+                                title={t("rappels_soignant.badge_tooltip")}
+                              >
+                                {t("rappels_soignant.badge")}
+                              </span>
+                            )}
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="font-mono text-xs font-semibold text-primary">
                                 {p.codePatient}
@@ -695,7 +699,7 @@ export function PatientsPage() {
                           </span>
                           {typeof p.observance?.taux30 === "number" && (
                             <span className="text-[11px] text-muted-foreground">
-                              {p.observance.taux30 >= 80 ? "Optimale" : p.observance.taux30 >= 50 ? "Modérée" : "Irrégulière"}
+                              {p.observance.taux30 >= 80 ? t("patients.obs_optimale") : p.observance.taux30 >= 50 ? t("patients.obs_moderee") : t("patients.obs_irreguliere")}
                             </span>
                           )}
                         </div>
@@ -706,19 +710,19 @@ export function PatientsPage() {
                         {retard > 0 ? (
                           <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
                             <AlertCircle className="h-3.5 w-3.5" />
-                            {retard} bilan{retard > 1 ? "s" : ""} en retard
+                            {t("patients.bilans_retard", { count: retard })}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                            À jour
+                            {t("patients.a_jour")}
                           </span>
                         )}
                       </td>
 
                       {/* Date de création */}
                       <td className="px-4 py-4 text-xs text-muted-foreground">
-                        {new Date(p.createdAt).toLocaleDateString("fr-FR", {
+                        {new Date(p.createdAt).toLocaleDateString(locale, {
                           day: "numeric",
                           month: "short",
                           year: "numeric",
@@ -732,10 +736,11 @@ export function PatientsPage() {
                           <Link
                             to={`/soignant/patients/${p.id}`}
                             className="inline-flex items-center gap-1 rounded-lg border border-border/80 bg-card px-2.5 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-secondary"
-                            title="Consulter le dossier médical complet"
+                            title={t("patients.voir_dossier_tooltip")}
+                            aria-label={t("patients.voir_dossier_tooltip")}
                           >
                             <Eye className="h-3.5 w-3.5 text-primary" />
-                            <span className="hidden lg:inline">Dossier</span>
+                            <span className="hidden lg:inline">{t("patients.voir_dossier")}</span>
                           </Link>
 
                           {/* Modifier */}
@@ -744,10 +749,11 @@ export function PatientsPage() {
                             variant="outline"
                             onClick={() => ouvrirModification(p)}
                             className="h-8 gap-1 px-2.5 text-xs font-semibold rounded-lg"
-                            title="Modifier les informations du patient"
+                            title={t("patients.modifier_tooltip")}
+                            aria-label={t("patients.modifier_tooltip")}
                           >
                             <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="hidden lg:inline">Modifier</span>
+                            <span className="hidden lg:inline">{t("patients.modifier")}</span>
                           </Button>
 
                           {/* Réinitialiser le mot de passe & fiche PDF */}
@@ -756,10 +762,11 @@ export function PatientsPage() {
                             variant="outline"
                             onClick={() => setPatientEnReinitialisation(p)}
                             className="h-8 gap-1 px-2.5 text-xs font-semibold rounded-lg text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-900/50 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                            title="Générer un nouveau mot de passe temporaire et une nouvelle fiche PDF"
+                            title={t("fiche.reinit_tooltip")}
+                            aria-label={t("fiche.reinit_tooltip")}
                           >
                             <KeyRound className="h-3.5 w-3.5" />
-                            <span className="hidden xl:inline">Réinitialiser</span>
+                            <span className="hidden xl:inline">{t("patients.reinitialiser")}</span>
                           </Button>
 
                           {/* Télécharger la fiche PDF d'accès */}
@@ -781,10 +788,11 @@ export function PatientsPage() {
                                 dateCreation: new Date(p.createdAt).toLocaleDateString("fr-FR"),
                               };
                               telechargerFichePatientPdf(doc);
-                              toast.success(`Fiche PDF téléchargée pour ${p.codePatient}`);
+                              toast.success(t("fiche.toast_pdf_pour", { code: p.codePatient }));
                             }}
                             className="h-8 gap-1 px-2.5 text-xs font-semibold rounded-lg"
-                            title="Télécharger la fiche d'accès officielle en PDF"
+                            title={t("patients.pdf_tooltip")}
+                            aria-label={t("patients.pdf_tooltip")}
                           >
                             <FileDown className="h-3.5 w-3.5 text-primary" />
                             <span className="hidden sm:inline">PDF</span>
@@ -806,10 +814,10 @@ export function PatientsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-bold">
               <UserPlus className="h-5 w-5 text-primary" />
-              Créer un nouveau dossier patient
+              {t("patients.nouveau_titre")}
             </DialogTitle>
             <DialogDescription>
-              Enregistrez le patient dans la file active VIHEPAT. Une fiche d'accès officielle en PDF avec mot de passe de connexion sera immédiatement générée.
+              {t("patients.nouveau_desc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -822,112 +830,112 @@ export function PatientsPage() {
           >
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="np-prenom">Prénom *</Label>
+                <Label htmlFor="np-prenom">{t("auth.first_name")} *</Label>
                 <Input
                   id="np-prenom"
                   value={npPrenom}
                   onChange={(e) => setNpPrenom(e.target.value)}
                   required
-                  placeholder="Ex: Awa"
+                  placeholder={t("patients.ph_prenom")}
                   className="rounded-xl h-10"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="np-nom">Nom *</Label>
+                <Label htmlFor="np-nom">{t("auth.last_name")} *</Label>
                 <Input
                   id="np-nom"
                   value={npNom}
                   onChange={(e) => setNpNom(e.target.value)}
                   required
-                  placeholder="Ex: Mensah"
+                  placeholder={t("patients.ph_nom")}
                   className="rounded-xl h-10"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="np-email">Email de connexion sécurisé *</Label>
+              <Label htmlFor="np-email">{t("patients.email_label")} *</Label>
               <Input
                 id="np-email"
                 type="email"
                 value={npEmail}
                 onChange={(e) => setNpEmail(e.target.value)}
                 required
-                placeholder="Ex: patient@exemple.com"
+                placeholder={t("patients.ph_email")}
                 className="rounded-xl h-10"
               />
               <p className="text-[11px] text-muted-foreground">
-                Sert d'identifiant de connexion pour le patient sur le portail VIHEPAT.
+                {t("patients.email_aide")}
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="np-patho">Pathologie suivie *</Label>
+                <Label htmlFor="np-patho">{t("auth.pathologie_label")} *</Label>
                 <SearchableSelect
                   value={npPathologie}
                   onChange={setNpPathologie}
                   options={PATHOLOGIE_OPTIONS}
-                  placeholder="Sélectionner"
+                  placeholder={t("patients.selectionner")}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="np-sexe">Sexe civil</Label>
+                <Label htmlFor="np-sexe">{t("patients.sexe")}</Label>
                 <SearchableSelect
                   value={npSexe}
                   onChange={setNpSexe}
                   options={[
-                    { value: "M", label: "Masculin (M)" },
-                    { value: "F", label: "Féminin (F)" },
+                    { value: "M", label: t("patients.sexe_m") },
+                    { value: "F", label: t("patients.sexe_f") },
                   ]}
-                  placeholder="Non spécifié"
+                  placeholder={t("patients.non_specifie")}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="np-tel">Téléphone</Label>
+                <Label htmlFor="np-tel">{t("patients.telephone")}</Label>
                 <Input
                   id="np-tel"
                   value={npTelephone}
                   onChange={(e) => setNpTelephone(e.target.value)}
-                  placeholder="Ex: +229 97 00 11 22"
+                  placeholder={t("patients.ph_telephone")}
                   className="rounded-xl h-10"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="np-langue">Langue d'accompagnement</Label>
+                <Label htmlFor="np-langue">{t("patients.langue")}</Label>
                 <SearchableSelect
                   value={npLangue}
                   onChange={setNpLangue}
                   options={[
-                    { value: "fr", label: "Français" },
-                    { value: "fon", label: "Fongbé" },
+                    { value: "fr", label: t("language.fr") },
+                    { value: "fon", label: t("language.fon") },
                   ]}
-                  placeholder="Français"
+                  placeholder={t("language.fr")}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="np-region">Région / Département</Label>
+                <Label htmlFor="np-region">{t("patients.region")}</Label>
                 <Input
                   id="np-region"
                   value={npRegion}
                   onChange={(e) => setNpRegion(e.target.value)}
-                  placeholder="Ex: Littoral, Ouémé"
+                  placeholder={t("patients.ph_region")}
                   className="rounded-xl h-10"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="np-commune">Commune / Ville</Label>
+                <Label htmlFor="np-commune">{t("patients.commune")}</Label>
                 <Input
                   id="np-commune"
                   value={npCommune}
                   onChange={(e) => setNpCommune(e.target.value)}
-                  placeholder="Ex: Cotonou, Porto-Novo"
+                  placeholder={t("patients.ph_commune")}
                   className="rounded-xl h-10"
                 />
               </div>
@@ -935,7 +943,7 @@ export function PatientsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="np-naissance">Date de naissance</Label>
+                <Label htmlFor="np-naissance">{t("patients.date_naissance")}</Label>
                 <Input
                   id="np-naissance"
                   type="date"
@@ -945,7 +953,7 @@ export function PatientsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="np-diagnostic">Date du diagnostic</Label>
+                <Label htmlFor="np-diagnostic">{t("patients.date_diagnostic")}</Label>
                 <Input
                   id="np-diagnostic"
                   type="date"
@@ -958,12 +966,12 @@ export function PatientsPage() {
 
             {estAdmin && (
               <div className="space-y-1.5">
-                <Label htmlFor="np-soignant">Soignant référent affecté (Admin)</Label>
+                <Label htmlFor="np-soignant">{t("patients.soignant_admin")}</Label>
                 <SearchableSelect
                   value={npSoignantId}
                   onChange={setNpSoignantId}
                   options={soignantsLookup ?? []}
-                  placeholder="Affecter un soignant (optionnel)"
+                  placeholder={t("fiche.soignant_referent_placeholder")}
                 />
               </div>
             )}
@@ -977,13 +985,13 @@ export function PatientsPage() {
                 className="mt-0.5"
               />
               <Label htmlFor="np-consent" className="text-xs leading-relaxed font-normal cursor-pointer text-foreground">
-                <strong>Consentement médical explicite recueilli :</strong> Le patient a été informé et a donné son consentement libre pour le traitement confidentiel et le suivi sécurisé de ses données de santé sur la plateforme VIHEPAT.
+                <strong>{t("patients.consentement_titre")}</strong> {t("patients.consentement_texte")}
               </Label>
             </div>
 
             <DialogFooter className="pt-2">
               <Button type="button" variant="outline" onClick={() => setModalNouveauOpen(false)} className="rounded-full">
-                Annuler
+                {t("fiche.annuler")}
               </Button>
               <Button
                 type="submit"
@@ -991,7 +999,7 @@ export function PatientsPage() {
                 className="rounded-full font-semibold shadow-sm"
               >
                 {creatingPatient && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Créer le dossier & Générer la fiche PDF
+                {t("patients.creer_submit")}
               </Button>
             </DialogFooter>
           </form>
@@ -1004,10 +1012,10 @@ export function PatientsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-bold">
               <Edit3 className="h-5 w-5 text-primary" />
-              Modifier le dossier patient
+              {t("patients.modifier_titre")}
             </DialogTitle>
             <DialogDescription>
-              Code patient : <span className="font-mono font-bold text-primary">{patientEnModification?.codePatient}</span>
+              {t("fiche.code_patient")} : <span className="font-mono font-bold text-primary">{patientEnModification?.codePatient}</span>
             </DialogDescription>
           </DialogHeader>
 
@@ -1020,7 +1028,7 @@ export function PatientsPage() {
           >
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="edit-prenom">Prénom *</Label>
+                <Label htmlFor="edit-prenom">{t("auth.first_name")} *</Label>
                 <Input
                   id="edit-prenom"
                   value={editPrenom}
@@ -1030,7 +1038,7 @@ export function PatientsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="edit-nom">Nom *</Label>
+                <Label htmlFor="edit-nom">{t("auth.last_name")} *</Label>
                 <Input
                   id="edit-nom"
                   value={editNom}
@@ -1042,7 +1050,7 @@ export function PatientsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="edit-email">Email sécurisé *</Label>
+              <Label htmlFor="edit-email">{t("patients.email_label")} *</Label>
               <Input
                 id="edit-email"
                 type="email"
@@ -1055,31 +1063,31 @@ export function PatientsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="edit-patho">Pathologie suivie *</Label>
+                <Label htmlFor="edit-patho">{t("auth.pathologie_label")} *</Label>
                 <SearchableSelect
                   value={editPathologie}
                   onChange={setEditPathologie}
                   options={PATHOLOGIE_OPTIONS}
-                  placeholder="Sélectionner"
+                  placeholder={t("patients.selectionner")}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="edit-sexe">Sexe</Label>
+                <Label htmlFor="edit-sexe">{t("patients.sexe")}</Label>
                 <SearchableSelect
                   value={editSexe}
                   onChange={setEditSexe}
                   options={[
-                    { value: "M", label: "Masculin (M)" },
-                    { value: "F", label: "Féminin (F)" },
+                    { value: "M", label: t("patients.sexe_m") },
+                    { value: "F", label: t("patients.sexe_f") },
                   ]}
-                  placeholder="Non spécifié"
+                  placeholder={t("patients.non_specifie")}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="edit-tel">Téléphone</Label>
+                <Label htmlFor="edit-tel">{t("patients.telephone")}</Label>
                 <Input
                   id="edit-tel"
                   value={editTelephone}
@@ -1088,22 +1096,22 @@ export function PatientsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="edit-langue">Langue préférée</Label>
+                <Label htmlFor="edit-langue">{t("patients.langue")}</Label>
                 <SearchableSelect
                   value={editLangue}
                   onChange={setEditLangue}
                   options={[
-                    { value: "fr", label: "Français" },
-                    { value: "fon", label: "Fongbé" },
+                    { value: "fr", label: t("language.fr") },
+                    { value: "fon", label: t("language.fon") },
                   ]}
-                  placeholder="Français"
+                  placeholder={t("language.fr")}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="edit-region">Région</Label>
+                <Label htmlFor="edit-region">{t("patients.region")}</Label>
                 <Input
                   id="edit-region"
                   value={editRegion}
@@ -1112,7 +1120,7 @@ export function PatientsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="edit-commune">Commune</Label>
+                <Label htmlFor="edit-commune">{t("patients.commune")}</Label>
                 <Input
                   id="edit-commune"
                   value={editCommune}
@@ -1124,7 +1132,7 @@ export function PatientsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="edit-naissance">Date de naissance</Label>
+                <Label htmlFor="edit-naissance">{t("patients.date_naissance")}</Label>
                 <Input
                   id="edit-naissance"
                   type="date"
@@ -1134,7 +1142,7 @@ export function PatientsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="edit-diagnostic">Date du diagnostic</Label>
+                <Label htmlFor="edit-diagnostic">{t("patients.date_diagnostic")}</Label>
                 <Input
                   id="edit-diagnostic"
                   type="date"
@@ -1147,7 +1155,7 @@ export function PatientsPage() {
 
             <DialogFooter className="pt-2">
               <Button type="button" variant="outline" onClick={() => setPatientEnModification(null)} className="rounded-full">
-                Annuler
+                {t("fiche.annuler")}
               </Button>
               <Button
                 type="submit"
@@ -1155,7 +1163,7 @@ export function PatientsPage() {
                 className="rounded-full font-semibold shadow-sm"
               >
                 {updatingPatient && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Enregistrer les modifications
+                {t("patients.enregistrer")}
               </Button>
             </DialogFooter>
           </form>
@@ -1168,10 +1176,10 @@ export function PatientsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-bold">
               <Link2 className="h-5 w-5 text-primary" />
-              Rattacher un patient existant
+              {t("patients.rattacher_titre")}
             </DialogTitle>
             <DialogDescription>
-              Renseignez le code unique du patient pour l'ajouter à votre liste active de suivi.
+              {t("patients.rattacher_desc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -1183,7 +1191,7 @@ export function PatientsPage() {
             className="space-y-4 pt-2"
           >
             <div className="space-y-1.5">
-              <Label htmlFor="code-rattacher">Code Patient Unique (ex: VHP-2026-XXXXXX) *</Label>
+              <Label htmlFor="code-rattacher">{t("patients.rattacher_label")} *</Label>
               <Input
                 id="code-rattacher"
                 value={codeRattacher}
@@ -1196,11 +1204,11 @@ export function PatientsPage() {
 
             <DialogFooter className="pt-2">
               <Button type="button" variant="outline" onClick={() => setModalRattacherOpen(false)} className="rounded-full">
-                Annuler
+                {t("fiche.annuler")}
               </Button>
               <Button type="submit" disabled={attachingPatient || !codeRattacher.trim()} className="rounded-full font-semibold">
                 {attachingPatient && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Rattacher le patient
+                {t("patients.rattacher_submit")}
               </Button>
             </DialogFooter>
           </form>
@@ -1213,10 +1221,10 @@ export function PatientsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-bold text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="h-6 w-6" />
-              Dossier & Fiche d'accès créés avec succès !
+              {t("patients.fiche_titre")}
             </DialogTitle>
             <DialogDescription>
-              Le téléchargement de la <strong>fiche d'accès PDF officielle</strong> a été déclenché. Vous pouvez également l'imprimer directement pour la remettre en main propre au patient.
+              {t("patients.fiche_desc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -1225,7 +1233,7 @@ export function PatientsPage() {
               <div className="rounded-2xl border border-border/80 bg-secondary/40 p-4 space-y-2.5 font-mono text-sm">
                 <div>
                   <span className="text-[10px] uppercase font-sans font-bold tracking-wider text-muted-foreground block">
-                    Patient
+                    {t("patients.fiche_patient")}
                   </span>
                   <span className="font-bold text-foreground">
                     {fichePdfData.patient.prenom} {fichePdfData.patient.nom}
@@ -1233,7 +1241,7 @@ export function PatientsPage() {
                 </div>
                 <div>
                   <span className="text-[10px] uppercase font-sans font-bold tracking-wider text-muted-foreground block">
-                    Code Patient Unique
+                    {t("patients.fiche_code")}
                   </span>
                   <span className="text-base font-extrabold text-primary">
                     {fichePdfData.patient.codePatient}
@@ -1241,13 +1249,13 @@ export function PatientsPage() {
                 </div>
                 <div>
                   <span className="text-[10px] uppercase font-sans font-bold tracking-wider text-muted-foreground block">
-                    Identifiant de connexion (Email)
+                    {t("patients.fiche_identifiant")}
                   </span>
                   <span className="font-bold text-foreground">{fichePdfData.patient.email}</span>
                 </div>
                 <div className="pt-2 border-t border-border/60">
                   <span className="text-[10px] uppercase font-sans font-bold tracking-wider text-muted-foreground block">
-                    Mot de passe temporaire initial
+                    {t("patients.fiche_mdp")}
                   </span>
                   <div className="flex items-center justify-between mt-1 bg-card p-2 rounded-xl border border-emerald-500/30">
                     <span className="text-base font-extrabold tracking-widest text-emerald-600 dark:text-emerald-400">
@@ -1258,13 +1266,13 @@ export function PatientsPage() {
                       variant="ghost"
                       onClick={() => {
                         navigator.clipboard.writeText(
-                          `Identifiants VIHEPAT:\nEmail: ${fichePdfData.patient.email}\nCode: ${fichePdfData.patient.codePatient}\nMot de passe: ${fichePdfData.motDePasseTemporaire}`
+                          `${t("patients.copie_titre")}\n${t("auth.email")} : ${fichePdfData.patient.email}\n${t("fiche.code_patient")} : ${fichePdfData.patient.codePatient}\n${t("auth.password")} : ${fichePdfData.motDePasseTemporaire}`
                         );
-                        toast.success("Identifiants copiés dans le presse-papier !");
+                        toast.success(t("patients.toast_copie"));
                       }}
                       className="h-7 gap-1 text-xs"
                     >
-                      <Copy className="h-3 w-3" /> Copier
+                      <Copy className="h-3 w-3" /> {t("patients.copier")}
                     </Button>
                   </div>
                 </div>
@@ -1275,12 +1283,12 @@ export function PatientsPage() {
                 <Button
                   onClick={() => {
                     telechargerFichePatientPdf(fichePdfData);
-                    toast.success("Fiche d'accès PDF téléchargée !");
+                    toast.success(t("fiche.toast_pdf"));
                   }}
                   className="rounded-full gap-2 font-semibold shadow-sm"
                 >
                   <FileDown className="h-4 w-4" />
-                  Télécharger le PDF
+                  {t("fiche.telecharger_pdf")}
                 </Button>
 
                 <Button
@@ -1291,12 +1299,12 @@ export function PatientsPage() {
                   className="rounded-full gap-2 font-semibold"
                 >
                   <Printer className="h-4 w-4" />
-                  Imprimer la fiche (A4)
+                  {t("fiche.imprimer_a4")}
                 </Button>
               </div>
 
               <p className="text-xs text-center text-muted-foreground leading-relaxed">
-                Ce document officiel contient toutes les instructions pour la première connexion du patient.
+                {t("patients.fiche_note")}
               </p>
             </div>
           )}
@@ -1307,7 +1315,7 @@ export function PatientsPage() {
               onClick={() => setFichePdfData(null)}
               className="w-full rounded-full font-semibold"
             >
-              Fermer
+              {t("password.close")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1319,22 +1327,19 @@ export function PatientsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-bold text-amber-600 dark:text-amber-400">
               <KeyRound className="h-5 w-5" />
-              Réinitialiser les identifiants d'accès
+              {t("fiche.reinit_titre")}
             </DialogTitle>
             <DialogDescription>
-              Vous êtes sur le point de générer un <strong>nouveau mot de passe temporaire</strong> pour le patient{" "}
-              <strong>
-                {patientEnReinitialisation?.user.prenom} {patientEnReinitialisation?.user.nom}
-              </strong>{" "}
-              ({patientEnReinitialisation?.codePatient}).
+              {t("fiche.reinit_desc", {
+                nom: `${patientEnReinitialisation?.user.prenom ?? ""} ${patientEnReinitialisation?.user.nom ?? ""}`,
+                code: patientEnReinitialisation?.codePatient ?? "",
+              })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs text-amber-900 dark:text-amber-200 leading-relaxed space-y-2">
-            <p>• L'ancien mot de passe du patient ne sera plus valide.</p>
-            <p>
-              • Une nouvelle <strong>Fiche d'accès PDF officielle</strong> contenant ses nouveaux identifiants sera générée et téléchargée immédiatement.
-            </p>
+            <p>• {t("fiche.reinit_point1")}</p>
+            <p>• {t("fiche.reinit_point2")}</p>
           </div>
 
           <DialogFooter className="pt-2">
@@ -1344,7 +1349,7 @@ export function PatientsPage() {
               onClick={() => setPatientEnReinitialisation(null)}
               className="rounded-full"
             >
-              Annuler
+              {t("fiche.annuler")}
             </Button>
             <Button
               type="button"
@@ -1357,7 +1362,7 @@ export function PatientsPage() {
               className="rounded-full font-semibold bg-amber-600 hover:bg-amber-700 text-white"
             >
               {resettingAcces && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirmer & Télécharger la nouvelle fiche PDF
+              {t("fiche.reinit_confirmer")}
             </Button>
           </DialogFooter>
         </DialogContent>

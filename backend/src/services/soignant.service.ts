@@ -6,6 +6,8 @@ import {
 import type { TypeObservation } from '../models/Observation';
 import type { Pathologie } from '../models/Patient';
 import { getAlertesExamens, getResumeObservance } from './observance.service';
+import { getEtatAgrege } from './rappels.service';
+import { memoriserVersion } from '../utils/token-version';
 import { genererCodePatient } from './auth.service';
 import { sendPasswordResetEmail, sendWelcomePatientEmail } from './mail.service';
 
@@ -207,11 +209,12 @@ export async function getPatientDetail(userId: number, patientId: number) {
   });
   if (!patient) throw httpError(404, 'Patient introuvable');
 
-  const [observance, alertesExamens] = await Promise.all([
+  const [observance, alertesExamens, rappels] = await Promise.all([
     getResumeObservance(patient.id),
     getAlertesExamens(patient.id, patient.pathologie),
+    getEtatAgrege(patient.id),
   ]);
-  return { ...patient.toJSON(), observance, alertesExamens };
+  return { ...patient.toJSON(), observance, alertesExamens, rappels };
 }
 
 export async function updatePatient(
@@ -285,7 +288,10 @@ export async function reinitialiserAccesPatient(userId: number, patientId: numbe
 
   user.passwordHash = passwordHash;
   user.actif = true;
+  // Nouveaux accès : les sessions encore ouvertes avec l'ancien mot de passe sont fermées
+  user.tokenVersion = (user.tokenVersion ?? 0) + 1;
   await user.save();
+  memoriserVersion(user.id, user.tokenVersion);
 
   // Envoi de l'email de réinitialisation avec les nouveaux accès (Brevo)
   if (user.email) {
@@ -432,14 +438,17 @@ export async function getPatients(userId: number, search?: string) {
   // Indicateurs de suivi pour repérer rapidement les patients qui décrochent
   return Promise.all(
     patients.map(async (p) => {
-      const [resume, alertes] = await Promise.all([
+      const [resume, alertes, rappels] = await Promise.all([
         getResumeObservance(p.id),
         getAlertesExamens(p.id, p.pathologie),
+        getEtatAgrege(p.id),
       ]);
       return {
         ...p.toJSON(),
         observance: { taux7: resume.taux7, taux30: resume.taux30 },
         examensEnRetard: alertes.filter((a) => a.statut === 'en_retard').length,
+        // Aide à la priorisation seulement : aucune décision automatique
+        rappelsARegarder: rappels.aRegarder,
       };
     })
   );

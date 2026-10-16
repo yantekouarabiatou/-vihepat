@@ -13,5 +13,6 @@ export function errorHandler(err: any, _req: Request, res: Response, _next: Next
   }
   console.error('❌', err);
   const status = err.status ?? 500;
-  res.status(status).json({ error: err.message ?? 'Erreur serveur' });
+  // `code` : identifiant stable que le front traduit (FR/EN) au lieu d'afficher le message brut
+  res.status(status).json({ error: err.message ?? 'Erreur serveur', ...(err.status && typeof err.code === 'string' ? { code: err.code } : {}) });
 }

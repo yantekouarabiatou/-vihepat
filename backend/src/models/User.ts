@@ -12,9 +12,14 @@ export interface UserAttributes {
   prenom: string;
   actif: boolean;
   derniereConnexion?: Date | null;
+  /** Incrémentée à chaque changement de mot de passe : invalide les sessions ouvertes ailleurs */
+  tokenVersion: number;
+  /** Empreinte SHA-256 du jeton « mot de passe oublié » (jamais le jeton en clair) */
+  resetTokenHash?: string | null;
+  resetTokenExpire?: Date | null;
 }
 
-type UserCreation = Optional<UserAttributes, 'id' | 'actif'>;
+type UserCreation = Optional<UserAttributes, 'id' | 'actif' | 'tokenVersion'>;
 
 export class User extends Model<UserAttributes, UserCreation> implements UserAttributes {
   declare id: number;
@@ -25,6 +30,9 @@ export class User extends Model<UserAttributes, UserCreation> implements UserAtt
   declare prenom: string;
   declare actif: boolean;
   declare derniereConnexion?: Date | null;
+  declare tokenVersion: number;
+  declare resetTokenHash?: string | null;
+  declare resetTokenExpire?: Date | null;
 }
 
 User.init(
@@ -37,6 +45,9 @@ User.init(
     prenom: { type: DataTypes.STRING(100), allowNull: false },
     actif: { type: DataTypes.BOOLEAN, defaultValue: true },
     derniereConnexion: { type: DataTypes.DATE, allowNull: true },
+    tokenVersion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    resetTokenHash: { type: DataTypes.STRING(64), allowNull: true },
+    resetTokenExpire: { type: DataTypes.DATE, allowNull: true },
   },
   { sequelize, tableName: 'users' }
 );

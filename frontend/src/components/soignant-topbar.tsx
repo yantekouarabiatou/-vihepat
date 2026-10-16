@@ -52,6 +52,7 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
+            aria-label={t("app_shell.search_placeholder")}
             placeholder={t("app_shell.search_placeholder")}
             className="h-11 w-full rounded-full border border-border bg-secondary/40 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground transition-colors duration-150 focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
@@ -61,10 +62,10 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
           <Link
             to="/"
             className="flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3 py-1.5 text-xs font-semibold text-foreground/85 hover:bg-secondary hover:text-primary transition-all shadow-xs"
-            title="Accéder au site public VIHEPAT"
+            title={t("app_shell.site_public_tooltip")}
           >
             <Globe className="h-3.5 w-3.5 text-primary" />
-            <span className="hidden sm:inline">Site public</span>
+            <span className="hidden sm:inline">{t("app_shell.site_public")}</span>
             <ExternalLink className="h-3 w-3 text-muted-foreground" />
           </Link>
 

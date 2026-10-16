@@ -10,13 +10,14 @@ import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { InstallButton } from "@/components/install-button";
 import { ChatWidget } from "@/components/chat-widget";
+import { localeAffichage } from "@/lib/date-locale";
 
 export function LandingPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
-    document.title = "VIHEPAT - Suivi intelligent VIH & hépatites virales";
-  }, []);
+    document.title = t("landing.document_title");
+  }, [t]);
 
   const stats = [
     { value: t("stats.pvviH_value"), label: t("stats.pvviH_label"), sub: t("stats.pvviH_sub") },
@@ -235,18 +236,18 @@ export function LandingPage() {
               <div className="rounded-2xl bg-white p-5 text-foreground shadow-xl">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase text-muted-foreground">
-                    Patient suivi
+                    {t("landing.mock_patient")}
                   </span>
                   <span className="rounded-full bg-[hsl(var(--brand)/0.1)] px-2 py-0.5 text-xs font-semibold text-[hsl(var(--brand))]">
-                    VIH · ARV
+                    {t("landing.mock_badge")}
                   </span>
                 </div>
                 <div className="mt-3 text-lg font-bold">VHP-2026-482917</div>
                 <div className="mt-4 space-y-3">
                   <div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Charge virale</span>
-                      <span className="font-semibold text-emerald-600">Indétectable</span>
+                      <span className="text-muted-foreground">{t("landing.mock_charge_virale")}</span>
+                      <span className="font-semibold text-emerald-600">{t("landing.mock_indetectable")}</span>
                     </div>
                     <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
                       <div className="h-full w-[92%] rounded-full bg-emerald-500" />
@@ -254,7 +255,7 @@ export function LandingPage() {
                   </div>
                   <div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Observance (30 j)</span>
+                      <span className="text-muted-foreground">{t("landing.mock_observance")}</span>
                       <span className="font-semibold text-[hsl(var(--brand))]">96 %</span>
                     </div>
                     <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
@@ -263,8 +264,8 @@ export function LandingPage() {
                   </div>
                   <div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Prochain RDV</span>
-                      <span className="font-semibold">12 oct. 2026</span>
+                      <span className="text-muted-foreground">{t("landing.mock_prochain_rdv")}</span>
+                      <span className="font-semibold">{new Date(2026, 9, 12).toLocaleDateString(localeAffichage(i18n.resolvedLanguage), { day: "numeric", month: "short", year: "numeric" })}</span>
                     </div>
                   </div>
                 </div>

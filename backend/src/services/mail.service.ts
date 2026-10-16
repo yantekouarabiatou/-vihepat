@@ -25,6 +25,8 @@ export interface SendMailOptions {
   subject: string;
   html: string;
   text?: string;
+  /** Nom d'expéditeur affiché ; par défaut MAIL_FROM_NAME */
+  fromName?: string;
 }
 
 /**
@@ -32,7 +34,7 @@ export interface SendMailOptions {
  */
 export async function sendMail(options: SendMailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
-    const from = `"${env.MAIL_FROM_NAME}" <${env.MAIL_FROM_ADDRESS}>`;
+    const from = `"${options.fromName ?? env.MAIL_FROM_NAME}" <${env.MAIL_FROM_ADDRESS}>`;
     const info = await mailTransporter.sendMail({
       from,
       to: options.to,
@@ -336,5 +338,74 @@ export async function sendAlerteMedicaleEmail(params: {
     to: params.to,
     subject: `🚨 [Alerte VIHEPAT] Signalement sévère — Patient ${params.patientCode}`,
     html,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// E-mails neutres (discrétion)
+// Une boîte mail peut être lue par l'entourage : ces messages ne contiennent ni le nom
+// de l'application, ni la pathologie, ni de vocabulaire médical.
+// ---------------------------------------------------------------------------
+
+const TEXTES_NEUTRES = {
+  fr: {
+    changeSujet: 'Votre mot de passe a été mis à jour',
+    changeCorps: 'Votre mot de passe a été mis à jour.',
+    changeAlerte: "Si vous n'êtes pas à l'origine de cette modification, utilisez le lien « Mot de passe oublié » ou contactez la personne qui vous a remis vos identifiants.",
+    lienSujet: 'Réinitialisation de votre mot de passe',
+    lienCorps: 'Une demande de réinitialisation de mot de passe a été faite pour votre compte.',
+    lienBouton: 'Choisir un nouveau mot de passe',
+    lienDuree: 'Ce lien est valable 30 minutes et ne peut servir qu\'une fois.',
+    lienIgnorer: "Si vous n'avez rien demandé, ignorez ce message : votre mot de passe reste inchangé.",
+  },
+  en: {
+    changeSujet: 'Your password has been updated',
+    changeCorps: 'Your password has been updated.',
+    changeAlerte: 'If you did not make this change, use the "Forgot password" link or contact the person who gave you your login details.',
+    lienSujet: 'Reset your password',
+    lienCorps: 'A password reset was requested for your account.',
+    lienBouton: 'Choose a new password',
+    lienDuree: 'This link is valid for 30 minutes and can only be used once.',
+    lienIgnorer: 'If you did not request this, ignore this message: your password stays the same.',
+  },
+};
+
+function textesNeutres(langue: string) {
+  return langue === 'en' ? TEXTES_NEUTRES.en : TEXTES_NEUTRES.fr;
+}
+
+/** Mise en page sobre : aucune marque, aucun logo, aucune couleur distinctive. */
+function layoutNeutre(contenu: string, langue: string): string {
+  return `<!DOCTYPE html>
+<html lang="${langue === 'en' ? 'en' : 'fr'}">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:24px 16px;background:#ffffff;color:#1f2937;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;">
+  <div style="max-width:520px;margin:0 auto;">${contenu}</div>
+</body>
+</html>`;
+}
+
+export async function sendPasswordChangedEmail(params: { to: string; langue: string }) {
+  const t = textesNeutres(params.langue);
+  return sendMail({
+    to: params.to,
+    subject: t.changeSujet,
+    fromName: env.MAIL_FROM_NAME_NEUTRE,
+    html: layoutNeutre(`<p>${t.changeCorps}</p><p style="color:#6b7280;font-size:13px;">${t.changeAlerte}</p>`, params.langue),
+  });
+}
+
+export async function sendPasswordResetLinkEmail(params: { to: string; lien: string; langue: string }) {
+  const t = textesNeutres(params.langue);
+  return sendMail({
+    to: params.to,
+    subject: t.lienSujet,
+    fromName: env.MAIL_FROM_NAME_NEUTRE,
+    html: layoutNeutre(
+      `<p>${t.lienCorps}</p>
+  <p style="margin:24px 0;"><a href="${params.lien}" style="display:inline-block;padding:12px 20px;background:#374151;color:#ffffff;text-decoration:none;border-radius:8px;">${t.lienBouton}</a></p>
+  <p style="color:#6b7280;font-size:13px;">${t.lienDuree}<br>${t.lienIgnorer}</p>`,
+      params.langue,
+    ),
   });
 }

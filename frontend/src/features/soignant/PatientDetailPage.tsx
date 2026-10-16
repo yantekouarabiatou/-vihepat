@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
   ArrowLeft, FlaskConical, Pill, Plus, Loader2, ShieldCheck, AlertCircle, CalendarDays, Square, Activity,
-  FileDown, Printer, Edit3, KeyRound,
+  FileDown, Printer, Edit3, KeyRound, AlarmClock,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -25,6 +25,7 @@ import {
   NIVEAU_STYLES, OBSERVATION_TYPES, repereObservation, type TypeObservation,
 } from "@/lib/observations";
 import { apiErrorMessage } from "@/lib/api-error";
+import { localeAffichage } from "@/lib/date-locale";
 import { ObservanceBars, formatTaux, libelleEcheance, tauxStyle } from "@/lib/observance";
 import { telechargerFichePatientPdf, imprimerFichePatient, type PatientCredentialsDoc } from "@/lib/patient-pdf";
 
@@ -34,7 +35,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 function formatDate(iso: string | null | undefined, withTime = false) {
   if (!iso) return "-";
-  return new Date(iso).toLocaleDateString(undefined, {
+  return new Date(iso).toLocaleDateString(localeAffichage(), {
     day: "numeric", month: "short", year: "numeric",
     ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
   });
@@ -86,7 +87,7 @@ export function PatientDetailPage() {
     mutationFn: () => soignantApi.reinitialiserAcces(patientId),
     onSuccess: (res) => {
       setResetOpen(false);
-      toast.success("Nouveaux identifiants générés !");
+      toast.success(t("fiche.toast_identifiants"));
       invalidate();
       const doc: PatientCredentialsDoc = {
         patient: {
@@ -104,12 +105,12 @@ export function PatientDetailPage() {
       };
       telechargerFichePatientPdf(doc);
     },
-    onError: (err) => toast.error(apiErrorMessage(err, "Erreur lors de la réinitialisation des identifiants")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("fiche.erreur_reinit"))),
   });
 
   if (isLoading) {
     return (
-      <AppShell title="Espace soignant">
+      <AppShell title={t("sidebar.role_soignant")}>
         <div className="flex justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -119,7 +120,7 @@ export function PatientDetailPage() {
 
   if (isError || !patient) {
     return (
-      <AppShell title="Espace soignant">
+      <AppShell title={t("sidebar.role_soignant")}>
         <BackLink />
         <p className="mt-10 text-center text-muted-foreground">
           {apiErrorMessage(error, t("patient_detail.dossier_introuvable"))}
@@ -131,7 +132,7 @@ export function PatientDetailPage() {
   const a = age(patient.dateNaissance);
 
   return (
-    <AppShell title="Espace soignant">
+    <AppShell title={t("sidebar.role_soignant")}>
       <BackLink />
 
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
@@ -170,12 +171,12 @@ export function PatientDetailPage() {
                 dateCreation: new Date(patient.createdAt).toLocaleDateString("fr-FR"),
               };
               telechargerFichePatientPdf(doc);
-              toast.success(`Fiche PDF téléchargée pour ${patient.codePatient}`);
+              toast.success(t("fiche.toast_pdf_pour", { code: patient.codePatient }));
             }}
             className="rounded-full gap-1.5 text-xs font-semibold"
           >
             <FileDown className="h-3.5 w-3.5 text-primary" />
-            Fiche PDF
+            {t("fiche.fiche_pdf")}
           </Button>
 
           <Button
@@ -201,7 +202,7 @@ export function PatientDetailPage() {
             className="rounded-full gap-1.5 text-xs font-semibold"
           >
             <Printer className="h-3.5 w-3.5" />
-            Imprimer
+            {t("fiche.imprimer")}
           </Button>
 
           <Button
@@ -209,10 +210,10 @@ export function PatientDetailPage() {
             variant="outline"
             onClick={() => setResetOpen(true)}
             className="rounded-full gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-900/50 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-            title="Générer un nouveau mot de passe temporaire et ré-émettre la fiche d'accès PDF"
+            title={t("fiche.reinit_tooltip")}
           >
             <KeyRound className="h-3.5 w-3.5" />
-            Réinitialiser accès
+            {t("fiche.reinit_bouton")}
           </Button>
 
           <div className="flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-xs font-medium text-primary">
@@ -229,6 +230,7 @@ export function PatientDetailPage() {
         <div className="min-w-0 space-y-6 lg:col-span-2">
 
           <ObservanceCard patient={patient} />
+          <RappelsCard patient={patient} />
           <TraitementsSection patient={patient} onSaved={invalidate} />
           <SignalementsSection patient={patient} />
           <RendezVousSection patient={patient} />
@@ -241,21 +243,21 @@ export function PatientDetailPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-bold text-amber-600 dark:text-amber-400">
               <KeyRound className="h-5 w-5" />
-              Réinitialiser les identifiants
+              {t("fiche.reinit_titre")}
             </DialogTitle>
             <DialogDescription>
-              Générer un <strong>nouveau mot de passe temporaire</strong> pour {patient.user.prenom} {patient.user.nom} ({patient.codePatient}).
+              {t("fiche.reinit_desc", { nom: `${patient.user.prenom} ${patient.user.nom}`, code: patient.codePatient })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs text-amber-900 dark:text-amber-200 leading-relaxed space-y-2">
-            <p>• L'ancien mot de passe du patient deviendra immédiatement caduc.</p>
-            <p>• Une nouvelle <strong>Fiche d'accès PDF officielle</strong> sera générée et téléchargée immédiatement.</p>
+            <p>• {t("fiche.reinit_point1")}</p>
+            <p>• {t("fiche.reinit_point2")}</p>
           </div>
 
           <DialogFooter className="pt-2">
             <Button variant="outline" onClick={() => setResetOpen(false)} className="rounded-full">
-              Annuler
+              {t("fiche.annuler")}
             </Button>
             <Button
               disabled={resetting}
@@ -263,7 +265,7 @@ export function PatientDetailPage() {
               className="rounded-full font-semibold bg-amber-600 hover:bg-amber-700 text-white"
             >
               {resetting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirmer & Télécharger la fiche PDF
+              {t("fiche.reinit_confirmer")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -316,6 +318,54 @@ function ObservanceCard({ patient }: { patient: PatientDetail }) {
             </div>
           ))}
         </div>
+      )}
+    </Card>
+  );
+}
+
+/**
+ * Rappels du patient, vus par le soignant : uniquement des compteurs agrégés
+ * (jamais le nom ni l'heure d'un rappel). L'indicateur « à regarder » aide à
+ * prioriser mais ne déclenche aucune action automatique.
+ */
+function RappelsCard({ patient }: { patient: PatientDetail }) {
+  const { t } = useT();
+  const etat = patient.rappels;
+  if (!etat) return null;
+  return (
+    <Card>
+      <SectionTitle icon={AlarmClock} title={t("rappels_soignant.titre", { count: etat.periodeJours })} />
+      {!etat.partage ? (
+        <p className="mt-3 text-sm text-muted-foreground">{t("rappels_soignant.non_partage")}</p>
+      ) : (
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-2 text-center">
+            <div className="rounded-2xl bg-secondary p-3">
+              <p className="text-xs font-semibold text-muted-foreground">{t("rappels_soignant.prises")}</p>
+              <p className="mt-1 text-sm text-foreground">
+                <span className="text-lg font-extrabold">{etat.prises.confirmees}</span> {t("rappels_soignant.confirmees")}
+              </p>
+              <p className="text-sm text-foreground">
+                <span className="text-lg font-extrabold">{etat.prises.nonConfirmees}</span> {t("rappels_soignant.non_confirmees")}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-secondary p-3">
+              <p className="text-xs font-semibold text-muted-foreground">{t("rappels_soignant.rendez_vous")}</p>
+              <p className="mt-1 text-sm text-foreground">
+                <span className="text-lg font-extrabold">{etat.rendezVous.confirmees}</span> {t("rappels_soignant.honores")}
+              </p>
+              <p className="text-sm text-foreground">
+                <span className="text-lg font-extrabold">{etat.rendezVous.nonConfirmees}</span> {t("rappels_soignant.non_confirmes")}
+              </p>
+            </div>
+          </div>
+          {etat.aRegarder && (
+            <p className="mt-3 rounded-xl bg-[hsl(var(--gold)/0.15)] px-3 py-2 text-xs font-medium text-foreground">
+              {t("rappels_soignant.a_regarder", { count: etat.serieNonConfirmees })}
+            </p>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">{t("rappels_soignant.note")}</p>
+        </>
       )}
     </Card>
   );

@@ -13,6 +13,18 @@ export interface SoignantPatient {
   user: { id: number; nom: string; prenom: string; email: string };
   observance?: { taux7: number | null; taux30: number | null };
   examensEnRetard?: number;
+  /** Série de rappels non confirmés : aide à la priorisation, sans décision automatique */
+  rappelsARegarder?: boolean;
+}
+
+/** État agrégé des rappels du patient : jamais le libellé ni l'heure personnelle. */
+export interface EtatRappels {
+  partage: boolean;
+  periodeJours: number;
+  prises: { confirmees: number; nonConfirmees: number };
+  rendezVous: { confirmees: number; nonConfirmees: number };
+  serieNonConfirmees: number;
+  aRegarder: boolean;
 }
 
 export interface SoignantRendezVous extends RendezVous {
@@ -61,6 +73,7 @@ export interface PatientDetail {
   rendezVous: RendezVous[];
   observance: ResumeObservance;
   alertesExamens: AlerteExamen[];
+  rappels?: EtatRappels;
 }
 
 

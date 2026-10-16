@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { useDiscretionStore } from "@/store/discretion.store";
 
 /**
@@ -6,6 +7,7 @@ import { useDiscretionStore } from "@/store/discretion.store";
  * Un appui l'affiche pendant 5 secondes, puis elle se masque à nouveau.
  */
 export function Masque({ children, className = "" }: { children: ReactNode; className?: string }) {
+  const { t } = useTranslation();
   const modeDiscret = useDiscretionStore((s) => s.modeDiscret);
   const [visible, setVisible] = useState(false);
 
@@ -24,8 +26,8 @@ export function Masque({ children, className = "" }: { children: ReactNode; clas
         e.stopPropagation();
         setVisible(true);
       }}
-      title="Appuyer pour afficher"
-      aria-label="Information masquée, appuyer pour afficher"
+      title={t("masque.afficher")}
+      aria-label={t("masque.aria")}
       className={`inline-block cursor-pointer select-none rounded-md bg-muted px-1.5 align-middle text-muted-foreground ${className}
 `}
     >

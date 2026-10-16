@@ -3,6 +3,7 @@ import { User, Patient, Soignant, Traitement, GroupeSoutien } from '../models';
 import { ADMIN_TABLES, getTableDefOrThrow, type TableDef } from '../admin/registry';
 import { ROLES_CONFIG, PERMISSIONS_CATALOG, type Role } from '../config/permissions';
 import { genererCodePatient } from './auth.service';
+import { memoriserVersion } from '../utils/token-version';
 
 const SALT_ROUNDS = 12;
 
@@ -10,6 +11,14 @@ function httpError(status: number, message: string) {
   const e: any = new Error(message);
   e.status = status;
   return e;
+}
+
+/** Champs de sécurité jamais renvoyés au client (empreintes, jeton de réinitialisation). */
+function masquerSecrets(json: Record<string, unknown>) {
+  delete json.passwordHash;
+  delete json.resetTokenHash;
+  delete json.resetTokenExpire;
+  delete json.tokenVersion;
 }
 
 export function listTables() {
@@ -72,7 +81,7 @@ export async function listRows(tableKey: string) {
 
   return rows.map((row: any) => {
     const json = row.toJSON();
-    delete json.passwordHash;
+    masquerSecrets(json);
     const labels: Record<string, string> = {};
     for (const f of fkFields) {
       const val = json[f.key];
@@ -123,7 +132,7 @@ export async function createRow(tableKey: string, body: Record<string, unknown>)
 
   const row = await def.model.create(data);
   const json = row.toJSON();
-  delete json.passwordHash;
+  masquerSecrets(json);
   return json;
 }
 
@@ -138,11 +147,14 @@ export async function updateRow(tableKey: string, id: number, body: Record<strin
   if (tableKey === 'users' && typeof body.password === 'string' && body.password.trim().length > 0) {
     if (body.password.length < 8) throw httpError(400, 'Mot de passe trop court (8 caractères minimum)');
     (data as any).passwordHash = await bcrypt.hash(body.password, SALT_ROUNDS);
+    // Mot de passe imposé par l'admin : les sessions ouvertes du compte sont fermées
+    (data as any).tokenVersion = ((row as any).tokenVersion ?? 0) + 1;
   }
 
   await row.update(data);
+  if (tableKey === 'users' && (data as any).tokenVersion !== undefined) memoriserVersion(id, (data as any).tokenVersion, (row as any).actif !== false);
   const json = row.toJSON();
-  delete json.passwordHash;
+  masquerSecrets(json);
   return json;
 }
 

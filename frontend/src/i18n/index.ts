@@ -6,6 +6,11 @@ import fr from './locales/fr.json';
 import en from './locales/en.json';
 import fon from './locales/fon.json';
 
+/**
+ * Langues locales prévues (ewe, baatonou…) : ajouter `./locales/<code>.json` avec les
+ * mêmes clés, l'enregistrer ici et dans `supportedLngs`, puis dans le sélecteur de langue.
+ * Toute clé absente retombe sur le français.
+ */
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -24,5 +29,12 @@ i18n
       lookupLocalStorage: 'vihepat_lang',
     },
   });
+
+// Attribut lang du document : lecteurs d'écran et césure suivent la langue choisie
+const appliquerLangDocument = (lng: string) => {
+  if (typeof document !== 'undefined') document.documentElement.lang = lng === 'fon' ? 'fon' : lng;
+};
+appliquerLangDocument(i18n.resolvedLanguage ?? i18n.language ?? 'fr');
+i18n.on('languageChanged', appliquerLangDocument);
 
 export default i18n;

@@ -66,4 +66,17 @@ export const authApi = {
     api.post<AuthResponse>('/auth/register/soignant', input).then((r) => r.data),
 
   me: () => api.get('/auth/me').then((r) => r.data),
+
+  /** Changement par l'utilisateur connecté ; renvoie de nouveaux jetons (les autres sessions sont fermées). */
+  changePassword: (input: { actuel: string; nouveau: string }) =>
+    api
+      .post<{ accessToken: string; refreshToken: string }>('/auth/password/change', input)
+      .then((r) => r.data),
+
+  /** Réponse identique que le compte existe ou non. */
+  forgotPassword: (email: string) =>
+    api.post<{ ok: true }>('/auth/password/forgot', { email }).then((r) => r.data),
+
+  resetPassword: (input: { jeton: string; nouveau: string }) =>
+    api.post<{ ok: true }>('/auth/password/reset', input).then((r) => r.data),
 };

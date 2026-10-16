@@ -13,6 +13,7 @@ import { GroupeSoutien } from './GroupeSoutien';
 import { MembreGroupe } from './MembreGroupe';
 import { MessageGroupe } from './MessageGroupe';
 import { Communique } from './Communique';
+import { ConfirmationRappel } from './ConfirmationRappel';
 
 // User ↔ Patient (1-1)
 User.hasOne(Patient, { foreignKey: 'userId', as: 'patient' });
@@ -64,6 +65,10 @@ GroupeSoutien.hasMany(MessageGroupe, { foreignKey: 'groupeId', as: 'messages' })
 MessageGroupe.belongsTo(GroupeSoutien, { foreignKey: 'groupeId', as: 'groupe' });
 MessageGroupe.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
 
+// Patient ↔ ConfirmationRappel (1-N)
+Patient.hasMany(ConfirmationRappel, { foreignKey: 'patientId', as: 'confirmationsRappels' });
+ConfirmationRappel.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
+
 // AuditLog
 AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -75,5 +80,5 @@ Communique.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
 export {
   User, Patient, Soignant, Affectation,
   Traitement, RendezVous, Observation, Signalement, AuditLog, PriseMedicament,
-  Structure, GroupeSoutien, MembreGroupe, MessageGroupe, Communique,
+  Structure, GroupeSoutien, MembreGroupe, MessageGroupe, Communique, ConfirmationRappel,
 };

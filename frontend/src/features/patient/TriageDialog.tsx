@@ -56,6 +56,7 @@ import {
   type SigneGraveId,
   type SymptomeId,
 } from "@/lib/triage";
+import { traduireConseil, traduireRaison } from "@/lib/triage-i18n";
 import { estErreurReseau, mettreEnAttente } from "@/lib/offline-queue";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { ListenButton } from "@/components/listen-button";
@@ -327,7 +328,7 @@ export function TriageDialog({
   const [transcriptionVocale, setTranscriptionVocale] = useState<string | null>(null);
 
   // Reconnaissance vocale (Speech-To-Text)
-  const lang = i18n.language === "en" ? "en-US" : "fr-FR";
+  const lang = i18n.resolvedLanguage === "en" ? "en-US" : "fr-FR";
   const {
     isSupported: micSupported,
     isListening,
@@ -456,7 +457,7 @@ export function TriageDialog({
   async function startAudioRecording() {
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
-        toast.error("L'enregistrement audio n'est pas supporté par ce navigateur.");
+        toast.error(t("triage.audio_non_supporte_navigateur"));
         return;
       }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -483,7 +484,7 @@ export function TriageDialog({
       }, 1000);
     } catch (err) {
       console.warn("Audio recording error", err);
-      toast.error("Impossible d'accéder au microphone. Veuillez autoriser l'accès.");
+      toast.error(t("triage.micro_refuse"));
     }
   }
 
@@ -585,7 +586,7 @@ export function TriageDialog({
                 1
               </span>
               <span className={etape === "symptomes" ? "text-foreground font-bold" : ""}>
-                Symptômes
+                {t("triage.etape_symptomes")}
               </span>
             </div>
             <span className="text-muted-foreground/40">›</span>
@@ -601,7 +602,7 @@ export function TriageDialog({
                 2
               </span>
               <span className={etape === "details" ? "text-foreground font-bold" : ""}>
-                Détails
+                {t("triage.etape_details")}
               </span>
             </div>
             <span className="text-muted-foreground/40">›</span>
@@ -617,7 +618,7 @@ export function TriageDialog({
                 3
               </span>
               <span className={etape === "gravite" ? "text-foreground font-bold" : ""}>
-                Gravité
+                {t("triage.etape_gravite")}
               </span>
             </div>
             <span className="text-muted-foreground/40">›</span>
@@ -633,7 +634,7 @@ export function TriageDialog({
                 4
               </span>
               <span className={etape === "resultat" ? "text-foreground font-bold" : ""}>
-                Résultat
+                {t("triage.etape_resultat")}
               </span>
             </div>
           </div>
@@ -816,7 +817,8 @@ export function TriageDialog({
                       size="icon"
                       onClick={resetAudio}
                       className="h-8 w-8 text-destructive hover:bg-destructive/10 rounded-full shrink-0"
-                      title="Supprimer la note vocale"
+                      title={t("triage.supprimer_audio")}
+                      aria-label={t("triage.supprimer_audio")}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -993,12 +995,12 @@ export function TriageDialog({
                       </p>
                     </div>
                     <ListenButton
-                      text={`${t(`triage.niveaux.${resultat.niveau}`)}. ${resultat.conseil}`}
+                      text={`${t(`triage.niveaux.${resultat.niveau}`)}. ${traduireConseil(resultat.conseil, t)}`}
                       size="sm"
                     />
                   </div>
                   <p className="mt-2.5 text-sm font-medium leading-relaxed text-foreground">
-                    {resultat.conseil}
+                    {traduireConseil(resultat.conseil, t)}
                   </p>
                 </div>
               );
@@ -1006,10 +1008,10 @@ export function TriageDialog({
 
             {resultat.raisons.length > 0 && (
               <div className="rounded-2xl border border-border/80 bg-card p-3.5 space-y-1">
-                <p className="text-xs font-semibold text-muted-foreground">Motifs identifiés :</p>
+                <p className="text-xs font-semibold text-muted-foreground">{t("triage.motifs")}</p>
                 <ul className="list-inside list-disc text-sm text-foreground space-y-1">
                   {resultat.raisons.map((r) => (
-                    <li key={r}>{r}</li>
+                    <li key={r}>{traduireRaison(r, t)}</li>
                   ))}
                 </ul>
               </div>

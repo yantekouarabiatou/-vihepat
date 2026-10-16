@@ -134,6 +134,16 @@ export interface TriageVocalReponse {
   mesures: { modele: string; latenceTotaleMs: number; promptVersion: string };
 }
 
+/** Réponse à un rappel : jamais de libellé ni de réglage personnel. */
+export interface ConfirmationRappelPayload {
+  clientId: string;
+  type: 'prise' | 'rdv';
+  statut: 'confirmee' | 'non_confirmee';
+  prevuLe: string;
+  reponduLe: string | null;
+  reports: number;
+}
+
 export const patientApi = {
   getRendezVous: () => api.get<RendezVous[]>('/patients/me/rendez-vous').then((r) => r.data),
 
@@ -173,4 +183,16 @@ export const patientApi = {
     api
       .post<{ transcription: string; langue: 'fr' | 'fon' | 'mixte' | 'autre'; utilisable: boolean }>('/chat/transcrire', input, { timeout: 45000 })
       .then((r) => r.data),
+
+  getPartageRappels: () =>
+    api.get<{ partageConfirmations: boolean }>('/patients/me/rappels/partage').then((r) => r.data),
+
+  setPartageRappels: (partageConfirmations: boolean) =>
+    api.put<{ partageConfirmations: boolean }>('/patients/me/rappels/partage', { partageConfirmations }).then((r) => r.data),
+
+  envoyerConfirmationsRappels: (confirmations: ConfirmationRappelPayload[]) =>
+    api.post('/patients/me/rappels/confirmations', { confirmations }).then((r) => r.data),
+
+  journaliserRappel: (action: string) =>
+    api.post('/patients/me/rappels/journal', { action }).then((r) => r.data),
 };

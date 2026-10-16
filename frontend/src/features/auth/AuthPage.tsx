@@ -4,15 +4,18 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { HeartPulse, Loader2, Stethoscope, ShieldCheck, Lock, Info, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { apiErrorMessage } from "@/lib/api-error";
 import { authApi, type RegisterSoignantInput } from "@/api/auth.api";
 import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { InstallButton } from "@/components/install-button";
 import { ListenButton } from "@/components/listen-button";
+import { ForgotPasswordDialog } from "@/features/auth/ForgotPasswordDialog";
 
 type Mode = "login" | "register";
 
@@ -25,6 +28,7 @@ export function AuthPage() {
   const initialMode: Mode = searchParams.get("mode") === "register" ? "register" : "login";
   const [mode, setMode] = useState<Mode>(initialMode);
   const [loading, setLoading] = useState(false);
+  const [oubliOpen, setOubliOpen] = useState(false);
 
   // Champs d'authentification
   const [email, setEmail] = useState("");
@@ -68,11 +72,11 @@ export function AuthPage() {
       };
       const res = await authApi.registerSoignant(input);
       setAuth(res.user, res.accessToken, res.refreshToken);
-      toast.success("Compte soignant créé avec succès !");
+      toast.success(t("auth.toast_soignant_created"));
       navigate("/soignant/dashboard");
     } catch (err: any) {
-      toast.error(err.response?.data?.error || t("auth.error_generic"), {
-        description: err.response?.data?.message || t("auth.error_description"),
+      toast.error(apiErrorMessage(err, t("auth.error_generic")), {
+        description: t("auth.error_description"),
       });
     } finally {
       setLoading(false);
@@ -97,10 +101,10 @@ export function AuthPage() {
           <div className="mt-8 space-y-3 rounded-2xl bg-white/10 p-5 backdrop-blur-md text-sm text-primary-foreground/90">
             <div className="flex items-center gap-2.5 font-semibold text-white">
               <ShieldCheck className="h-5 w-5 text-emerald-300 shrink-0" />
-              <span>Gouvernance & Rôles Sécurisés</span>
+              <span>{t("auth.governance_title")}</span>
             </div>
             <p className="text-xs text-primary-foreground/75 leading-relaxed">
-              Pour des raisons éthiques et de secret médical, les dossiers patients sont exclusivement ouverts et gérés par le personnel soignant habilité et les administrateurs en centre de santé.
+              {t("auth.governance_desc")}
             </p>
           </div>
         </div>
@@ -128,21 +132,19 @@ export function AuthPage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-                {mode === "login" ? t("auth.back_title") : "Inscription Soignant"}
+                {mode === "login" ? t("auth.back_title") : t("auth.start_title")}
               </h1>
               <p className="mt-2 text-muted-foreground text-sm">
-                {mode === "login"
-                  ? "Connectez-vous à votre espace personnel sécurisé."
-                  : "Réservé aux professionnels habilités par leur structure de santé."}
+                {mode === "login" ? t("auth.back_subtitle") : t("auth.start_subtitle")}
               </p>
             </div>
             <ListenButton
               className="mt-1"
-              text={`${mode === "login" ? t("auth.back_title") : "Inscription Soignant"}. ${
+              text={
                 mode === "login"
-                  ? "Connectez-vous à votre espace personnel sécurisé."
-                  : "Réservé aux professionnels habilités par leur structure de santé."
-              }`}
+                  ? `${t("auth.back_title")}. ${t("auth.back_subtitle")}`
+                  : `${t("auth.start_title")}. ${t("auth.start_subtitle")}`
+              }
             />
           </div>
 
@@ -153,10 +155,10 @@ export function AuthPage() {
                 <Info className="h-5 w-5 text-sky-600 dark:text-sky-400 mt-0.5 shrink-0" />
                 <div className="text-xs leading-relaxed space-y-1.5">
                   <p className="font-bold text-sm text-sky-950 dark:text-sky-100">
-                    Vous êtes patient·e ?
+                    {t("auth.patient_restriction_title")}
                   </p>
                   <p className="text-sky-800 dark:text-sky-300">
-                    Les comptes patients <strong>ne peuvent pas être créés en ligne</strong> de manière autonome. Votre dossier doit être ouvert directement par votre médecin, infirmier ou coordinateur en centre de santé.
+                    {t("auth.patient_banner_desc")}
                   </p>
                   <Button
                     type="button"
@@ -165,7 +167,7 @@ export function AuthPage() {
                     className="p-0 h-auto font-semibold text-sky-700 dark:text-sky-300 hover:underline"
                     onClick={() => setMode("login")}
                   >
-                    J'ai déjà reçu mes identifiants de mon soignant →
+                    {t("auth.patient_have_credentials")}
                   </Button>
                 </div>
               </div>
@@ -175,7 +177,7 @@ export function AuthPage() {
               <div className="flex items-center gap-2">
                 <Lock className="h-3.5 w-3.5 text-primary shrink-0" />
                 <span>
-                  Espace d'accès unique : <strong>Patients</strong>, <strong>Soignants</strong> et <strong>Administrateurs</strong>.
+                  {t("auth.single_access")}
                 </span>
               </div>
             </div>
@@ -192,7 +194,7 @@ export function AuthPage() {
                       value={prenom}
                       onChange={(e) => setPrenom(e.target.value)}
                       required
-                      placeholder="Prénom"
+                      placeholder={t("auth.first_name")}
                       className="h-12 rounded-xl"
                     />
                   </div>
@@ -203,7 +205,7 @@ export function AuthPage() {
                       value={nom}
                       onChange={(e) => setNom(e.target.value)}
                       required
-                      placeholder="Nom"
+                      placeholder={t("auth.last_name")}
                       className="h-12 rounded-xl"
                     />
                   </div>
@@ -216,7 +218,7 @@ export function AuthPage() {
                     value={matricule}
                     onChange={(e) => setMatricule(e.target.value)}
                     required
-                    placeholder="Ex: MED-COTONOU-102"
+                    placeholder={t("auth.matricule_placeholder")}
                     className="h-12 rounded-xl"
                   />
                 </div>
@@ -238,7 +240,7 @@ export function AuthPage() {
                     id="specialite"
                     value={specialite}
                     onChange={(e) => setSpecialite(e.target.value)}
-                    placeholder="Ex: Infectiologie, Médecine générale"
+                    placeholder={t("auth.specialite_placeholder")}
                     className="h-12 rounded-xl"
                   />
                 </div>
@@ -267,17 +269,28 @@ export function AuthPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="vous@exemple.com"
+                placeholder={t("auth.email_placeholder")}
                 required
                 className="h-12 rounded-xl"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">{t("auth.password")}</Label>
-              <Input
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="password">{t("auth.password")}</Label>
+                {mode === "login" && (
+                  <button
+                    type="button"
+                    onClick={() => setOubliOpen(true)}
+                    className="min-h-11 rounded-md px-1 text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {t("password.forgot_link")}
+                  </button>
+                )}
+              </div>
+              <PasswordInput
                 id="password"
-                type="password"
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -296,7 +309,7 @@ export function AuthPage() {
               className="h-12 w-full rounded-full text-base font-semibold transition-transform active:scale-[0.99]"
             >
               {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-              {mode === "login" ? t("auth.submit_login") : "Créer mon compte soignant"}
+              {mode === "login" ? t("auth.submit_login") : t("auth.submit_register")}
             </Button>
           </form>
 
@@ -305,7 +318,7 @@ export function AuthPage() {
             {mode === "login" ? (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
-                  Vous êtes un professionnel de santé et n'avez pas encore de compte ?
+                  {t("auth.pro_question")}
                 </p>
                 <Button
                   type="button"
@@ -314,27 +327,29 @@ export function AuthPage() {
                   className="rounded-full text-xs font-semibold gap-1.5 h-9"
                 >
                   <Stethoscope className="h-3.5 w-3.5 text-primary" />
-                  Créer un compte professionnel (Soignant)
+                  {t("auth.create_account_link")}
                 </Button>
                 <p className="text-[11px] text-muted-foreground/80 mt-2">
-                  Patients : vos identifiants sécurisés vous sont remis en main propre par votre centre de santé.
+                  {t("auth.patients_credentials_note")}
                 </p>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Déjà inscrit·e ?{" "}
+                {t("auth.has_account")}{" "}
                 <button
                   type="button"
                   onClick={() => setMode("login")}
                   className="font-semibold text-primary hover:underline"
                 >
-                  Retourner à la connexion
+                  {t("auth.back_to_login")}
                 </button>
               </p>
             )}
           </div>
         </div>
       </div>
+
+      <ForgotPasswordDialog open={oubliOpen} onOpenChange={setOubliOpen} defaultEmail={email} />
     </div>
   );
 }

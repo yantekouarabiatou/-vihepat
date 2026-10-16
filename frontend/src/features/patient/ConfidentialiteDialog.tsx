@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { EyeOff, KeyRound, Loader2, ShieldCheck } from "lucide-react";
+import { EyeOff, KeyRound, Loader2, LockKeyhole, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { patientApi } from "@/api/patient.api";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { LONGUEUR_PIN, PaveNumerique, Points } from "@/components/ecran-verrou";
 import { useDiscretionStore } from "@/store/discretion.store";
+import { ChangePasswordDialog } from "@/components/change-password-dialog";
+import { localeAffichage } from "@/lib/date-locale";
 
 type EtapePin = "repos" | "saisie" | "confirmation";
 
@@ -58,9 +60,10 @@ function CreationPin({ onFini }: { onFini: () => void }) {
 }
 
 export function ConfidentialiteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { empreintePin, modeDiscret, basculerModeDiscret, supprimerPin } = useDiscretionStore();
   const [creation, setCreation] = useState(false);
+  const [motDePasseOpen, setMotDePasseOpen] = useState(false);
   const { data: acces, isLoading } = useQuery({
     queryKey: ["patient", "acces"],
     queryFn: patientApi.getAccesDossier,
@@ -76,6 +79,7 @@ export function ConfidentialiteDialog({ open, onOpenChange }: { open: boolean; o
   };
 
   return (
+    <>
     <Dialog
       open={open}
       onOpenChange={(o) => {
@@ -127,6 +131,25 @@ export function ConfidentialiteDialog({ open, onOpenChange }: { open: boolean; o
           )}
         </section>
 
+        {/* Mot de passe du compte */}
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border p-4">
+          <div className="flex items-center gap-2">
+            <LockKeyhole className="h-5 w-5 text-primary" />
+            <h3 className="font-bold text-foreground">{t("password.change_title")}</h3>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 rounded-full"
+            onClick={() => {
+              onOpenChange(false);
+              setMotDePasseOpen(true);
+            }}
+          >
+            {t("password.change_menu")}
+          </Button>
+        </section>
+
         {/* Mode discret */}
         <section className="flex items-start justify-between gap-4 rounded-2xl bg-secondary p-4">
           <div>
@@ -163,7 +186,7 @@ export function ConfidentialiteDialog({ open, onOpenChange }: { open: boolean; o
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {a.acteur?.structure ? `${a.acteur.structure} · ` : ""}
-                    {new Date(a.date).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    {new Date(a.date).toLocaleString(localeAffichage(i18n.resolvedLanguage), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </li>
               ))}
@@ -175,5 +198,7 @@ export function ConfidentialiteDialog({ open, onOpenChange }: { open: boolean; o
         </section>
       </DialogContent>
     </Dialog>
+    <ChangePasswordDialog open={motDePasseOpen} onOpenChange={setMotDePasseOpen} />
+    </>
   );
 }

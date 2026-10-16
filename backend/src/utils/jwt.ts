@@ -5,6 +5,8 @@ import type { Role } from '../models/User';
 export interface JwtPayload {
   userId: number;
   role: Role;
+  /** Version des jetons du compte (User.tokenVersion) : absente sur les jetons émis avant son introduction */
+  tv?: number;
 }
 
 export function signAccessToken(payload: JwtPayload): string {

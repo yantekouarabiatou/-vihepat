@@ -1,5 +1,5 @@
 import { isAxiosError } from "axios";
-import { patientApi, type Gravite, type StatutPrise } from "@/api/patient.api";
+import { patientApi, type ConfirmationRappelPayload, type Gravite, type StatutPrise } from "@/api/patient.api";
 
 /**
  * File d'attente hors ligne : les saisies faites sans réseau sont conservées
@@ -8,7 +8,9 @@ import { patientApi, type Gravite, type StatutPrise } from "@/api/patient.api";
 
 export type ActionEnAttente =
   | { type: "signalement"; payload: { symptome: string; gravite: Gravite; notes?: string | undefined } }
-  | { type: "prise"; payload: { traitementId: number; rang: number; statut: StatutPrise; date: string } };
+  | { type: "prise"; payload: { traitementId: number; rang: number; statut: StatutPrise; date: string } }
+  | { type: "confirmation_rappel"; payload: ConfirmationRappelPayload }
+  | { type: "journal_rappel"; payload: { action: string } };
 
 interface Element {
   id: string;
@@ -74,7 +76,9 @@ export function mettreEnAttente(action: ActionEnAttente) {
               e.action.payload.date === action.payload.date
             ),
         )
-      : elements;
+      : action.type === "confirmation_rappel"
+        ? elements.filter((e) => !(e.action.type === "confirmation_rappel" && e.action.payload.clientId === action.payload.clientId))
+        : elements;
   filtres.push({
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     creeLe: new Date().toISOString(),
@@ -96,7 +100,14 @@ export function estErreurReseau(err: unknown): boolean {
 
 async function executer(action: ActionEnAttente) {
   if (action.type === "signalement") await patientApi.createSignalement(action.payload);
-  else await patientApi.declarerPrise(action.payload);
+  else if (action.type === "prise") await patientApi.declarerPrise(action.payload);
+  else if (action.type === "confirmation_rappel") await patientApi.envoyerConfirmationsRappels([action.payload]);
+  else await patientApi.journaliserRappel(action.payload.action);
+}
+
+/** Éléments techniques : envoyés sans annoncer « saisie envoyée à votre équipe ». */
+function estDiscret(action: ActionEnAttente) {
+  return action.type === "confirmation_rappel" || action.type === "journal_rappel";
 }
 
 let enCours = false;
@@ -113,7 +124,7 @@ export async function synchroniser(): Promise<number> {
 
       try {
         await executer(element.action);
-        envoyes++;
+        if (!estDiscret(element.action)) envoyes++;
         ecrire(lire().filter((e) => e.id !== element.id));
       } catch (err) {
         if (estErreurReseau(err)) break; // toujours hors ligne : on réessaiera plus tard
@@ -125,4 +136,9 @@ export async function synchroniser(): Promise<number> {
     enCours = false;
   }
   return envoyes;
+}
+
+/** Partage coupé par le patient : les réponses aux rappels pas encore envoyées sont abandonnées. */
+export function retirerConfirmationsEnAttente() {
+  ecrire(lire().filter((e) => e.action.type !== "confirmation_rappel"));
 }

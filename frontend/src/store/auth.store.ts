@@ -18,6 +18,8 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   setAuth: (user: AuthUser, accessToken: string, refreshToken: string) => void;
+  /** Remplace les jetons de la session courante (ex. après un changement de mot de passe). */
+  setTokens: (accessToken: string, refreshToken: string) => void;
   logout: () => void;
 }
 
@@ -32,6 +34,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.setItem('vihepat_access_token', accessToken);
     localStorage.setItem('vihepat_refresh_token', refreshToken);
     set({ user, accessToken, refreshToken, isAuthenticated: true });
+  },
+
+  setTokens: (accessToken, refreshToken) => {
+    localStorage.setItem('vihepat_access_token', accessToken);
+    localStorage.setItem('vihepat_refresh_token', refreshToken);
+    set({ accessToken, refreshToken });
   },
 
   logout: () => {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import i18n from "@/i18n";
 import { abonnerFileAttente, nombreEnAttente, synchroniser } from "@/lib/offline-queue";
 
 /** État du réseau + nombre de saisies en attente, avec synchronisation automatique. */
@@ -15,7 +16,7 @@ export function useConnexion() {
     const lancer = async () => {
       const n = await synchroniser();
       if (n > 0) {
-        toast.success(n > 1 ? `${n} saisies envoyées à votre équipe` : "Saisie envoyée à votre équipe");
+        toast.success(i18n.t("app_shell.sync", { count: n }));
         queryClient.invalidateQueries({ queryKey: ["patient"] });
       }
     };

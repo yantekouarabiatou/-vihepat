@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, JwtPayload } from '../utils/jwt';
+import { jetonEncoreValide } from '../utils/token-version';
 
 declare global {
   namespace Express {
@@ -7,17 +8,27 @@ declare global {
   }
 }
 
-export function authRequired(req: Request, res: Response, next: NextFunction) {
+export async function authRequired(req: Request, res: Response, next: NextFunction) {
   const h = req.headers.authorization;
   if (!h?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Token manquant' });
   }
+  let payload: JwtPayload;
   try {
-    req.user = verifyAccessToken(h.slice(7));
-    next();
+    payload = verifyAccessToken(h.slice(7));
   } catch {
-    res.status(401).json({ error: 'Token invalide ou expiré' });
+    return res.status(401).json({ error: 'Token invalide ou expiré' });
   }
+  try {
+    // Session fermée par un changement de mot de passe (ou compte désactivé)
+    if (!(await jetonEncoreValide(payload.userId, payload.tv))) {
+      return res.status(401).json({ error: 'Session expirée', code: 'SESSION_REVOKED' });
+    }
+  } catch (err) {
+    return next(err);
+  }
+  req.user = payload;
+  next();
 }
 
 export function authOptional(req: Request, res: Response, next: NextFunction) {

@@ -3,6 +3,8 @@ import { LandingPage } from '../features/marketing/LandingPage';
 import { AuthPage } from '../features/auth/AuthPage';
 import { DashboardPage as PatientDashboardPage } from '../features/patient/DashboardPage';
 import { PeerGroupsPage } from '../features/patient/PeerGroupsPage';
+import { RappelsPage } from '../features/patient/RappelsPage';
+import { ResetPasswordPage } from '../features/auth/ResetPasswordPage';
 import { DashboardPage as SoignantDashboardPage } from '../features/soignant/DashboardPage';
 import { PatientsPage } from '../features/soignant/PatientsPage';
 import { PatientDetailPage } from '../features/soignant/PatientDetailPage';
@@ -13,11 +15,13 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
   { path: '/login', element: <AuthPage /> },
+  { path: '/reinitialiser', element: <ResetPasswordPage /> },
   {
     element: <ProtectedRoute allowedRoles={['patient']} />,
     children: [
       { path: '/dashboard', element: <PatientDashboardPage /> },
       { path: '/groupes', element: <PeerGroupsPage /> },
+      { path: '/rappels', element: <RappelsPage /> },
     ],
   },
   {

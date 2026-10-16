@@ -24,7 +24,11 @@ import {
   type RoleConfig
 } from "@/lib/permissions";
 import { telechargerFichePatientPdf, imprimerFichePatient, type PatientCredentialsDoc } from "@/lib/patient-pdf";
-import type { Role } from "@/store/auth.store";
+import { useAuthStore, type Role } from "@/store/auth.store";
+import { apiErrorMessage as messageErreurApi } from "@/lib/api-error";
+import { localeAffichage } from "@/lib/date-locale";
+import { PasswordInput } from "@/components/ui/password-input";
+import i18n from "@/i18n";
 import { AppShell } from "@/components/app-shell";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
@@ -53,19 +57,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-function apiErrorMessage(err: unknown, fallback: string): string {
-  const e = err as any;
-  return e?.response?.data?.error || e?.response?.data?.message || fallback;
-}
+const apiErrorMessage = messageErreurApi;
 
 function formatCellValue(row: AdminRow, f: AdminField): string {
   if (f.type === "fk") return row._labels?.[f.key] ?? (row[f.key] != null ? `#${row[f.key]}` : "—");
   const val = row[f.key];
   if (val == null) return "—";
-  if (f.type === "boolean") return val ? "Oui" : "Non";
+  if (f.type === "boolean") return val ? i18n.t("admin_ui.oui") : i18n.t("admin_ui.non");
   if (f.type === "date" || f.type === "datetime") {
     const d = new Date(val as string);
-    return Number.isNaN(d.getTime()) ? String(val) : d.toLocaleString();
+    return Number.isNaN(d.getTime()) ? String(val) : d.toLocaleString(localeAffichage());
   }
   return String(val);
 }
@@ -122,11 +123,11 @@ function FieldInput({
       );
     case "password":
       return (
-        <Input
-          type="password"
+        <PasswordInput
+          autoComplete="new-password"
           value={(value as string) ?? ""}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Laisser vide pour ne pas changer"
+          placeholder={i18n.t("admin_ui.mdp_inchange")}
           className="h-11 rounded-xl"
         />
       );
@@ -184,7 +185,12 @@ function FieldInput({
 }
 
 export function AdminPage() {
-  const { t } = useTranslation();
+  const { t, i18n: i18nInstance } = useTranslation();
+  const locale = localeAffichage(i18nInstance.resolvedLanguage);
+  // Émetteur affiché sur la fiche d'accès PDF
+  const user = useAuthStore((s) => s.user);
+  const permLabel = (key: string, champ: "label" | "description", defaut: string) =>
+    t(`permissions.perm.${key.replace(":", "_")}.${champ}`, { defaultValue: defaut });
   const queryClient = useQueryClient();
 
   // Navigation par onglets
@@ -261,22 +267,22 @@ export function AdminPage() {
   const { mutate: updateRole, isPending: updatingRole } = useMutation({
     mutationFn: () => adminApi.updateUserRole(selectedUserForRole!.id, newSelectedRole),
     onSuccess: (res) => {
-      toast.success(`Rôle mis à jour pour ${res.user.nom} ${res.user.prenom} (${res.newRole})`);
+      toast.success(t("admin_ui.toast_role", { nom: `${res.user.prenom} ${res.user.nom}`, role: t(`permissions.role.${res.newRole}.badge`, { defaultValue: res.newRole }) }));
       setRoleDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["admin", "users-overview"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "rows"] });
     },
-    onError: (err) => toast.error(apiErrorMessage(err, "Erreur lors de la modification du rôle")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("admin_ui.erreur_role"))),
   });
 
   const { mutate: toggleStatus } = useMutation({
     mutationFn: (id: number) => adminApi.toggleUserStatus(id),
     onSuccess: (res) => {
-      toast.success(res.actif ? "Compte réactivé avec succès" : "Compte suspendu");
+      toast.success(res.actif ? t("admin_ui.toast_reactive") : t("admin_ui.toast_suspendu"));
       queryClient.invalidateQueries({ queryKey: ["admin", "users-overview"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "rows"] });
     },
-    onError: (err) => toast.error(apiErrorMessage(err, "Erreur lors du changement de statut")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("admin_ui.erreur_statut"))),
   });
 
   const { mutate: creerPatient, isPending: creatingPatient } = useMutation({
@@ -294,7 +300,7 @@ export function AdminPage() {
     onSuccess: (res) => {
       setNewPatientOpen(false);
       setGeneratedCredentials(res);
-      toast.success("Dossier patient créé avec succès !");
+      toast.success(t("patients.toast_modifie_cree"));
       queryClient.invalidateQueries({ queryKey: ["admin", "users-overview"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "rows"] });
 
@@ -319,7 +325,7 @@ export function AdminPage() {
       setNpPrenom("");
       setNpTelephone("");
     },
-    onError: (err) => toast.error(apiErrorMessage(err, "Erreur lors de la création du patient")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("patients.erreur_creation"))),
   });
 
   const { mutate: saveRow, isPending: saving } = useMutation({
@@ -336,23 +342,23 @@ export function AdminPage() {
         : adminApi.createRow(table!.key, payload);
     },
     onSuccess: () => {
-      toast.success(editingRow ? "Ligne mise à jour" : "Ligne créée");
+      toast.success(editingRow ? t("admin_ui.toast_ligne_maj") : t("admin_ui.toast_ligne_creee"));
       setDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["admin", "rows", tableKey] });
       queryClient.invalidateQueries({ queryKey: ["admin", "users-overview"] });
     },
-    onError: (err) => toast.error(apiErrorMessage(err, "Erreur lors de l'enregistrement")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("admin_ui.erreur_enregistrement"))),
   });
 
   const { mutate: removeRow, isPending: deleting } = useMutation({
     mutationFn: (row: AdminRow) => adminApi.deleteRow(table!.key, row.id),
     onSuccess: () => {
-      toast.success("Ligne supprimée");
+      toast.success(t("admin_ui.toast_ligne_supprimee"));
       setRowToDelete(null);
       queryClient.invalidateQueries({ queryKey: ["admin", "rows", tableKey] });
       queryClient.invalidateQueries({ queryKey: ["admin", "users-overview"] });
     },
-    onError: (err) => toast.error(apiErrorMessage(err, "Erreur lors de la suppression")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("admin_ui.erreur_suppression"))),
   });
 
   // KPI
@@ -393,22 +399,27 @@ export function AdminPage() {
     if (!table) return [];
     const cols: DataTableColumn<AdminRow>[] = [
       {
+        key: "id",
         header: "ID",
-        accessor: (r) => <span className="font-mono text-xs text-muted-foreground">{r.id}</span>,
+        render: (r) => <span className="font-mono text-xs text-muted-foreground">{r.id}</span>,
+        sortValue: (r) => r.id,
         className: "w-16",
       },
     ];
     for (const f of table.fields) {
       if (f.type === "password") continue;
       cols.push({
+        key: f.key,
         header: f.label,
-        accessor: (r) => formatCellValue(r, f),
-        className: f.type === "textarea" ? "max-w-xs truncate" : undefined,
+        render: (r) => formatCellValue(r, f),
+        sortValue: (r) => formatCellValue(r, f),
+        ...(f.type === "textarea" ? { className: "max-w-xs truncate" } : {}),
       });
     }
     cols.push({
-      header: "Actions",
-      accessor: (r) => (
+      key: "actions",
+      header: t("patients.col_actions"),
+      render: (r) => (
         <div className="flex items-center gap-1">
           {table.allowUpdate && (
             <Button
@@ -420,6 +431,8 @@ export function AdminPage() {
                 setValues(rowToFormValues(r, table));
                 setDialogOpen(true);
               }}
+              aria-label={t("patients.modifier")}
+              title={t("patients.modifier")}
             >
               <Edit3 className="h-4 w-4" />
             </Button>
@@ -430,6 +443,8 @@ export function AdminPage() {
               variant="ghost"
               className="h-8 w-8 p-0 text-destructive hover:text-destructive"
               onClick={() => setRowToDelete(r)}
+              aria-label={t("rappels.supprimer_bouton")}
+              title={t("rappels.supprimer_bouton")}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -439,25 +454,25 @@ export function AdminPage() {
       className: "w-24 text-right",
     });
     return cols;
-  }, [table]);
+  }, [table, t]);
 
   return (
-    <AppShell title="Administration & Habilitations">
+    <AppShell title={t("sidebar.administration")}>
       <div className="space-y-6">
         {/* Entête héroïque */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="rounded-full border-primary/30 bg-primary/10 text-primary text-xs font-semibold px-3 py-0.5">
-                <Shield className="h-3 w-3 mr-1" /> Gouvernance & Sécurité
+                <Shield className="h-3 w-3 mr-1" /> {t("admin_ui.badge_gouvernance")}
               </Badge>
               <span className="text-xs text-muted-foreground">VIHEPAT Core Platform</span>
             </div>
             <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-              Gestion des Rôles & Permissions
+              {t("admin_ui.titre")}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
-              Les dossiers patients sont créés exclusivement par les soignants et administrateurs. Supervisez les privilèges, gérez les habilitations et explorez le registre des données.
+              {t("admin_ui.sous_titre")}
             </p>
           </div>
 
@@ -468,7 +483,7 @@ export function AdminPage() {
                 className="rounded-full border-border/80 bg-background hover:bg-secondary font-semibold text-xs h-10 px-4 gap-1.5 shadow-xs"
               >
                 <Globe className="h-4 w-4 text-primary" />
-                Site public
+                {t("app_shell.site_public")}
               </Button>
             </Link>
             <Button
@@ -476,7 +491,7 @@ export function AdminPage() {
               className="rounded-full shadow-md bg-[hsl(var(--brand))] hover:bg-[hsl(var(--brand-deep))] text-white font-semibold text-xs h-10 px-4 gap-1.5"
             >
               <Plus className="h-4 w-4" />
-              Créer un dossier patient
+              {t("admin_ui.creer_patient")}
             </Button>
           </div>
         </div>
@@ -485,46 +500,46 @@ export function AdminPage() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-xs font-medium">Total Utilisateurs</span>
+              <span className="text-xs font-medium">{t("admin_ui.kpi_utilisateurs")}</span>
               <Users className="h-4 w-4 text-primary" />
             </div>
             <div className="mt-2 text-2xl font-bold text-foreground">
               {usersLoading ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : stats.total}
             </div>
-            <span className="text-[11px] text-muted-foreground">Inscrits sur la plateforme</span>
+            <span className="text-[11px] text-muted-foreground">{t("admin_ui.kpi_utilisateurs_sub")}</span>
           </div>
 
           <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-xs font-medium">Patients Suivis</span>
+              <span className="text-xs font-medium">{t("admin_ui.kpi_patients")}</span>
               <HeartPulse className="h-4 w-4 text-sky-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-sky-600 dark:text-sky-400">
               {usersLoading ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : stats.patients}
             </div>
-            <span className="text-[11px] text-muted-foreground">Créés en centre de santé</span>
+            <span className="text-[11px] text-muted-foreground">{t("admin_ui.kpi_patients_sub")}</span>
           </div>
 
           <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-xs font-medium">Soignants Habilités</span>
+              <span className="text-xs font-medium">{t("admin_ui.kpi_soignants")}</span>
               <Stethoscope className="h-4 w-4 text-emerald-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
               {usersLoading ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : stats.soignants}
             </div>
-            <span className="text-[11px] text-muted-foreground">Avec code structure vérifié</span>
+            <span className="text-[11px] text-muted-foreground">{t("admin_ui.kpi_soignants_sub")}</span>
           </div>
 
           <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between text-muted-foreground">
-              <span className="text-xs font-medium">Administrateurs</span>
+              <span className="text-xs font-medium">{t("admin_ui.kpi_admins")}</span>
               <Shield className="h-4 w-4 text-amber-600" />
             </div>
             <div className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400">
               {usersLoading ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : stats.admins}
             </div>
-            <span className="text-[11px] text-muted-foreground">Accès de supervision complet</span>
+            <span className="text-[11px] text-muted-foreground">{t("admin_ui.kpi_admins_sub")}</span>
           </div>
         </div>
 
@@ -541,7 +556,7 @@ export function AdminPage() {
           >
             <span className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              Contrôle d'Accès & Matrice des Permissions
+              {t("admin_ui.onglet_roles")}
             </span>
           </button>
           <button
@@ -555,7 +570,7 @@ export function AdminPage() {
           >
             <span className="flex items-center gap-2">
               <Database className="h-4 w-4" />
-              Registre & Base de Données Globale
+              {t("admin_ui.onglet_donnees")}
             </span>
           </button>
         </div>
@@ -574,25 +589,25 @@ export function AdminPage() {
                   >
                     <div className="flex items-center justify-between">
                       <span className={`text-xs font-bold px-3 py-1 rounded-full ${rCfg.badgeBg}`}>
-                        {rCfg.badge}
+                        {t(`permissions.role.${rKey}.badge`, { defaultValue: rCfg.badge })}
                       </span>
                       <span className="text-xs font-mono font-semibold opacity-75">
-                        {rCfg.permissions.length} privilèges
+                        {t("admin_ui.privileges", { count: rCfg.permissions.length })}
                       </span>
                     </div>
-                    <h3 className="mt-3 text-base font-extrabold text-foreground">{rCfg.name}</h3>
+                    <h3 className="mt-3 text-base font-extrabold text-foreground">{t(`permissions.role.${rKey}.name`, { defaultValue: rCfg.name })}</h3>
                     <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                      {rCfg.description}
+                      {t(`permissions.role.${rKey}.description`, { defaultValue: rCfg.description })}
                     </p>
                     <div className="mt-4 pt-3 border-t border-border/40 text-[11px] font-medium text-foreground/80 flex items-center justify-between">
-                      <span>Création de patient :</span>
+                      <span>{t("admin_ui.creation_patient")}</span>
                       {rKey === "patient" ? (
                         <span className="inline-flex items-center gap-1 text-destructive font-bold">
-                          <XCircle className="h-3.5 w-3.5" /> Interdit (en centre)
+                          <XCircle className="h-3.5 w-3.5" /> {t("admin_ui.interdit_centre")}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Autorisé
+                          <CheckCircle2 className="h-3.5 w-3.5" /> {t("admin_ui.autorise")}
                         </span>
                       )}
                     </div>
@@ -607,10 +622,10 @@ export function AdminPage() {
                 <div>
                   <h2 className="text-xl font-extrabold text-foreground flex items-center gap-2">
                     <Users className="h-5 w-5 text-primary" />
-                    Utilisateurs & Attribution des Rôles
+                    {t("admin_ui.utilisateurs_titre")}
                   </h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Modifiez les rôles des utilisateurs, activez ou suspendez leurs accès en temps réel.
+                    {t("admin_ui.utilisateurs_desc")}
                   </p>
                 </div>
 
@@ -619,7 +634,8 @@ export function AdminPage() {
                   <Input
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
-                    placeholder="Rechercher nom, email, rôle..."
+                    placeholder={t("admin_ui.recherche_utilisateurs")}
+                    aria-label={t("admin_ui.recherche_utilisateurs")}
                     className="pl-9 h-10 rounded-full text-xs"
                   />
                 </div>
@@ -631,19 +647,19 @@ export function AdminPage() {
                 </div>
               ) : filteredUsers.length === 0 ? (
                 <div className="text-center py-10 text-muted-foreground text-sm">
-                  Aucun utilisateur trouvé pour cette recherche.
+                  {t("admin_ui.utilisateurs_vide")}
                 </div>
               ) : (
                 <div className="mt-4 overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
                       <tr className="border-b border-border/50 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                        <th className="py-3 px-3">Utilisateur</th>
-                        <th className="py-3 px-3">Rôle Actuel</th>
-                        <th className="py-3 px-3">Entité / Profil</th>
-                        <th className="py-3 px-3">Statut</th>
-                        <th className="py-3 px-3">Dernière Connexion</th>
-                        <th className="py-3 px-3 text-right">Actions</th>
+                        <th className="py-3 px-3">{t("admin_ui.col_utilisateur")}</th>
+                        <th className="py-3 px-3">{t("admin_ui.col_role")}</th>
+                        <th className="py-3 px-3">{t("admin_ui.col_entite")}</th>
+                        <th className="py-3 px-3">{t("admin_ui.col_statut")}</th>
+                        <th className="py-3 px-3">{t("admin_ui.col_connexion")}</th>
+                        <th className="py-3 px-3 text-right">{t("patients.col_actions")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/40">
@@ -659,20 +675,20 @@ export function AdminPage() {
                             </td>
                             <td className="py-3 px-3">
                               <Badge className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${rCfg?.badgeBg ?? "bg-secondary"}`}>
-                                {rCfg?.badge ?? u.role}
+                                {rCfg ? t(`permissions.role.${u.role}.badge`, { defaultValue: rCfg.badge }) : u.role}
                               </Badge>
                             </td>
                             <td className="py-3 px-3 text-xs">
                               {u.patient ? (
                                 <span className="font-mono bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 px-2 py-0.5 rounded-md font-semibold border border-sky-200 dark:border-sky-800">
-                                  {u.patient.codePatient} ({u.patient.pathologie.toUpperCase()})
+                                  {u.patient.codePatient} ({t(`shared.pathologie.${u.patient.pathologie}`, { defaultValue: u.patient.pathologie.toUpperCase() })})
                                 </span>
                               ) : u.soignant ? (
                                 <span className="text-emerald-700 dark:text-emerald-300 font-medium">
                                   {u.soignant.structure} ({u.soignant.matricule})
                                 </span>
                               ) : (
-                                <span className="text-muted-foreground italic">Administration Centrale</span>
+                                <span className="text-muted-foreground italic">{t("admin_ui.administration_centrale")}</span>
                               )}
                             </td>
                             <td className="py-3 px-3">
@@ -684,11 +700,11 @@ export function AdminPage() {
                                 }`}
                               >
                                 <span className={`h-1.5 w-1.5 rounded-full ${u.actif ? "bg-emerald-500" : "bg-destructive"}`} />
-                                {u.actif ? "Actif" : "Suspendu"}
+                                {u.actif ? t("admin_ui.actif") : t("admin_ui.suspendu")}
                               </span>
                             </td>
                             <td className="py-3 px-3 text-xs text-muted-foreground">
-                              {u.derniereConnexion ? new Date(u.derniereConnexion).toLocaleDateString() : "Jamais"}
+                              {u.derniereConnexion ? new Date(u.derniereConnexion).toLocaleDateString(locale) : t("admin_ui.jamais")}
                             </td>
                             <td className="py-3 px-3 text-right">
                               <div className="flex items-center justify-end gap-1.5">
@@ -703,7 +719,7 @@ export function AdminPage() {
                                   className="h-8 rounded-full text-xs font-medium gap-1"
                                 >
                                   <KeyRound className="h-3.5 w-3.5 text-primary" />
-                                  Modifier rôle
+                                  {t("admin_ui.modifier_role")}
                                 </Button>
                                 <Button
                                   size="sm"
@@ -714,7 +730,8 @@ export function AdminPage() {
                                       ? "text-destructive hover:bg-destructive/10"
                                       : "text-emerald-600 hover:bg-emerald-50"
                                   }`}
-                                  title={u.actif ? "Suspendre l'utilisateur" : "Réactiver l'utilisateur"}
+                                  title={u.actif ? t("admin_ui.suspendre") : t("admin_ui.reactiver")}
+                                  aria-label={u.actif ? t("admin_ui.suspendre") : t("admin_ui.reactiver")}
                                 >
                                   {u.actif ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                                 </Button>
@@ -735,10 +752,10 @@ export function AdminPage() {
                 <div>
                   <h2 className="text-xl font-extrabold text-foreground flex items-center gap-2">
                     <Shield className="h-5 w-5 text-primary" />
-                    Matrice des Permissions par Rôle
+                    {t("admin_ui.matrice_titre")}
                   </h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Visualisez les règles d'accès précises appliquées sur toute la plateforme.
+                    {t("admin_ui.matrice_desc")}
                   </p>
                 </div>
 
@@ -753,7 +770,7 @@ export function AdminPage() {
                         : "bg-secondary text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    Toutes ({PERMISSIONS_CATALOG.length})
+                    {t("admin_ui.toutes", { count: PERMISSIONS_CATALOG.length })}
                   </button>
                   {PERMISSION_CATEGORIES.map((cat) => (
                     <button
@@ -766,7 +783,7 @@ export function AdminPage() {
                           : "bg-secondary text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      {cat.label}
+                      {t(`permissions.cat.${cat.key}.label`, { defaultValue: cat.label })}
                     </button>
                   ))}
                 </div>
@@ -777,15 +794,15 @@ export function AdminPage() {
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-border/50 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                      <th className="py-3 px-4 w-2/5">Capacité & Action</th>
+                      <th className="py-3 px-4 w-2/5">{t("admin_ui.col_capacite")}</th>
                       <th className="py-3 px-4 text-center w-1/5">
-                        <span className="text-amber-600 dark:text-amber-400">Administrateur</span>
+                        <span className="text-amber-600 dark:text-amber-400">{t("permissions.role.admin.badge")}</span>
                       </th>
                       <th className="py-3 px-4 text-center w-1/5">
-                        <span className="text-emerald-600 dark:text-emerald-400">Soignant</span>
+                        <span className="text-emerald-600 dark:text-emerald-400">{t("permissions.role.soignant.badge")}</span>
                       </th>
                       <th className="py-3 px-4 text-center w-1/5">
-                        <span className="text-sky-600 dark:text-sky-400">Patient</span>
+                        <span className="text-sky-600 dark:text-sky-400">{t("permissions.role.patient.badge")}</span>
                       </th>
                     </tr>
                   </thead>
@@ -807,15 +824,15 @@ export function AdminPage() {
                         >
                           <td className="py-3 px-4">
                             <div className="font-semibold text-foreground flex items-center gap-2">
-                              {perm.label}
+                              {permLabel(perm.key, "label", perm.label)}
                               {isPatientCreation && (
                                 <Badge className="bg-amber-600 text-white text-[10px] py-0 px-2 rounded-full">
-                                  Règle Clé
+                                  {t("admin_ui.regle_cle")}
                                 </Badge>
                               )}
                             </div>
                             <div className="text-xs text-muted-foreground leading-relaxed mt-0.5">
-                              {perm.description}
+                              {permLabel(perm.key, "description", perm.description)}
                             </div>
                           </td>
 
@@ -823,7 +840,7 @@ export function AdminPage() {
                           <td className="py-3 px-4 text-center">
                             {adminHas ? (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full">
-                                <CheckCircle2 className="h-4 w-4" /> Autorisé
+                                <CheckCircle2 className="h-4 w-4" /> {t("admin_ui.autorise")}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
@@ -836,11 +853,11 @@ export function AdminPage() {
                           <td className="py-3 px-4 text-center">
                             {soignantHas ? (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full">
-                                <CheckCircle2 className="h-4 w-4" /> Autorisé
+                                <CheckCircle2 className="h-4 w-4" /> {t("admin_ui.autorise")}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
-                                <XCircle className="h-4 w-4 text-muted-foreground/60" /> Interdit
+                                <XCircle className="h-4 w-4 text-muted-foreground/60" /> {t("admin_ui.interdit")}
                               </span>
                             )}
                           </td>
@@ -849,11 +866,11 @@ export function AdminPage() {
                           <td className="py-3 px-4 text-center">
                             {patientHas ? (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 px-2.5 py-1 rounded-full">
-                                <CheckCircle2 className="h-4 w-4" /> Son dossier
+                                <CheckCircle2 className="h-4 w-4" /> {t("admin_ui.son_dossier")}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-destructive/80 bg-destructive/10 px-2.5 py-1 rounded-full">
-                                <XCircle className="h-4 w-4 text-destructive" /> Interdit
+                                <XCircle className="h-4 w-4 text-destructive" /> {t("admin_ui.interdit")}
                               </span>
                             )}
                           </td>
@@ -878,8 +895,8 @@ export function AdminPage() {
                     value={tableKey}
                     onChange={setTableKey}
                     options={(tables ?? []).map((tb) => ({ value: tb.key, label: tb.label }))}
-                    placeholder="Choisir une table"
-                    searchPlaceholder="Rechercher une table..."
+                    placeholder={t("admin_ui.choisir_table")}
+                    searchPlaceholder={t("admin_ui.rechercher_table")}
                   />
                 </div>
               </div>
@@ -893,7 +910,7 @@ export function AdminPage() {
                     setDialogOpen(true);
                   }}
                 >
-                  <Plus className="h-4 w-4" /> Nouveau {table.label}
+                  <Plus className="h-4 w-4" /> {t("admin_ui.nouvelle_entree", { table: table.label })}
                 </Button>
               )}
             </div>
@@ -904,14 +921,14 @@ export function AdminPage() {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : !table ? (
-                <p className="py-10 text-center text-sm text-muted-foreground">Sélectionnez une table</p>
+                <p className="py-10 text-center text-sm text-muted-foreground">{t("admin_ui.selectionnez_table")}</p>
               ) : (
                 <DataTable
                   data={rows ?? []}
                   columns={tableColumns}
                   getRowKey={(r) => r.id}
-                  searchPlaceholder="Rechercher dans les données..."
-                  emptyText="Aucune donnée enregistrée dans cette table."
+                  searchPlaceholder={t("admin_ui.rechercher_donnees")}
+                  emptyText={t("admin_ui.table_vide")}
                   pageSize={10}
                   searchText={(r) =>
                     table.fields
@@ -932,7 +949,7 @@ export function AdminPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <KeyRound className="h-5 w-5 text-primary" />
-              Modifier le rôle de l'utilisateur
+              {t("admin_ui.role_dialog_titre")}
             </DialogTitle>
             <DialogDescription>
               {selectedUserForRole && (
@@ -945,26 +962,14 @@ export function AdminPage() {
 
           <div className="space-y-4 py-2">
             <Label className="text-xs font-semibold uppercase text-muted-foreground">
-              Sélectionnez le nouveau rôle :
+              {t("admin_ui.role_dialog_label")}
             </Label>
             <div className="space-y-2.5">
               {(
                 [
-                  {
-                    role: "patient",
-                    title: "Patient·e",
-                    desc: "Accès personnel à son propre suivi et aux groupes de soutien. Ne peut pas créer de dossier.",
-                  },
-                  {
-                    role: "soignant",
-                    title: "Soignant·e (Professionnel de santé)",
-                    desc: "Habilité à ouvrir des dossiers patients, prescrire, suivre la biologie et planifier des rdv.",
-                  },
-                  {
-                    role: "admin",
-                    title: "Administrateur & Coordinateur",
-                    desc: "Supervision globale, gestion de tous les utilisateurs, configuration et audit de sécurité.",
-                  },
+                  { role: "patient", title: t("admin_ui.role_patient_titre"), desc: t("admin_ui.role_patient_desc") },
+                  { role: "soignant", title: t("admin_ui.role_soignant_titre"), desc: t("admin_ui.role_soignant_desc") },
+                  { role: "admin", title: t("admin_ui.role_admin_titre"), desc: t("admin_ui.role_admin_desc") },
                 ] as const
               ).map((item) => (
                 <label
@@ -994,18 +999,18 @@ export function AdminPage() {
             {newSelectedRole === "admin" && (
               <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
-                <span>Attention : le rôle Administrateur confère un contrôle total sur l'ensemble de la plateforme.</span>
+                <span>{t("admin_ui.role_admin_attention")}</span>
               </div>
             )}
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setRoleDialogOpen(false)} className="rounded-full">
-              Annuler
+              {t("fiche.annuler")}
             </Button>
             <Button onClick={() => updateRole()} disabled={updatingRole} className="rounded-full font-semibold">
               {updatingRole && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirmer la mise à jour
+              {t("admin_ui.role_dialog_confirmer")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1017,10 +1022,10 @@ export function AdminPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <HeartPulse className="h-5 w-5 text-primary" />
-              Ouverture de dossier patient
+              {t("admin_ui.np_titre")}
             </DialogTitle>
             <DialogDescription>
-              En tant qu'administrateur, vous initialisez le compte patient. Un mot de passe temporaire sera généré pour remise en main propre.
+              {t("admin_ui.np_desc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -1033,75 +1038,71 @@ export function AdminPage() {
           >
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="np-prenom">Prénom *</Label>
+                <Label htmlFor="np-prenom">{t("auth.first_name")} *</Label>
                 <Input
                   id="np-prenom"
                   value={npPrenom}
                   onChange={(e) => setNpPrenom(e.target.value)}
                   required
-                  placeholder="Awa"
+                  placeholder={t("patients.ph_prenom")}
                   className="rounded-xl h-11"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="np-nom">Nom *</Label>
+                <Label htmlFor="np-nom">{t("auth.last_name")} *</Label>
                 <Input
                   id="np-nom"
                   value={npNom}
                   onChange={(e) => setNpNom(e.target.value)}
                   required
-                  placeholder="Mensah"
+                  placeholder={t("patients.ph_nom")}
                   className="rounded-xl h-11"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="np-email">Email sécurisé *</Label>
+              <Label htmlFor="np-email">{t("patients.email_label")} *</Label>
               <Input
                 id="np-email"
                 type="email"
                 value={npEmail}
                 onChange={(e) => setNpEmail(e.target.value)}
                 required
-                placeholder="patient@exemple.com"
+                placeholder={t("patients.ph_email")}
                 className="rounded-xl h-11"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="np-pathologie">Pathologie suivie *</Label>
+                <Label htmlFor="np-pathologie">{t("auth.pathologie_label")} *</Label>
                 <SearchableSelect
                   value={npPathologie}
                   onChange={setNpPathologie}
-                  options={[
-                    { value: "vih", label: "VIH" },
-                    { value: "vhb", label: "Hépatite B" },
-                    { value: "vhc", label: "Hépatite C" },
-                    { value: "vih_vhb", label: "VIH + Hépatite B" },
-                    { value: "vih_vhc", label: "VIH + Hépatite C" },
-                    { value: "vhb_vhc", label: "Hépatite B + C" },
-                  ]}
-                  placeholder="Choisir pathologie"
+                  options={["vih", "vhb", "vhc", "vih_vhb", "vih_vhc", "vhb_vhc"].map((v) => ({
+                    value: v,
+                    label: t(`shared.pathologie.${v}`),
+                  }))}
+                  placeholder={t("patients.selectionner")}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="np-sexe">Sexe</Label>
+                <Label htmlFor="np-sexe">{t("patients.sexe")}</Label>
                 <SearchableSelect
                   value={npSexe}
                   onChange={setNpSexe}
                   options={[
-                    { value: "F", label: "Femme" },
-                    { value: "M", label: "Homme" },
+                    { value: "F", label: t("patients.sexe_f") },
+                    { value: "M", label: t("patients.sexe_m") },
                   ]}
-                  placeholder="Non précisé"
+                  placeholder={t("patients.non_specifie")}
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="np-telephone">Téléphone</Label>
+              <Label htmlFor="np-telephone">{t("patients.telephone")}</Label>
               <Input
                 id="np-telephone"
                 value={npTelephone}
@@ -1112,15 +1113,15 @@ export function AdminPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="np-soignant">Soignant référent affecté</Label>
+              <Label htmlFor="np-soignant">{t("fiche.soignant_referent")}</Label>
               <SearchableSelect
                 value={npSoignantId}
                 onChange={setNpSoignantId}
                 options={soignantsLookup ?? []}
-                placeholder="Assigner un soignant (optionnel)"
+                placeholder={t("fiche.soignant_referent_placeholder")}
               />
               <p className="text-[11px] text-muted-foreground">
-                Si non spécifié, le patient sera assigné au premier soignant actif disponible.
+                {t("admin_ui.np_soignant_aide")}
               </p>
             </div>
 
@@ -1132,17 +1133,17 @@ export function AdminPage() {
                 className="mt-0.5"
               />
               <Label htmlFor="np-consent" className="text-xs leading-relaxed font-normal cursor-pointer">
-                Consentement médical recueilli pour le traitement sécurisé et chiffré des données de santé.
+                {t("admin_ui.np_consentement")}
               </Label>
             </div>
 
             <DialogFooter className="pt-2">
               <Button type="button" variant="outline" onClick={() => setNewPatientOpen(false)} className="rounded-full">
-                Annuler
+                {t("fiche.annuler")}
               </Button>
               <Button type="submit" disabled={creatingPatient || !npConsentement} className="rounded-full font-semibold">
                 {creatingPatient && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Créer le compte patient
+                {t("admin_ui.np_submit")}
               </Button>
             </DialogFooter>
           </form>
@@ -1155,10 +1156,10 @@ export function AdminPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="h-6 w-6" />
-              Dossier patient initialisé
+              {t("admin_ui.cred_titre")}
             </DialogTitle>
             <DialogDescription>
-              Transmettez ces identifiants de première connexion au patient en main propre.
+              {t("admin_ui.cred_desc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -1166,24 +1167,24 @@ export function AdminPage() {
             <div className="space-y-4 py-3">
               <div className="rounded-2xl border border-border/80 bg-secondary/50 p-4 space-y-3 font-mono text-sm">
                 <div>
-                  <span className="text-xs uppercase text-muted-foreground font-sans block">Nom du patient</span>
+                  <span className="text-xs uppercase text-muted-foreground font-sans block">{t("patients.fiche_patient")}</span>
                   <span className="font-bold text-foreground">
                     {generatedCredentials.patient.user.prenom} {generatedCredentials.patient.user.nom}
                   </span>
                 </div>
                 <div>
-                  <span className="text-xs uppercase text-muted-foreground font-sans block">Code Patient Unique</span>
+                  <span className="text-xs uppercase text-muted-foreground font-sans block">{t("patients.fiche_code")}</span>
                   <span className="text-base font-extrabold text-primary">
                     {generatedCredentials.patient.codePatient}
                   </span>
                 </div>
                 <div>
-                  <span className="text-xs uppercase text-muted-foreground font-sans block">Email de connexion</span>
+                  <span className="text-xs uppercase text-muted-foreground font-sans block">{t("patients.fiche_identifiant")}</span>
                   <span className="font-bold text-foreground">{generatedCredentials.patient.user.email}</span>
                 </div>
                 <div className="pt-2 border-t border-border/60">
                   <span className="text-xs uppercase text-muted-foreground font-sans block">
-                    Mot de passe temporaire
+                    {t("patients.fiche_mdp")}
                   </span>
                   <div className="flex items-center justify-between mt-1 bg-card p-2 rounded-xl border border-border">
                     <span className="text-base font-extrabold tracking-wider text-emerald-600 dark:text-emerald-400">
@@ -1194,13 +1195,13 @@ export function AdminPage() {
                       variant="ghost"
                       onClick={() => {
                         navigator.clipboard.writeText(
-                          `Identifiants VIHEPAT:\nEmail: ${generatedCredentials.patient.user.email}\nCode: ${generatedCredentials.patient.codePatient}\nMot de passe: ${generatedCredentials.motDePasseTemporaire}`
+                          `${t("patients.copie_titre")}\n${t("auth.email")} : ${generatedCredentials.patient.user.email}\n${t("fiche.code_patient")} : ${generatedCredentials.patient.codePatient}\n${t("auth.password")} : ${generatedCredentials.motDePasseTemporaire}`
                         );
-                        toast.success("Identifiants copiés dans le presse-papier !");
+                        toast.success(t("patients.toast_copie"));
                       }}
                       className="h-8 gap-1 text-xs"
                     >
-                      <Copy className="h-3.5 w-3.5" /> Copier
+                      <Copy className="h-3.5 w-3.5" /> {t("patients.copier")}
                     </Button>
                   </div>
                 </div>
@@ -1223,12 +1224,12 @@ export function AdminPage() {
                       emetteurNom: user ? `${user.prenom} ${user.nom}` : undefined,
                     };
                     telechargerFichePatientPdf(doc);
-                    toast.success("Fiche d'accès PDF téléchargée !");
+                    toast.success(t("fiche.toast_pdf"));
                   }}
                   className="rounded-full gap-2 text-xs font-semibold shadow-sm"
                 >
                   <FileDown className="h-4 w-4" />
-                  Télécharger PDF
+                  {t("fiche.telecharger_pdf")}
                 </Button>
 
                 <Button
@@ -1251,7 +1252,7 @@ export function AdminPage() {
                   className="rounded-full gap-2 text-xs font-semibold"
                 >
                   <Printer className="h-4 w-4" />
-                  Imprimer (A4)
+                  {t("fiche.imprimer_a4")}
                 </Button>
               </div>
             </div>
@@ -1259,7 +1260,7 @@ export function AdminPage() {
 
           <DialogFooter>
             <Button variant="secondary" onClick={() => setGeneratedCredentials(null)} className="w-full rounded-full font-semibold">
-              Terminer & fermer
+              {t("admin_ui.terminer")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1270,7 +1271,7 @@ export function AdminPage() {
         <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingRow ? `Modifier : ${table?.label}` : `Ajouter : ${table?.label}`}
+              {editingRow ? t("admin_ui.modifier_entree", { table: table?.label ?? "" }) : t("admin_ui.ajouter_entree", { table: table?.label ?? "" })}
             </DialogTitle>
             <DialogDescription>{table?.label}</DialogDescription>
           </DialogHeader>
@@ -1299,7 +1300,7 @@ export function AdminPage() {
               <DialogFooter>
                 <Button type="submit" disabled={saving} className="w-full rounded-full font-semibold">
                   {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {editingRow ? "Enregistrer les modifications" : "Créer l'entrée"}
+                  {editingRow ? t("patients.enregistrer") : t("admin_ui.creer_entree")}
                 </Button>
               </DialogFooter>
             </form>
@@ -1311,20 +1312,20 @@ export function AdminPage() {
       <AlertDialog open={!!rowToDelete} onOpenChange={(o) => !o && setRowToDelete(null)}>
         <AlertDialogContent className="rounded-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogTitle>{t("admin_ui.suppression_titre")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer cet élément (#{rowToDelete?.id}) ? Cette action est irréversible.
+              {t("admin_ui.suppression_desc", { id: rowToDelete?.id ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-full">Annuler</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-full">{t("fiche.annuler")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={deleting}
               className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => rowToDelete && removeRow(rowToDelete)}
             >
               {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Supprimer définitivement
+              {t("admin_ui.supprimer_definitivement")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

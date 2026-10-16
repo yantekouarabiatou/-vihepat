@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PriseDuJour } from "@/api/patient.api";
+import i18n from "@/i18n";
 
 const CLE_ACTIF = "vihepat_rappels";
 const CLE_ENVOYES = "vihepat_rappels_envoyes";
 
 /** Texte volontairement neutre : aucune mention de maladie ni de médicament (discrétion). */
-const TITRE = "Petit rappel";
-const MESSAGE = "C'est le moment de prendre soin de vous 🌿";
+const titre = () => i18n.t("observance.notif_titre");
+const message = () => i18n.t("observance.notif_message");
 
 function lire(cle: string): string | null {
   try {
@@ -75,13 +76,13 @@ export function useRappelsPrises(journee: PriseDuJour[] | undefined, date: strin
       if (dues.length === 0) return;
       for (const p of dues) envoyes.current.add(`${p.traitementId}-${p.rang}`);
       ecrire(CLE_ENVOYES, JSON.stringify({ date, cles: Array.from(envoyes.current) }));
-      const options = { body: MESSAGE, silent: true, tag: `rappel-${date}`, icon: "/icons/icon-192.png" };
+      const options = { body: message(), silent: true, tag: `rappel-${date}`, icon: "/icons/icon-192.png" };
       // Sur mobile, les notifications passent par le service worker
       if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-        void navigator.serviceWorker.ready.then((r) => r.showNotification(TITRE, options)).catch(() => undefined);
+        void navigator.serviceWorker.ready.then((r) => r.showNotification(titre(), options)).catch(() => undefined);
       } else {
         try {
-          new Notification(TITRE, options);
+          new Notification(titre(), options);
         } catch {
           /* navigateur sans prise en charge : ignoré */
         }

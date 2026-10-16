@@ -29,6 +29,8 @@ const schema = z.object({
   MAIL_ENCRYPTION: z.string().default('tls'),
   MAIL_FROM_ADDRESS: z.string().email().default('rabiatouyantekoua@gmail.com'),
   MAIL_FROM_NAME: z.string().default('VIHEPAT Santé'),
+  // Expéditeur des e-mails liés au compte (mot de passe) : volontairement neutre
+  MAIL_FROM_NAME_NEUTRE: z.string().default('Notification'),
 });
 
 export const env = schema.parse(process.env);

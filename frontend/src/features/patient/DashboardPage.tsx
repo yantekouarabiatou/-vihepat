@@ -21,9 +21,10 @@ import { ObservanceSection } from "./ObservanceSection";
 import { TriageDialog } from "./TriageDialog";
 import { Masque } from "@/components/masque";
 import { ListenButton } from "@/components/listen-button";
+import { localeAffichage } from "@/lib/date-locale";
 
 export function DashboardPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const [rdvOpen, setRdvOpen] = useState(false);
@@ -32,7 +33,7 @@ export function DashboardPage() {
   const [dateHeure, setDateHeure] = useState("");
 
   function formatDate(iso: string) {
-    return new Date(iso).toLocaleDateString(undefined, {
+    return new Date(iso).toLocaleDateString(localeAffichage(i18n.resolvedLanguage), {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -78,7 +79,7 @@ export function DashboardPage() {
   const dernierSignalement = signalements?.[0];
 
   return (
-    <AppShell title="Espace patient">
+    <AppShell title={t("app_shell.patient_space")}>
       {/* ===== Header ===== */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex items-start gap-2">
@@ -116,7 +117,7 @@ export function DashboardPage() {
               className="h-12 rounded-full px-5 gap-2 border-border/80 font-semibold shadow-xs hover:bg-secondary"
             >
               <Globe className="h-4 w-4 text-primary" />
-              <span>Site public</span>
+              <span>{t("app_shell.site_public")}</span>
             </Button>
           </Link>
           <Button

@@ -49,13 +49,13 @@ export function ChatWidget() {
   // Message d'accueil contextualisé
   const greetingText = useMemo(() => {
     if (role === "soignant" || role === "admin") {
-      return "Bonjour ! Je suis l'assistant clinique VIHEPAT. Comment puis-je vous assister dans le suivi de vos patients ou l'utilisation de la plateforme ?";
+      return t("chat.greeting_soignant");
     }
     if (role === "patient") {
-      return "Bonjour ! Je suis votre assistant santé VIHEPAT. Décrivez-moi vos symptômes ou posez vos questions. Vous pouvez aussi utiliser le micro pour parler ou écouter mes réponses.";
+      return t("chat.greeting_patient");
     }
-    return "Bonjour et bienvenue sur la plateforme nationale VIHEPAT ! Je suis votre assistant santé. Posez-moi vos questions sur le VIH, les hépatites virales B et C, le dépistage ou l'accès aux soins au Bénin.";
-  }, [role]);
+    return t("chat.greeting_public");
+  }, [role, t]);
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: greetingText },
@@ -69,30 +69,16 @@ export function ChatWidget() {
   // Suggestions rapides selon le rôle
   const quickChips = useMemo(() => {
     if (role === "patient") {
-      return [
-        "J'ai de la fièvre et des courbatures",
-        "J'ai oublié de prendre mon traitement",
-        "J'ai des nausées depuis ce matin",
-        "Comment bien prendre mes médicaments ?",
-      ];
+      return [t("chat.chip_patient_1"), t("chat.chip_patient_2"), t("chat.chip_patient_3"), t("chat.chip_patient_4")];
     }
     if (role === "soignant" || role === "admin") {
-      return [
-        "Quels sont les seuils d'alerte charge virale ?",
-        "Protocoles nationaux de prise en charge",
-        "Comment réinitialiser un code patient ?",
-      ];
+      return [t("chat.chip_soignant_1"), t("chat.chip_soignant_2"), t("chat.chip_soignant_3")];
     }
-    return [
-      "Comment et où faire un dépistage au Bénin ?",
-      "Quelle est la différence entre Hépatite B et C ?",
-      "Le traitement du VIH est-il gratuit ?",
-      "Comment protéger mon partenaire ?",
-    ];
-  }, [role]);
+    return [t("chat.chip_public_1"), t("chat.chip_public_2"), t("chat.chip_public_3"), t("chat.chip_public_4")];
+  }, [role, t]);
 
   const { isSupported: micSupported, isListening, transcript, start: startListening, stop: stopListening } =
-    useSpeechRecognition("fr-FR");
+    useSpeechRecognition(i18n.resolvedLanguage === "en" ? "en-US" : "fr-FR");
 
   useEffect(() => {
     if (transcript) setInput(transcript);
@@ -113,7 +99,7 @@ export function ChatWidget() {
       setInput("");
       blob = await fin;
     } catch {
-      toast.error("Impossible d'accéder au microphone. Autorisez-le dans votre navigateur.");
+      toast.error(t("chat.micro_refuse"));
       return;
     }
     if (!blob) return;
@@ -124,12 +110,12 @@ export function ChatWidget() {
         // Le texte n'est pas envoyé tout seul : la personne le relit et le corrige avant d'appuyer sur Envoyer
         setInput(r.transcription);
       } else if (r.langue === "fon" || r.langue === "autre") {
-        toast.info("Je ne comprends pas encore bien le fon à l'oral. Écrivez votre message, ou parlez en français.");
+        toast.info(t("chat.fon_non_compris"));
       } else {
-        toast.info("Je n'ai rien entendu. Réessayez en parlant plus près du micro.");
+        toast.info(t("chat.rien_entendu"));
       }
     } catch {
-      toast.error("La note vocale n'a pas pu être transcrite. Vous pouvez écrire votre message.");
+      toast.error(t("chat.transcription_echec"));
     } finally {
       setTranscription(false);
     }
@@ -142,7 +128,7 @@ export function ChatWidget() {
   // Synthèse vocale (Text-To-Speech)
   function toggleSpeech(text: string, index: number) {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      toast.info("La synthèse vocale n'est pas supportée sur ce navigateur.");
+      toast.info(t("chat.tts_non_supporte"));
       return;
     }
 
@@ -154,7 +140,7 @@ export function ChatWidget() {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = i18n.language === "fon" ? "fr-FR" : "fr-FR";
+    utterance.lang = i18n.resolvedLanguage === "en" ? "en-US" : "fr-FR";
     utterance.rate = 0.95;
     utterance.pitch = 1.0;
 
@@ -171,7 +157,7 @@ export function ChatWidget() {
     onSuccess: (res) => {
       setMessages((prev) => [...prev, { role: "assistant", content: res.reply }]);
       if (res.signalementCreated) {
-        toast.success("Signalement médical transmis à votre équipe soignante.");
+        toast.success(t("chat.signalement_transmis"));
         queryClient.invalidateQueries({ queryKey: ["patient", "signalements"] });
       }
     },
@@ -180,8 +166,7 @@ export function ChatWidget() {
         ...prev,
         {
           role: "assistant",
-          content:
-            "Désolé, je rencontre une difficulté de connexion. En cas d'urgence ou de malaise, contactez directement votre centre de santé ou le 166.",
+          content: t("chat.erreur_connexion"),
         },
       ]);
     },
@@ -222,7 +207,7 @@ export function ChatWidget() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Ouvrir l'assistant santé VIHEPAT"
+        aria-label={t("chat.ouvrir")}
         className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[linear-gradient(135deg,hsl(var(--brand))_0%,hsl(var(--brand-deep))_100%)] text-white shadow-xl transition-all duration-300 hover:scale-110 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-primary/20"
       >
         <MessageCircle className="h-6 w-6" />
@@ -244,17 +229,17 @@ export function ChatWidget() {
                 </div>
                 <div>
                   <DialogTitle className="text-base font-bold flex items-center gap-2">
-                    Assistant VIHEPAT
+                    {t("chat.title")}
                     <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">
-                      En ligne
+                      {t("chat.en_ligne")}
                     </span>
                   </DialogTitle>
                   <DialogDescription className="text-xs text-muted-foreground">
                     {role === "patient"
-                      ? "Accompagnement & Signalement de santé"
+                      ? t("chat.sous_titre_patient")
                       : role === "soignant" || role === "admin"
-                      ? "Support professionnel & Protocoles"
-                      : "Information & Prévention santé"}
+                      ? t("chat.sous_titre_soignant")
+                      : t("chat.sous_titre_public")}
                   </DialogDescription>
                 </div>
               </div>
@@ -265,7 +250,8 @@ export function ChatWidget() {
                 variant="ghost"
                 size="icon"
                 onClick={handleReset}
-                title="Recommencer la conversation"
+                title={t("chat.recommencer")}
+                aria-label={t("chat.recommencer")}
                 className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
               >
                 <RotateCcw className="h-4 w-4" />
@@ -278,7 +264,7 @@ export function ChatWidget() {
             <div className="mx-4 mt-3 flex items-start gap-2 rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-900 dark:text-amber-200">
               <CloudOff className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
               <span>
-                Mode hors ligne : l'assistant intelligent requiert internet. Vos déclarations de traitement et signalements restent enregistrés hors ligne.
+                {t("chat.hors_ligne")}
               </span>
             </div>
           )}
@@ -314,7 +300,8 @@ export function ChatWidget() {
                       variant="ghost"
                       size="icon"
                       onClick={() => toggleSpeech(m.content, i)}
-                      title={speakingIndex === i ? "Arrêter la lecture" : "Écouter la réponse"}
+                      title={speakingIndex === i ? t("chat.arreter_lecture") : t("chat.ecouter_reponse")}
+                      aria-label={speakingIndex === i ? t("chat.arreter_lecture") : t("chat.ecouter_reponse")}
                       className="h-7 w-7 shrink-0 rounded-full text-muted-foreground hover:text-primary"
                     >
                       {speakingIndex === i ? (
@@ -346,7 +333,7 @@ export function ChatWidget() {
               <div className="mt-4 space-y-2 pt-2 border-t border-border/40">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Sparkles className="h-3 w-3 text-primary" />
-                  Suggestions rapides :
+                  {t("chat.suggestions_rapides")}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {quickChips.map((chip, idx) => (
@@ -380,8 +367,8 @@ export function ChatWidget() {
                   size={enregistreur.isRecording ? "sm" : "icon"}
                   onClick={() => void noteVocale()}
                   disabled={transcription || isPending || !enLigne}
-                  aria-label={enregistreur.isRecording ? "Arrêter et transcrire la note vocale" : "Enregistrer une note vocale"}
-                  title={enregistreur.isRecording ? "Arrêter et transcrire" : "Enregistrer une note vocale"}
+                  aria-label={enregistreur.isRecording ? t("chat.note_arreter_aria") : t("chat.note_enregistrer")}
+                  title={enregistreur.isRecording ? t("chat.note_arreter") : t("chat.note_enregistrer")}
                   className={cn(
                     "h-10 shrink-0 rounded-full",
                     enregistreur.isRecording ? "animate-pulse gap-1.5 bg-rose-500 px-3 text-white hover:bg-rose-600" : "w-10"
@@ -406,8 +393,8 @@ export function ChatWidget() {
                   variant={isListening ? "default" : "outline"}
                   size="icon"
                   onClick={toggleMic}
-                  aria-label={isListening ? "Arrêter l'enregistrement" : "Parler au micro"}
-                  title={isListening ? "Arrêter le micro" : "Parler au micro"}
+                  aria-label={isListening ? t("chat.micro_arreter_aria") : t("chat.micro_parler")}
+                  title={isListening ? t("chat.micro_arreter") : t("chat.micro_parler")}
                   className={cn(
                     "h-10 w-10 shrink-0 rounded-full",
                     isListening && "animate-pulse bg-rose-500 text-white hover:bg-rose-600"
@@ -422,14 +409,14 @@ export function ChatWidget() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={
                   enregistreur.isRecording
-                    ? "Je vous écoute… appuyez sur ■ pour terminer"
+                    ? t("chat.ph_enregistrement")
                     : transcription
-                    ? "Transcription de votre note vocale…"
+                    ? t("chat.ph_transcription")
                     : isListening
-                    ? "Je vous écoute..."
+                    ? t("chat.ph_ecoute")
                     : role === "patient"
-                    ? "Décrivez ce que vous ressentez..."
-                    : "Posez votre question..."
+                    ? t("chat.ph_patient")
+                    : t("chat.ph_question")
                 }
                 className="h-10 flex-1 rounded-full text-sm"
                 disabled={isPending || !enLigne}
@@ -440,7 +427,7 @@ export function ChatWidget() {
                 size="icon"
                 disabled={isPending || !input.trim()}
                 className="h-10 w-10 shrink-0 rounded-full shadow-sm"
-                aria-label="Envoyer"
+                aria-label={t("chat.send")}
               >
                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>

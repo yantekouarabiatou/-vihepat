@@ -5,7 +5,7 @@
  * - Les écritures (POST/PATCH) ne sont jamais mises en cache : elles passent par la
  *   file d'attente de l'application, envoyée au retour du réseau.
  */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE_APP = `vihepat-app-${VERSION}`;
 const CACHE_API = 'vihepat-api';
 const COQUILLE = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
@@ -62,13 +62,24 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(reseauDabord(requete, CACHE_APP));
 });
 
-// Clic sur un rappel : ramène l'application au premier plan
+// Clic sur un rappel (ou sur ses actions « C'est fait » / « Plus tard »)
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const cle = event.notification.data && event.notification.data.cle;
+  const action = event.action || '';
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((fenetres) => {
       const f = fenetres[0];
-      return f ? f.focus() : self.clients.openWindow('/dashboard');
+      // Ancien rappel (sans clé) : on ramène simplement l'application au premier plan
+      if (!cle) return f ? f.focus() : self.clients.openWindow('/dashboard');
+      if (f) {
+        // Application ouverte : elle applique l'action elle-même (stockage local, file hors ligne)
+        f.postMessage({ type: 'rappel-action', cle, action: action || 'ouvrir' });
+        return action ? undefined : f.focus();
+      }
+      // Application fermée : on l'ouvre avec l'action à appliquer
+      const params = action ? '?occ=' + encodeURIComponent(cle) + '&action=' + encodeURIComponent(action) : '';
+      return self.clients.openWindow('/rappels' + params);
     })
   );
 });

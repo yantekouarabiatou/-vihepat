@@ -21,6 +21,10 @@ r.post('/me/prises', catchAsync(patientController.declarerPrise));
 r.get('/me/alertes-examens', catchAsync(patientController.getAlertesExamens));
 r.get('/me/acces', catchAsync(patientController.getAccesDossier));
 r.get('/me/communiques', catchAsync(patientController.getCommuniques));
+r.get('/me/rappels/partage', catchAsync(patientController.getPartageRappels));
+r.put('/me/rappels/partage', catchAsync(patientController.setPartageRappels));
+r.post('/me/rappels/confirmations', catchAsync(patientController.enregistrerConfirmations));
+r.post('/me/rappels/journal', catchAsync(patientController.journaliserRappel));
 
 
 

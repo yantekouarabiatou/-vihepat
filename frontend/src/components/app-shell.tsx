@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LogOut, CloudOff, RefreshCw, Leaf, Lock, Settings, Shield, Sun, Moon, Users, Globe } from "lucide-react";
+import { LogOut, CloudOff, RefreshCw, Leaf, Lock, Settings, Shield, Sun, Moon, Users, Globe, AlarmClock, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { useConnexion } from "@/hooks/use-connexion";
 import { useAuthStore } from "@/store/auth.store";
@@ -17,6 +17,8 @@ import { SoignantSidebar } from "@/components/soignant-sidebar";
 import { SoignantTopbar } from "@/components/soignant-topbar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ChangePasswordDialog } from "@/components/change-password-dialog";
+import { useMoteurRappels } from "@/hooks/use-moteur-rappels";
 
 /** Délai en arrière-plan au-delà duquel l'application se reverrouille. */
 const DELAI_VERROU_MS = 60_000;
@@ -55,16 +57,20 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
   const { sombre, basculer } = useTheme();
   const [confidentialiteOpen, setConfidentialiteOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [motDePasseOpen, setMotDePasseOpen] = useState(false);
   const cacheDepuis = useRef<number | null>(null);
 
   useEffect(() => {
     charger(estPatient ? user?.id ?? null : null);
   }, [charger, estPatient, user?.id]);
 
+  // Rappels discrets : actifs dès que le patient est connecté, même écran verrouillé
+  useMoteurRappels(estPatient ? user?.id ?? null : null);
+
   // Côté patient, l'onglet et l'application affichent un nom neutre
   useEffect(() => {
-    document.title = estPatient ? "Mon carnet" : "VIHEPAT - Espace soignant";
-  }, [estPatient]);
+    document.title = estPatient ? t("app_shell.patient_app_name") : `VIHEPAT - ${t("sidebar.role_soignant")}`;
+  }, [estPatient, t]);
 
   // Verrouillage automatique après un passage en arrière-plan
   useEffect(() => {
@@ -124,7 +130,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               type="button"
               aria-label={t("app_shell.parametres_tooltip")}
               title={t("app_shell.parametres_tooltip")}
-              className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-dash transition-transform duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="fixed bottom-24 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-dash transition-transform duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <Settings className="h-6 w-6" />
             </button>
@@ -141,12 +147,22 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               {sombre ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               {sombre ? t("app_shell.theme_clair") : t("app_shell.theme_sombre")}
             </button>
+            <button
+              type="button"
+              onClick={() => setMotDePasseOpen(true)}
+              className="flex w-full items-center gap-3 rounded-input px-3 py-2.5 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-secondary"
+            >
+              <KeyRound className="h-4 w-4" />
+              {t("password.change_menu")}
+            </button>
             <div className="mt-1 flex items-center justify-between rounded-input px-3 py-2">
               <span className="text-sm font-medium text-foreground">{t("app_shell.langue_label")}</span>
               <LanguageSwitcher />
             </div>
           </PopoverContent>
         </Popover>
+
+        <ChangePasswordDialog open={motDePasseOpen} onOpenChange={setMotDePasseOpen} />
 
         <ChatWidget />
       </div>
@@ -159,28 +175,38 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
         <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-2 px-4 sm:px-6">
           <Link
             to="/"
-            title="Accéder au site public VIHEPAT"
+            title={t("app_shell.site_public_tooltip")}
             className="flex min-w-0 items-center gap-3 transition-opacity hover:opacity-85"
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary">
               <Leaf className="h-5 w-5 text-primary-foreground" />
             </div>
             <div className="min-w-0">
-              <span className="block truncate text-sm font-extrabold tracking-tight text-foreground">Mon carnet</span>
-              <span className="block truncate text-xs text-muted-foreground">Mon espace</span>
+              <span className="block truncate text-sm font-extrabold tracking-tight text-foreground">{t("app_shell.patient_app_name")}</span>
+              <span className="block truncate text-xs text-muted-foreground">{t("app_shell.patient_space")}</span>
             </div>
           </Link>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <Link
               to="/"
               className="flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-secondary hover:text-primary transition-all shadow-xs"
-              title="Accéder au site public VIHEPAT"
+              title={t("app_shell.site_public_tooltip")}
             >
               <Globe className="h-3.5 w-3.5 text-primary" />
-              <span className="hidden sm:inline">Site public</span>
+              <span className="hidden sm:inline">{t("app_shell.site_public")}</span>
             </Link>
             <InstallButton />
             <LanguageSwitcher />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/rappels")}
+              className="rounded-full text-muted-foreground"
+              aria-label={t("app_shell.rappels_tooltip")}
+              title={t("app_shell.rappels_tooltip")}
+            >
+              <AlarmClock className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"

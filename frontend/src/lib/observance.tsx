@@ -1,4 +1,6 @@
 import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
+import { localeAffichage } from "@/lib/date-locale";
 import type { AlerteExamen, JourObservance } from "@/api/patient.api";
 
 /** Couleur associée à un taux d'observance (repère usuel : ≥ 95 % bonne observance). */
@@ -13,23 +15,26 @@ export function formatTaux(taux: number | null | undefined): string {
   return taux === null || taux === undefined ? "—" : `${taux} %`;
 }
 
-const JOURS_COURTS = ["D", "L", "M", "M", "J", "V", "S"];
 
 /** Mini-histogramme des 14 derniers jours : hauteur = part des prises effectuées. */
 export function ObservanceBars({ jours }: { jours: JourObservance[] }) {
+  const { t, i18n } = useTranslation();
+  const locale = localeAffichage(i18n.resolvedLanguage);
+  // Initiale du jour dans la langue affichée (L, M… / M, T…)
+  const initiale = (d: Date) => new Intl.DateTimeFormat(locale, { weekday: "narrow" }).format(d);
   return (
-    <div className="flex h-20 items-end gap-1" role="img" aria-label="Observance des 14 derniers jours">
+    <div className="flex h-20 items-end gap-1" role="img" aria-label={t("observance.barres_aria")}>
       {jours.map((j) => {
         const ratio = j.prevues > 0 ? j.prises / j.prevues : null;
         const couleur =
           ratio === null ? "bg-muted" : ratio >= 1 ? "bg-primary" : ratio > 0 ? "bg-[hsl(var(--gold))]" : "bg-destructive/70";
         const jour = new Date(`${j.date}T12:00:00`);
         return (
-          <div key={j.date} className="flex flex-1 flex-col items-center gap-1" title={`${jour.toLocaleDateString("fr-FR")} : ${j.prises}/${j.prevues}`}>
+          <div key={j.date} className="flex flex-1 flex-col items-center gap-1" title={`${jour.toLocaleDateString(locale)} : ${j.prises}/${j.prevues}`}>
             <div className="flex h-14 w-full items-end rounded-md bg-secondary/60">
               <div className={`w-full rounded-md ${couleur}`} style={{ height: `${ratio === null ? 8 : Math.max(ratio * 100, 8)}%` }} />
             </div>
-            <span className="text-[10px] text-muted-foreground">{JOURS_COURTS[jour.getDay()]}</span>
+            <span className="text-[10px] text-muted-foreground">{initiale(jour)}</span>
           </div>
         );
       })}

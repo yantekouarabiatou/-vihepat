@@ -24,6 +24,7 @@ import {
 import { apiErrorMessage } from "@/lib/api-error";
 import { formatTaux, tauxStyle } from "@/lib/observance";
 import { telechargerFichePatientPdf, imprimerFichePatient, type PatientCredentialsDoc } from "@/lib/patient-pdf";
+import { localeAffichage } from "@/lib/date-locale";
 
 const PATHOLOGIE_VALUES: Pathologie[] = ["vih", "vhb", "vhc", "vih_vhb", "vih_vhc", "vhb_vhc"];
 
@@ -56,7 +57,8 @@ function KpiCard({
 }
 
 export function DashboardPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = localeAffichage(i18n.resolvedLanguage);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -86,7 +88,7 @@ export function DashboardPage() {
   });
 
   function formatDate(iso: string) {
-    return new Date(iso).toLocaleDateString(undefined, {
+    return new Date(iso).toLocaleDateString(locale, {
       weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
     });
   }
@@ -147,7 +149,7 @@ export function DashboardPage() {
         dateCreation: new Date().toLocaleDateString("fr-FR"),
       };
       telechargerFichePatientPdf(doc);
-      toast.success("Dossier créé & Fiche d'accès PDF téléchargée !");
+      toast.success(t("fiche.toast_dossier_cree"));
     },
     onError: (err) => toast.error(apiErrorMessage(err, t("dashboard_soignant.toast_creer_patient_error"))),
   });
@@ -219,7 +221,7 @@ export function DashboardPage() {
   });
 
   return (
-    <AppShell title="Espace soignant">
+    <AppShell title={t("sidebar.role_soignant")}>
       {/* Bannière d'accueil */}
       <section className="relative overflow-hidden rounded-card bg-[linear-gradient(135deg,hsl(var(--brand))_0%,hsl(var(--brand-light))_100%)] p-6 sm:p-8">
         <div className="pointer-events-none absolute -right-8 -top-16 h-56 w-56 rounded-full bg-white/10" />
@@ -239,7 +241,7 @@ export function DashboardPage() {
                 "h-11 rounded-full border-white/40 bg-white/10 text-primary-foreground hover:bg-white/20 gap-2 font-semibold",
               )}
             >
-              <Globe className="h-4 w-4" /> Site public
+              <Globe className="h-4 w-4" /> {t("app_shell.site_public")}
             </Link>
             <Button
               className="h-11 rounded-full bg-white px-5 text-primary hover:bg-white/90 font-semibold"
@@ -436,7 +438,7 @@ export function DashboardPage() {
                     {s.notes && <p className="mt-1 text-sm text-muted-foreground">{s.notes}</p>}
                     <div className="mt-2 flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
-                        {new Date(s.createdAt).toLocaleDateString()}
+                        {new Date(s.createdAt).toLocaleDateString(locale)}
                       </span>
                       {s.statut !== "traite" && (
                         <div className="flex gap-2">
@@ -612,13 +614,13 @@ export function DashboardPage() {
             </div>
             {estAdmin && (
               <div className="space-y-2">
-                <Label htmlFor="npSoignant">Soignant référent assigné</Label>
+                <Label htmlFor="npSoignant">{t("fiche.soignant_referent")}</Label>
                 <SearchableSelect
                   id="npSoignant"
                   value={npSoignantId}
                   onChange={setNpSoignantId}
                   options={soignantsLookup ?? []}
-                  placeholder="Choisir un soignant référent (optionnel)"
+                  placeholder={t("fiche.soignant_referent_placeholder")}
                 />
               </div>
             )}
@@ -684,12 +686,12 @@ export function DashboardPage() {
                       emetteurNom: user ? `${user.prenom} ${user.nom}` : undefined,
                     };
                     telechargerFichePatientPdf(doc);
-                    toast.success("Fiche d'accès PDF téléchargée !");
+                    toast.success(t("fiche.toast_pdf"));
                   }}
                   className="rounded-full gap-2 text-xs font-semibold shadow-sm"
                 >
                   <FileDown className="h-4 w-4" />
-                  Télécharger PDF
+                  {t("fiche.telecharger_pdf")}
                 </Button>
 
                 <Button
@@ -713,7 +715,7 @@ export function DashboardPage() {
                   className="rounded-full gap-2 text-xs font-semibold"
                 >
                   <Printer className="h-4 w-4" />
-                  Imprimer (A4)
+                  {t("fiche.imprimer_a4")}
                 </Button>
               </div>
 
@@ -724,7 +726,7 @@ export function DashboardPage() {
                 onClick={() => {
                   navigator.clipboard
                     ?.writeText(
-                      `Code patient : ${identifiantsGeneres.patient.codePatient}\nMot de passe : ${identifiantsGeneres.motDePasseTemporaire}`,
+                      `${t("fiche.code_patient")} : ${identifiantsGeneres.patient.codePatient}\n${t("auth.password")} : ${identifiantsGeneres.motDePasseTemporaire}`,
                     )
                     .then(() => toast.success(t("dashboard_soignant.np_copie")))
                     .catch(() => {});

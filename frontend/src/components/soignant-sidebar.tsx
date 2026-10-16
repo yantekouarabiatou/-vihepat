@@ -36,15 +36,15 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
       title: t("sidebar.section_general"),
       items: [
         { to: "/soignant/dashboard", icon: LayoutDashboard, label: t("sidebar.dashboard") },
-        { to: "/", icon: Globe, label: "Site public" },
+        { to: "/", icon: Globe, label: t("app_shell.site_public") },
       ],
     },
     {
-      title: t("sidebar.section_patients", { defaultValue: "Gestion des Patients" }),
+      title: t("sidebar.section_patients"),
       items: [
-        { to: "/soignant/patients", icon: Users, label: t("sidebar.patients_index", { defaultValue: "Répertoire des patients" }) },
-        { to: "/soignant/patients?action=nouveau", icon: UserPlus, label: t("sidebar.patients_nouveau", { defaultValue: "Nouveau patient" }) },
-        { to: "/soignant/patients?view=gestion", icon: UserCog, label: t("sidebar.patients_gestion", { defaultValue: "Modification & Fiches" }) },
+        { to: "/soignant/patients", icon: Users, label: t("sidebar.patients_index") },
+        { to: "/soignant/patients?action=nouveau", icon: UserPlus, label: t("sidebar.patients_nouveau") },
+        { to: "/soignant/patients?view=gestion", icon: UserCog, label: t("sidebar.patients_gestion") },
       ],
     },
     {
@@ -64,7 +64,7 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
   function isItemActive(to: string): boolean {
     if (to.includes("?")) {
       const [path, search] = to.split("?");
-      return location.pathname === path && location.search.includes(search);
+      return location.pathname === path && location.search.includes(search ?? "");
     }
     return location.pathname === to && (!location.search || location.search === "");
   }
@@ -80,7 +80,7 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
       <Link
         to="/"
         onClick={onNavigate}
-        title="Accéder au site public VIHEPAT"
+        title={t("app_shell.site_public_tooltip")}
         className="group flex items-center gap-3 bg-[linear-gradient(160deg,hsl(var(--brand))_0%,hsl(var(--brand-deep))_100%)] px-5 py-6 transition-all hover:brightness-105"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 transition-transform group-hover:scale-105">
