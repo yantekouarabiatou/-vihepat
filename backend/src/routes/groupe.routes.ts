@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import * as groupeController from '../controllers/groupe.controller';
-import { authRequired, requireRole } from '../middlewares/auth';
+import { authRequired, requireRole, requirePermission } from '../middlewares/auth';
 import { catchAsync } from '../utils/catchAsync';
 
 const r = Router();
 
-r.use(authRequired, requireRole('patient'));
+r.use(authRequired, requireRole('patient'), requirePermission('groupe:participate'));
 
 r.get('/', catchAsync(groupeController.getGroupes));
 r.post('/:id/rejoindre', catchAsync(groupeController.rejoindreGroupe));

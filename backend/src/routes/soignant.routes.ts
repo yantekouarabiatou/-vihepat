@@ -1,29 +1,29 @@
 import { Router } from 'express';
 import * as soignantController from '../controllers/soignant.controller';
-import { authRequired, requireRole } from '../middlewares/auth';
+import { authRequired, requireRole, requirePermission as perm } from '../middlewares/auth';
 import { catchAsync } from '../utils/catchAsync';
 
 const r = Router();
 
 r.use(authRequired, requireRole('soignant', 'admin'));
 
-r.get('/patients', catchAsync(soignantController.getPatients));
-r.post('/patients', catchAsync(soignantController.creerPatient));
-r.post('/patients/rattacher', catchAsync(soignantController.rattacherPatient));
-r.get('/patients/:id', catchAsync(soignantController.getPatientDetail));
-r.patch('/patients/:id', catchAsync(soignantController.updatePatient));
-r.post('/patients/:id/reinitialiser-acces', catchAsync(soignantController.reinitialiserAccesPatient));
-r.post('/patients/:id/observations', catchAsync(soignantController.createObservation));
-r.post('/patients/:id/traitements', catchAsync(soignantController.createTraitement));
-r.patch('/traitements/:id', catchAsync(soignantController.updateTraitement));
+r.get('/patients', perm('patient:read_assigned'), catchAsync(soignantController.getPatients));
+r.post('/patients', perm('patient:create'), catchAsync(soignantController.creerPatient));
+r.post('/patients/rattacher', perm('patient:attach'), catchAsync(soignantController.rattacherPatient));
+r.get('/patients/:id', perm('patient:read_assigned'), catchAsync(soignantController.getPatientDetail));
+r.patch('/patients/:id', perm('patient:update'), catchAsync(soignantController.updatePatient));
+r.post('/patients/:id/reinitialiser-acces', perm('patient:update'), catchAsync(soignantController.reinitialiserAccesPatient));
+r.post('/patients/:id/observations', perm('observation:create'), catchAsync(soignantController.createObservation));
+r.post('/patients/:id/traitements', perm('traitement:manage'), catchAsync(soignantController.createTraitement));
+r.patch('/traitements/:id', perm('traitement:manage'), catchAsync(soignantController.updateTraitement));
 
-r.get('/rendez-vous', catchAsync(soignantController.getRendezVous));
-r.post('/rendez-vous', catchAsync(soignantController.createRendezVous));
-r.patch('/rendez-vous/:id', catchAsync(soignantController.updateRendezVous));
-r.post('/rendez-vous/:id/rappel', catchAsync(soignantController.envoyerRappelRdv));
-r.get('/signalements', catchAsync(soignantController.getSignalements));
-r.patch('/signalements/:id', catchAsync(soignantController.updateSignalement));
-r.get('/communiques', catchAsync(soignantController.getCommuniques));
-r.post('/communiques', catchAsync(soignantController.createCommunique));
+r.get('/rendez-vous', perm('rendez_vous:manage'), catchAsync(soignantController.getRendezVous));
+r.post('/rendez-vous', perm('rendez_vous:manage'), catchAsync(soignantController.createRendezVous));
+r.patch('/rendez-vous/:id', perm('rendez_vous:manage'), catchAsync(soignantController.updateRendezVous));
+r.post('/rendez-vous/:id/rappel', perm('rendez_vous:manage'), catchAsync(soignantController.envoyerRappelRdv));
+r.get('/signalements', perm('signalement:manage'), catchAsync(soignantController.getSignalements));
+r.patch('/signalements/:id', perm('signalement:manage'), catchAsync(soignantController.updateSignalement));
+r.get('/communiques', perm('communique:read'), catchAsync(soignantController.getCommuniques));
+r.post('/communiques', perm('communique:publish'), catchAsync(soignantController.createCommunique));
 
 export default r;

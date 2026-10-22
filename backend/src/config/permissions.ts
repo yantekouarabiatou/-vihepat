@@ -272,6 +272,45 @@ export const ROLES_CONFIG: Record<Role, RoleInfo> = {
   },
 };
 
+export const ROLES: Role[] = ['admin', 'soignant', 'patient'];
+
+/** Permissions qui n'ont de sens que pour un patient (routes `/api/patients/me/*`, groupes de pairs). */
+const PERMISSIONS_PATIENT: Permission[] = [
+  'patient:read_own', 'observance:declare', 'rendez_vous:request', 'signalement:create', 'groupe:participate',
+];
+/** Lecture commune à tous les rôles. */
+const PERMISSIONS_LECTURE: Permission[] = ['observation:read', 'traitement:read', 'observance:read', 'communique:read'];
+
+/**
+ * Rôles auxquels une permission peut être accordée. Une permission ne s'applique que là où une
+ * route la vérifie : donner `audit:read` à un soignant ne lui ouvrirait pas l'espace admin.
+ */
+export function rolesApplicables(permission: Permission): Role[] {
+  if (PERMISSIONS_LECTURE.includes(permission)) return ROLES;
+  if (PERMISSIONS_PATIENT.includes(permission)) return ['patient'];
+  const def = PERMISSIONS_CATALOG.find((p) => p.key === permission);
+  if (def?.category === 'admin') return ['admin'];
+  return ['admin', 'soignant'];
+}
+
+/**
+ * Permissions qu'on ne peut pas retirer, pour ne jamais se retrouver bloqué : l'administrateur garde
+ * l'administration et la vue globale, le patient garde l'accès à son propre dossier.
+ */
+export const PERMISSIONS_VERROUILLEES: Record<Role, Permission[]> = {
+  admin: [
+    ...PERMISSIONS_CATALOG.filter((p) => p.category === 'admin').map((p) => p.key),
+    'patient:read_all',
+  ],
+  soignant: [],
+  patient: ['patient:read_own'],
+};
+
+export function estPermission(valeur: string): valeur is Permission {
+  return PERMISSIONS_CATALOG.some((p) => p.key === valeur);
+}
+
+/** Valeurs par défaut uniquement : les droits effectifs viennent de `services/permissions.service.ts`. */
 export function hasPermission(role: Role, permission: Permission): boolean {
   const cfg = ROLES_CONFIG[role];
   if (!cfg) return false;

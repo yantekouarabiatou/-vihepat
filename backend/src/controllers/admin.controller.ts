@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import * as adminService from '../services/admin.service';
+import * as permissionsService from '../services/permissions.service';
 import { logAudit } from '../middlewares/audit';
 
 const idParam = z.coerce.number().int().positive();
@@ -44,7 +45,27 @@ export async function deleteRow(req: Request, res: Response) {
 }
 
 export function getRolesAndPermissions(_req: Request, res: Response) {
-  res.json(adminService.getRolesAndPermissions());
+  res.json(permissionsService.getMatrice());
+}
+
+const roleParam = z.enum(['patient', 'soignant', 'admin']);
+const updatePermissionsSchema = z.object({
+  permissions: z.array(z.string().max(64)).max(100),
+});
+
+export async function updateRolePermissions(req: Request, res: Response) {
+  const role = roleParam.parse(req.params.role);
+  const { permissions } = updatePermissionsSchema.parse(req.body);
+  const result = await permissionsService.definirPermissionsRole(role, permissions);
+  await logAudit(req, 'ADMIN_UPDATE_PERMISSIONS', `role:${role}`, { ajoutees: result.ajoutees, retirees: result.retirees });
+  res.json(result);
+}
+
+export async function resetRolePermissions(req: Request, res: Response) {
+  const role = roleParam.parse(req.params.role);
+  const result = await permissionsService.reinitialiserRole(role);
+  await logAudit(req, 'ADMIN_RESET_PERMISSIONS', `role:${role}`, { ajoutees: result.ajoutees, retirees: result.retirees });
+  res.json(result);
 }
 
 export async function getUsersOverview(_req: Request, res: Response) {

@@ -2,9 +2,11 @@ import { createApp } from './app';
 import { connectDB } from './config/database';
 import { env } from './config/env';
 import { verifySmtpConnection } from './services/mail.service';
+import { chargerPermissions } from './services/permissions.service';
 
 async function main() {
   await connectDB();
+  await chargerPermissions();
   void verifySmtpConnection();
 
   const app = createApp();

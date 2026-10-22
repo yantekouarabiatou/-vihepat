@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
 import { User, Patient, Soignant, Traitement, GroupeSoutien } from '../models';
 import { ADMIN_TABLES, getTableDefOrThrow, type TableDef } from '../admin/registry';
-import { ROLES_CONFIG, PERMISSIONS_CATALOG, type Role } from '../config/permissions';
+import { ROLES_CONFIG, type Role } from '../config/permissions';
+import { permissionsDuRole } from './permissions.service';
 import { genererCodePatient } from './auth.service';
 import { memoriserVersion } from '../utils/token-version';
 
@@ -166,13 +167,6 @@ export async function deleteRow(tableKey: string, id: number) {
   await row.destroy();
 }
 
-export function getRolesAndPermissions() {
-  return {
-    roles: Object.values(ROLES_CONFIG),
-    permissions: PERMISSIONS_CATALOG,
-  };
-}
-
 export async function getUsersOverview() {
   const users = await User.findAll({
     attributes: ['id', 'email', 'nom', 'prenom', 'role', 'actif', 'derniereConnexion', 'createdAt'],
@@ -198,7 +192,7 @@ export async function getUsersOverview() {
       ...json,
       roleName: roleCfg?.name ?? u.role,
       roleBadge: roleCfg?.badge ?? u.role,
-      permissions: roleCfg?.permissions ?? [],
+      permissions: roleCfg ? permissionsDuRole(u.role) : [],
     };
   });
 }

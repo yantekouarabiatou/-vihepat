@@ -9,6 +9,7 @@ import { getAlertesExamens, getResumeObservance } from './observance.service';
 import { getEtatAgrege } from './rappels.service';
 import { memoriserVersion } from '../utils/token-version';
 import { genererCodePatient } from './auth.service';
+import { roleAPermission } from './permissions.service';
 import { sendPasswordResetEmail, sendWelcomePatientEmail } from './mail.service';
 
 const SALT_ROUNDS = 12;
@@ -36,7 +37,8 @@ async function getContexte(userId: number): Promise<Contexte> {
     User.findByPk(userId),
   ]);
   if (!user) throw httpError(404, 'Utilisateur introuvable');
-  const admin = user.role === 'admin';
+  // Accès à toute la patientèle : permission `patient:read_all` (accordée à l'admin par défaut)
+  const admin = roleAPermission(user.role, 'patient:read_all');
   if (!soignant && !admin) {
     throw httpError(403, 'Profil soignant ou administrateur introuvable');
   }

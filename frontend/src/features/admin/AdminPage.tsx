@@ -6,7 +6,7 @@ import {
   Database, Plus, Trash2, Edit3, Loader2, Shield, Users, Stethoscope,
   HeartPulse, UserCheck, UserX, CheckCircle2, XCircle, AlertTriangle,
   ArrowRight, KeyRound, Copy, Check, Eye, Lock, FileText, Search, Globe,
-  FileDown, Printer
+  FileDown, Printer, RotateCcw, Save
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -15,6 +15,7 @@ import {
   type AdminRow,
   type AdminTableDef,
   type UserOverview,
+  type AdminRole,
 } from "@/api/admin.api";
 import {
   ROLES_CONFIG,
@@ -234,6 +235,67 @@ export function AdminPage() {
   const { data: tables, isLoading: tablesLoading } = useQuery({
     queryKey: ["admin", "tables"],
     queryFn: adminApi.getTables,
+  });
+
+  // Matrice rôles × permissions (modifiable, enregistrée dans role_permissions)
+  const { data: matrice } = useQuery({
+    queryKey: ["admin", "roles-permissions"],
+    queryFn: adminApi.getRolesAndPermissions,
+  });
+  // Brouillon des cases cochées, par rôle ; null = aucune modification en cours
+  const [brouillon, setBrouillon] = useState<Record<AdminRole, string[]> | null>(null);
+  const [roleAReinitialiser, setRoleAReinitialiser] = useState<AdminRole | null>(null);
+
+  const permissionsEnregistrees = useMemo(() => {
+    const parRole = {} as Record<AdminRole, string[]>;
+    for (const r of matrice?.roles ?? []) parRole[r.role] = r.permissions;
+    return parRole;
+  }, [matrice]);
+  const permissionsAffichees = brouillon ?? permissionsEnregistrees;
+  const rolesModifies = useMemo(
+    () =>
+      brouillon
+        ? (Object.keys(brouillon) as AdminRole[]).filter((role) => {
+            const avant = new Set(permissionsEnregistrees[role] ?? []);
+            const apres = brouillon[role];
+            return apres.length !== avant.size || apres.some((p) => !avant.has(p));
+          })
+        : [],
+    [brouillon, permissionsEnregistrees]
+  );
+
+  const basculerPermission = (role: AdminRole, permission: string, accorder: boolean) => {
+    const base = brouillon ?? permissionsEnregistrees;
+    const actuelles = base[role] ?? [];
+    setBrouillon({
+      ...base,
+      [role]: accorder ? [...actuelles, permission] : actuelles.filter((p) => p !== permission),
+    });
+  };
+
+  const { mutate: enregistrerMatrice, isPending: enregistrementMatrice } = useMutation({
+    mutationFn: () =>
+      Promise.all(rolesModifies.map((role) => adminApi.updateRolePermissions(role, brouillon![role]))),
+    onSuccess: (res) => {
+      const total = res.reduce((n, r) => n + r.ajoutees.length + r.retirees.length, 0);
+      toast.success(t("admin_ui.toast_permissions", { count: total }));
+      setBrouillon(null);
+      queryClient.invalidateQueries({ queryKey: ["admin", "roles-permissions"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users-overview"] });
+    },
+    onError: (err) => toast.error(apiErrorMessage(err, t("admin_ui.erreur_permissions"))),
+  });
+
+  const { mutate: reinitialiserRole, isPending: reinitialisationRole } = useMutation({
+    mutationFn: (role: AdminRole) => adminApi.resetRolePermissions(role),
+    onSuccess: (res) => {
+      toast.success(t("admin_ui.toast_permissions_defaut", { role: t(`permissions.role.${res.role}.badge`) }));
+      setRoleAReinitialiser(null);
+      setBrouillon(null);
+      queryClient.invalidateQueries({ queryKey: ["admin", "roles-permissions"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users-overview"] });
+    },
+    onError: (err) => toast.error(apiErrorMessage(err, t("admin_ui.erreur_permissions"))),
   });
 
   const { data: soignantsLookup } = useQuery({
@@ -592,13 +654,34 @@ export function AdminPage() {
                         {t(`permissions.role.${rKey}.badge`, { defaultValue: rCfg.badge })}
                       </span>
                       <span className="text-xs font-mono font-semibold opacity-75">
-                        {t("admin_ui.privileges", { count: rCfg.permissions.length })}
+                        {t("admin_ui.privileges", { count: (permissionsEnregistrees[rKey] ?? rCfg.permissions).length })}
                       </span>
                     </div>
                     <h3 className="mt-3 text-base font-extrabold text-foreground">{t(`permissions.role.${rKey}.name`, { defaultValue: rCfg.name })}</h3>
                     <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                       {t(`permissions.role.${rKey}.description`, { defaultValue: rCfg.description })}
                     </p>
+                    {(() => {
+                      const info = matrice?.roles.find((r) => r.role === rKey);
+                      if (!info) return null;
+                      const defaut = new Set(info.permissionsParDefaut);
+                      const personnalise =
+                        info.permissions.length !== defaut.size || info.permissions.some((p) => !defaut.has(p));
+                      return personnalise ? (
+                        <div className="mt-3 flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-semibold text-foreground/80">{t("admin_ui.permissions_personnalisees")}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setRoleAReinitialiser(rKey)}
+                            className="h-7 rounded-full text-[11px] gap-1 px-2"
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                            {t("admin_ui.retablir_defaut")}
+                          </Button>
+                        </div>
+                      ) : null;
+                    })()}
                     <div className="mt-4 pt-3 border-t border-border/40 text-[11px] font-medium text-foreground/80 flex items-center justify-between">
                       <span>{t("admin_ui.creation_patient")}</span>
                       {rKey === "patient" ? (
@@ -789,6 +872,36 @@ export function AdminPage() {
                 </div>
               </div>
 
+              {/* Barre d'enregistrement : visible dès qu'une case a changé */}
+              {rolesModifies.length > 0 && (
+                <div className="sticky top-2 z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-amber-500/40 bg-amber-50 dark:bg-amber-950/40 px-4 py-3">
+                  <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    {t("admin_ui.modifications_en_attente", { count: rolesModifies.length })}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setBrouillon(null)}
+                      disabled={enregistrementMatrice}
+                      className="h-8 rounded-full text-xs"
+                    >
+                      {t("admin_ui.annuler_modifications")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => enregistrerMatrice()}
+                      disabled={enregistrementMatrice}
+                      className="h-8 rounded-full text-xs gap-1"
+                    >
+                      {enregistrementMatrice ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                      {t("admin_ui.enregistrer_permissions")}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Tableau de la matrice */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
@@ -808,12 +921,50 @@ export function AdminPage() {
                   </thead>
                   <tbody className="divide-y divide-border/40">
                     {filteredPermissions.map((perm) => {
-                      const adminHas = ROLES_CONFIG.admin.permissions.includes(perm.key);
-                      const soignantHas = ROLES_CONFIG.soignant.permissions.includes(perm.key);
-                      const patientHas = ROLES_CONFIG.patient.permissions.includes(perm.key);
-
                       // Mise en avant spécifique pour la création de patient
                       const isPatientCreation = perm.key === "patient:create";
+                      const infoPerm = matrice?.permissions.find((p) => p.key === perm.key);
+
+                      const cellule = (role: AdminRole) => {
+                        const info = matrice?.roles.find((r) => r.role === role);
+                        const accordee = (permissionsAffichees[role] ?? ROLES_CONFIG[role].permissions).includes(perm.key);
+                        const applicable = infoPerm ? infoPerm.rolesApplicables.includes(role) : accordee;
+                        const verrouillee = info?.verrouillees.includes(perm.key) ?? false;
+                        if (!applicable) {
+                          return (
+                            <span className="text-xs text-muted-foreground/60" title={t("admin_ui.non_applicable")}>
+                              —<span className="sr-only">{t("admin_ui.non_applicable")}</span>
+                            </span>
+                          );
+                        }
+                        if (verrouillee || !matrice) {
+                          return accordee ? (
+                            <span
+                              className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full"
+                              title={verrouillee ? t("admin_ui.verrouillee_aide") : undefined}
+                            >
+                              {verrouillee ? <Lock className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-4 w-4" />}
+                              {verrouillee ? t("admin_ui.toujours") : t("admin_ui.autorise")}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                              <XCircle className="h-4 w-4 text-muted-foreground/60" /> {t("admin_ui.interdit")}
+                            </span>
+                          );
+                        }
+                        return (
+                          <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold">
+                            <Checkbox
+                              checked={accordee}
+                              onCheckedChange={(v) => basculerPermission(role, perm.key, v === true)}
+                              aria-label={`${permLabel(perm.key, "label", perm.label)} : ${t(`permissions.role.${role}.badge`)}`}
+                            />
+                            <span className={accordee ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}>
+                              {accordee ? t("admin_ui.autorise") : t("admin_ui.interdit")}
+                            </span>
+                          </label>
+                        );
+                      };
 
                       return (
                         <tr
@@ -835,45 +986,9 @@ export function AdminPage() {
                               {permLabel(perm.key, "description", perm.description)}
                             </div>
                           </td>
-
-                          {/* Admin */}
-                          <td className="py-3 px-4 text-center">
-                            {adminHas ? (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full">
-                                <CheckCircle2 className="h-4 w-4" /> {t("admin_ui.autorise")}
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
-                                <XCircle className="h-4 w-4" /> —
-                              </span>
-                            )}
-                          </td>
-
-                          {/* Soignant */}
-                          <td className="py-3 px-4 text-center">
-                            {soignantHas ? (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full">
-                                <CheckCircle2 className="h-4 w-4" /> {t("admin_ui.autorise")}
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
-                                <XCircle className="h-4 w-4 text-muted-foreground/60" /> {t("admin_ui.interdit")}
-                              </span>
-                            )}
-                          </td>
-
-                          {/* Patient */}
-                          <td className="py-3 px-4 text-center">
-                            {patientHas ? (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 px-2.5 py-1 rounded-full">
-                                <CheckCircle2 className="h-4 w-4" /> {t("admin_ui.son_dossier")}
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-destructive/80 bg-destructive/10 px-2.5 py-1 rounded-full">
-                                <XCircle className="h-4 w-4 text-destructive" /> {t("admin_ui.interdit")}
-                              </span>
-                            )}
-                          </td>
+                          <td className="py-3 px-4 text-center">{cellule("admin")}</td>
+                          <td className="py-3 px-4 text-center">{cellule("soignant")}</td>
+                          <td className="py-3 px-4 text-center">{cellule("patient")}</td>
                         </tr>
                       );
                     })}
@@ -1326,6 +1441,32 @@ export function AdminPage() {
             >
               {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t("admin_ui.supprimer_definitivement")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ======================= DIALOGUE RÉTABLIR LES PERMISSIONS PAR DÉFAUT ======================= */}
+      <AlertDialog open={!!roleAReinitialiser} onOpenChange={(o) => !o && setRoleAReinitialiser(null)}>
+        <AlertDialogContent className="rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin_ui.retablir_titre")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin_ui.retablir_desc", { role: roleAReinitialiser ? t(`permissions.role.${roleAReinitialiser}.badge`) : "" })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-full">{t("fiche.annuler")}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={reinitialisationRole}
+              className="rounded-full"
+              onClick={(e) => {
+                e.preventDefault();
+                if (roleAReinitialiser) reinitialiserRole(roleAReinitialiser);
+              }}
+            >
+              {reinitialisationRole && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t("admin_ui.retablir_defaut")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

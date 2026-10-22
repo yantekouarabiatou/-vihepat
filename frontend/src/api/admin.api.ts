@@ -63,9 +63,38 @@ export interface UserOverview {
   } | null;
 }
 
+export type AdminRole = 'patient' | 'soignant' | 'admin';
+
+export interface RoleMatrice {
+  role: AdminRole;
+  name: string;
+  badge: string;
+  description: string;
+  /** Permissions effectives (table `role_permissions`) */
+  permissions: string[];
+  permissionsParDefaut: string[];
+  /** Toujours accordées, non modifiables */
+  verrouillees: string[];
+}
+
+export interface PermissionMatrice {
+  key: string;
+  label: string;
+  category: string;
+  description: string;
+  rolesApplicables: AdminRole[];
+}
+
 export interface RolesAndPermissionsData {
-  roles: any[];
-  permissions: any[];
+  roles: RoleMatrice[];
+  permissions: PermissionMatrice[];
+}
+
+export interface MiseAJourPermissions {
+  role: AdminRole;
+  permissions: string[];
+  ajoutees: string[];
+  retirees: string[];
 }
 
 export const adminApi = {
@@ -73,6 +102,12 @@ export const adminApi = {
 
   getRolesAndPermissions: () =>
     api.get<RolesAndPermissionsData>('/admin/roles-permissions').then((r) => r.data),
+
+  updateRolePermissions: (role: AdminRole, permissions: string[]) =>
+    api.put<MiseAJourPermissions>(`/admin/roles/${role}/permissions`, { permissions }).then((r) => r.data),
+
+  resetRolePermissions: (role: AdminRole) =>
+    api.post<MiseAJourPermissions>(`/admin/roles/${role}/permissions/reinitialiser`).then((r) => r.data),
 
   getUsersOverview: () => api.get<UserOverview[]>('/admin/users-overview').then((r) => r.data),
 

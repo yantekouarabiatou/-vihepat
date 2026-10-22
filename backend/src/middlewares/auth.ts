@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, JwtPayload } from '../utils/jwt';
 import { jetonEncoreValide } from '../utils/token-version';
+import { roleAPermission } from '../services/permissions.service';
+import type { Permission } from '../config/permissions';
 
 declare global {
   namespace Express {
@@ -52,12 +54,16 @@ export const requireRole = (...roles: string[]) =>
     next();
   };
 
-export const requirePermission = (permission: import('../config/permissions').Permission) =>
+/** Vérifie la permission dans la matrice modifiable par l'administrateur (`role_permissions`). */
+export const requirePermission = (permission: Permission) =>
   (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) return res.status(401).json({ error: 'Non authentifié' });
-    const { hasPermission } = require('../config/permissions');
-    if (!hasPermission(req.user.role as any, permission)) {
-      return res.status(403).json({ error: `Permission refusée : action non autorisée pour le rôle ${req.user.role}` });
+    if (!roleAPermission(req.user.role, permission)) {
+      return res.status(403).json({
+        error: `Permission refusée : action non autorisée pour le rôle ${req.user.role}`,
+        code: 'PERMISSION_REFUSEE',
+        permission,
+      });
     }
     next();
   };

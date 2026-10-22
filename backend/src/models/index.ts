@@ -14,6 +14,7 @@ import { MembreGroupe } from './MembreGroupe';
 import { MessageGroupe } from './MessageGroupe';
 import { Communique } from './Communique';
 import { ConfirmationRappel } from './ConfirmationRappel';
+import { RolePermission } from './RolePermission';
 
 // User ↔ Patient (1-1)
 User.hasOne(Patient, { foreignKey: 'userId', as: 'patient' });
@@ -81,4 +82,5 @@ export {
   User, Patient, Soignant, Affectation,
   Traitement, RendezVous, Observation, Signalement, AuditLog, PriseMedicament,
   Structure, GroupeSoutien, MembreGroupe, MessageGroupe, Communique, ConfirmationRappel,
+  RolePermission,
 };
