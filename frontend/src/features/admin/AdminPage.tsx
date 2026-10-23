@@ -6,7 +6,7 @@ import {
   Database, Plus, Trash2, Edit3, Loader2, Shield, Users, Stethoscope,
   HeartPulse, UserCheck, UserX, CheckCircle2, XCircle, AlertTriangle,
   ArrowRight, KeyRound, Copy, Check, Eye, Lock, FileText, Search, Globe,
-  FileDown, Printer, RotateCcw, Save
+  FileDown, Printer, RotateCcw, Save, Mail
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -337,6 +337,15 @@ export function AdminPage() {
     onError: (err) => toast.error(apiErrorMessage(err, t("admin_ui.erreur_role"))),
   });
 
+  const { mutate: testerMail, isPending: testMailEnCours } = useMutation({
+    mutationFn: () => adminApi.testerMail(),
+    onSuccess: (res) => {
+      if (res.success) toast.success(t("admin_ui.mail_ok", { to: res.destinataire }));
+      else toast.error(t("admin_ui.mail_echec", { serveur: res.serveur, erreur: res.error ?? "" }), { duration: 12000 });
+    },
+    onError: (err) => toast.error(apiErrorMessage(err, t("admin_ui.mail_echec", { serveur: "SMTP", erreur: "" }))),
+  });
+
   const { mutate: toggleStatus } = useMutation({
     mutationFn: (id: number) => adminApi.toggleUserStatus(id),
     onSuccess: (res) => {
@@ -548,6 +557,16 @@ export function AdminPage() {
                 {t("app_shell.site_public")}
               </Button>
             </Link>
+            <Button
+              variant="outline"
+              onClick={() => testerMail()}
+              disabled={testMailEnCours}
+              title={t("admin_ui.mail_tester_aide")}
+              className="rounded-full border-border/80 bg-background hover:bg-secondary font-semibold text-xs h-10 px-4 gap-1.5 shadow-xs"
+            >
+              {testMailEnCours ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4 text-primary" />}
+              {t("admin_ui.mail_tester")}
+            </Button>
             <Button
               onClick={() => setNewPatientOpen(true)}
               className="rounded-full shadow-md bg-[hsl(var(--brand))] hover:bg-[hsl(var(--brand-deep))] text-white font-semibold text-xs h-10 px-4 gap-1.5"

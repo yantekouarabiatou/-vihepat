@@ -4,6 +4,8 @@ import { Database, Globe, HeartPulse, LayoutDashboard, LogOut, Megaphone, Users,
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
+import { useProfilSoignant } from "@/hooks/use-profil-soignant";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 interface NavItem {
   to: string;
@@ -30,6 +32,7 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const { medecin, fonction } = useProfilSoignant();
 
   const groups: NavGroup[] = [
     {
@@ -43,7 +46,7 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
       title: t("sidebar.section_patients"),
       items: [
         { to: "/soignant/patients", icon: Users, label: t("sidebar.patients_index") },
-        { to: "/soignant/patients?action=nouveau", icon: UserPlus, label: t("sidebar.patients_nouveau") },
+        ...(medecin ? [{ to: "/soignant/patients?action=nouveau", icon: UserPlus, label: t("sidebar.patients_nouveau") }] : []),
         { to: "/soignant/patients?view=gestion", icon: UserCog, label: t("sidebar.patients_gestion") },
       ],
     },
@@ -128,6 +131,8 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
         ))}
       </nav>
 
+      <ThemeSwitcher className="mx-3 mb-1" />
+
       {/* Bloc utilisateur */}
       <div className="m-3 rounded-card bg-[linear-gradient(160deg,hsl(var(--brand))_0%,hsl(var(--brand-deep))_100%)] p-4">
         <div className="flex items-center gap-3">
@@ -139,7 +144,7 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
               {user ? `${user.prenom} ${user.nom}` : ""}
             </p>
             <p className="truncate text-xs text-primary-foreground/70">
-              {admin ? t("sidebar.role_admin") : t("sidebar.role_soignant")}
+              {admin ? t("sidebar.role_admin") : fonction ? t(`fonction.${fonction}`) : t("sidebar.role_soignant")}
             </p>
           </div>
           <Button

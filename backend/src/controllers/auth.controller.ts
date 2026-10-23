@@ -28,6 +28,8 @@ const registerSoignantSchema = z.object({
   matricule: z.string().min(1),
   structureId: z.coerce.number().int().positive(),
   codeInvitation: z.string().trim().min(1, "Code d'habilitation requis"),
+  // Moindre privilège si absent : l'admin peut corriger la fonction ensuite
+  fonction: z.enum(['medecin', 'infirmier', 'sage_femme', 'pharmacien', 'mediateur', 'autre']).default('autre'),
   specialite: z.string().optional(),
   telephone: z.string().optional(),
 });

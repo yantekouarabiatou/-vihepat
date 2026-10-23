@@ -1,4 +1,5 @@
 import { api } from './client';
+import type { FonctionSoignant } from './patient.api';
 
 export interface LoginInput {
   email: string;
@@ -27,6 +28,7 @@ export interface RegisterSoignantInput {
   prenom: string;
   matricule: string;
   structureId: number;
+  fonction: FonctionSoignant;
   specialite?: string;
   telephone?: string;
   /** Code d'habilitation remis par la structure de santé */

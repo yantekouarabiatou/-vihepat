@@ -2,7 +2,8 @@ import nodemailer from 'nodemailer';
 import { env } from '../config/env';
 
 /**
- * Transporteur SMTP configuré pour Brevo (ou tout relais SMTP standard)
+ * Transporteur SMTP (Gmail, Brevo ou tout relais standard). L'adresse d'expédition doit être
+ * celle du compte SMTP : sinon les messageries rejettent le message (DMARC).
  */
 export const mailTransporter = nodemailer.createTransport({
   host: env.MAIL_HOST,
@@ -15,6 +16,7 @@ export const mailTransporter = nodemailer.createTransport({
           pass: env.MAIL_PASSWORD,
         }
       : undefined,
+  connectionTimeout: 15_000,
   tls: {
     rejectUnauthorized: false,
   },
@@ -53,17 +55,41 @@ export async function sendMail(options: SendMailOptions): Promise<{ success: boo
 }
 
 /**
- * Vérifie la connectivité au serveur SMTP Brevo
+ * Vérifie la connectivité au serveur SMTP
  */
-export async function verifySmtpConnection(): Promise<boolean> {
+export async function verifySmtpConnection(): Promise<{ ok: boolean; error?: string }> {
   try {
     await mailTransporter.verify();
-    console.log(`✅ [SMTP BREVO] Connecté avec succès à ${env.MAIL_HOST}:${env.MAIL_PORT} (${env.MAIL_USERNAME})`);
-    return true;
+    console.log(`✅ [SMTP] Connecté à ${env.MAIL_HOST}:${env.MAIL_PORT} (${env.MAIL_USERNAME})`);
+    return { ok: true };
   } catch (err) {
-    console.warn(`⚠️ [SMTP BREVO] Attention, impossible de joindre le serveur SMTP (${env.MAIL_HOST}) :`, err);
-    return false;
+    const error = err instanceof Error ? err.message : String(err);
+    console.warn(`⚠️ [SMTP] Impossible de joindre ${env.MAIL_HOST}:${env.MAIL_PORT} : ${error}`);
+    return { ok: false, error };
   }
+}
+
+/** Diagnostic depuis l'espace admin : connexion SMTP puis envoi réel à l'adresse donnée. */
+export async function sendTestEmail(to: string) {
+  const connexion = await verifySmtpConnection();
+  if (!connexion.ok) {
+    return { success: false, etape: 'connexion', serveur: `${env.MAIL_HOST}:${env.MAIL_PORT}`, error: connexion.error };
+  }
+  const envoi = await sendMail({
+    to,
+    subject: 'VIHEPAT — Test de la messagerie',
+    html: emailLayout(`
+      <p style="font-size: 17px; font-weight: 600; color: #0f172a; margin-top: 0;">La messagerie fonctionne ✅</p>
+      <p>Ce message confirme que la plateforme peut envoyer des e-mails : identifiants des nouveaux patients,
+      liens « mot de passe oublié », alertes de signalements sévères et avis de nouveautés.</p>
+      <div class="credentials-box">
+        <div class="credential-row"><span class="credential-label">Serveur</span><span class="credential-value">${env.MAIL_HOST}:${env.MAIL_PORT}</span></div>
+        <div class="credential-row"><span class="credential-label">Expéditeur</span><span class="credential-value">${env.MAIL_FROM_ADDRESS}</span></div>
+        <div class="credential-row"><span class="credential-label">Envoyé le</span><span class="credential-value">${new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Porto-Novo' })}</span></div>
+      </div>
+    `, 'Test de la messagerie VIHEPAT'),
+  });
+  return { ...envoi, etape: 'envoi', serveur: `${env.MAIL_HOST}:${env.MAIL_PORT}`, expediteur: env.MAIL_FROM_ADDRESS };
 }
 
 /**
@@ -352,6 +378,9 @@ const TEXTES_NEUTRES = {
     changeSujet: 'Votre mot de passe a été mis à jour',
     changeCorps: 'Votre mot de passe a été mis à jour.',
     changeAlerte: "Si vous n'êtes pas à l'origine de cette modification, utilisez le lien « Mot de passe oublié » ou contactez la personne qui vous a remis vos identifiants.",
+    infoSujet: 'Du nouveau dans votre espace',
+    infoCorps: 'Une nouvelle information vous attend dans votre espace personnel.',
+    infoBouton: 'Me connecter',
     lienSujet: 'Réinitialisation de votre mot de passe',
     lienCorps: 'Une demande de réinitialisation de mot de passe a été faite pour votre compte.',
     lienBouton: 'Choisir un nouveau mot de passe',
@@ -362,6 +391,9 @@ const TEXTES_NEUTRES = {
     changeSujet: 'Your password has been updated',
     changeCorps: 'Your password has been updated.',
     changeAlerte: 'If you did not make this change, use the "Forgot password" link or contact the person who gave you your login details.',
+    infoSujet: 'Something new in your space',
+    infoCorps: 'New information is waiting for you in your personal space.',
+    infoBouton: 'Sign in',
     lienSujet: 'Reset your password',
     lienCorps: 'A password reset was requested for your account.',
     lienBouton: 'Choose a new password',
@@ -405,6 +437,22 @@ export async function sendPasswordResetLinkEmail(params: { to: string; lien: str
       `<p>${t.lienCorps}</p>
   <p style="margin:24px 0;"><a href="${params.lien}" style="display:inline-block;padding:12px 20px;background:#374151;color:#ffffff;text-decoration:none;border-radius:8px;">${t.lienBouton}</a></p>
   <p style="color:#6b7280;font-size:13px;">${t.lienDuree}<br>${t.lienIgnorer}</p>`,
+      params.langue,
+    ),
+  });
+}
+
+/** Nouvelle prescription ou message ciblé : simple invitation à se connecter, sans aucun contenu. */
+export async function sendNouvelleInfoEmail(params: { to: string; langue: string }) {
+  const t = textesNeutres(params.langue);
+  const lien = `${env.CORS_ORIGIN.split(',')[0]?.trim() || 'http://localhost:5173'}/login`;
+  return sendMail({
+    to: params.to,
+    subject: t.infoSujet,
+    fromName: env.MAIL_FROM_NAME_NEUTRE,
+    html: layoutNeutre(
+      `<p>${t.infoCorps}</p>
+  <p style="margin:24px 0;"><a href="${lien}" style="display:inline-block;padding:12px 20px;background:#374151;color:#ffffff;text-decoration:none;border-radius:8px;">${t.infoBouton}</a></p>`,
       params.langue,
     ),
   });

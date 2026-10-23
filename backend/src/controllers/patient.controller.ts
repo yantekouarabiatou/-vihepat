@@ -80,6 +80,10 @@ export async function getCommuniques(req: Request, res: Response) {
   res.json(result);
 }
 
+export async function getSynthese(req: Request, res: Response) {
+  res.json(await patientService.getSynthese(req.user!.userId));
+}
+
 export async function getTraitements(req: Request, res: Response) {
   const result = await patientService.getTraitements(req.user!.userId);
   res.json(result);

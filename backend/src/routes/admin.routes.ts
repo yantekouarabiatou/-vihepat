@@ -20,6 +20,7 @@ const permTable = (req: Request, res: Response, next: NextFunction) => {
 };
 
 r.get('/tables', catchAsync(adminController.getTables));
+r.post('/mail/test', perm('user:manage'), catchAsync(adminController.testerMail));
 r.get('/roles-permissions', perm('role:assign'), catchAsync(adminController.getRolesAndPermissions));
 r.put('/roles/:role/permissions', perm('role:assign'), catchAsync(adminController.updateRolePermissions));
 r.post('/roles/:role/permissions/reinitialiser', perm('role:assign'), catchAsync(adminController.resetRolePermissions));

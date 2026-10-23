@@ -7,10 +7,14 @@ const r = Router();
 
 r.use(authRequired, requireRole('soignant', 'admin'));
 
+r.get('/moi', catchAsync(soignantController.getMonProfil));
 r.get('/patients', perm('patient:read_assigned'), catchAsync(soignantController.getPatients));
 r.post('/patients', perm('patient:create'), catchAsync(soignantController.creerPatient));
 r.post('/patients/rattacher', perm('patient:attach'), catchAsync(soignantController.rattacherPatient));
 r.get('/patients/:id', perm('patient:read_assigned'), catchAsync(soignantController.getPatientDetail));
+r.get('/patients/:id/equipe', perm('patient:read_assigned'), catchAsync(soignantController.getEquipePatient));
+r.post('/patients/:id/equipe', perm('patient:attach'), catchAsync(soignantController.rattacherSoignant));
+r.delete('/patients/:id/equipe/:soignantId', perm('patient:attach'), catchAsync(soignantController.detacherSoignant));
 r.patch('/patients/:id', perm('patient:update'), catchAsync(soignantController.updatePatient));
 r.post('/patients/:id/reinitialiser-acces', perm('patient:update'), catchAsync(soignantController.reinitialiserAccesPatient));
 r.post('/patients/:id/observations', perm('observation:create'), catchAsync(soignantController.createObservation));

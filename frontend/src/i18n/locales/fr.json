@@ -246,7 +246,10 @@
     "email_placeholder": "vous@exemple.com",
     "pro_question": "Vous êtes un professionnel de santé et n'avez pas encore de compte ?",
     "patients_credentials_note": "Patients : vos identifiants sécurisés vous sont remis en main propre par votre centre de santé.",
-    "back_to_login": "Retourner à la connexion"
+    "back_to_login": "Retourner à la connexion",
+    "fonction_label": "Fonction",
+    "fonction_placeholder": "Choisir votre fonction",
+    "fonction_medecin_aide": "En tant que médecin, vous pourrez ouvrir des dossiers et rattacher des soignants à vos patients."
   },
   "app_shell": {
     "groupes_tooltip": "Groupes de soutien",
@@ -299,7 +302,30 @@
     "rdv_dialog_motif_placeholder": "Ex. renouvellement traitement",
     "rdv_dialog_submit": "Envoyer la demande",
     "toast_rdv_success": "Demande de rendez-vous envoyée",
-    "toast_rdv_error": "Impossible d'envoyer la demande"
+    "toast_rdv_error": "Impossible d'envoyer la demande",
+    "kpi_en_cours": "Traitements en cours",
+    "kpi_a_venir": "Traitements à venir",
+    "kpi_termines": "Traitements terminés",
+    "kpi_rdv": "Rendez-vous à venir",
+    "kpi_communiques": "Communiqués",
+    "kpi_communiques_nouveaux_one": "{{count}} nouveau cette semaine",
+    "kpi_communiques_nouveaux_other": "{{count}} nouveaux cette semaine",
+    "kpi_signalements": "Signalements en attente",
+    "prochain_rdv": "Prochain rendez-vous",
+    "mes_traitements": "Mes traitements",
+    "onglet_en_cours": "En cours",
+    "onglet_a_venir": "À venir",
+    "onglet_termine": "Terminés",
+    "onglet_vide_en_cours": "Aucun traitement en cours.",
+    "onglet_vide_a_venir": "Aucun traitement programmé.",
+    "onglet_vide_termine": "Aucun traitement terminé pour l'instant.",
+    "commence_le": "Commence le {{date}}",
+    "periode": "Du {{debut}} au {{fin}}",
+    "depuis": "Depuis le {{date}}",
+    "progression": "{{pct}} % du traitement effectué",
+    "communiques_empty": "Aucun communiqué de votre équipe pour le moment.",
+    "communique_perso": "Pour vous",
+    "nouveau_badge": "Nouveau"
   },
   "observance": {
     "today_title": "Aujourd'hui",
@@ -1205,6 +1231,39 @@
     "toutes": "Toutes ({{count}})",
     "utilisateurs_desc": "Modifiez les rôles des utilisateurs, activez ou suspendez leurs accès en temps réel.",
     "utilisateurs_titre": "Utilisateurs et attribution des rôles",
-    "utilisateurs_vide": "Aucun utilisateur trouvé pour cette recherche."
+    "utilisateurs_vide": "Aucun utilisateur trouvé pour cette recherche.",
+    "mail_tester": "Tester l'e-mail",
+    "mail_tester_aide": "Envoie un e-mail de test à votre adresse et vérifie la connexion SMTP",
+    "mail_ok": "E-mail de test envoyé à {{to}}. Vérifiez la boîte de réception (et les spams).",
+    "mail_echec": "Échec de l'envoi via {{serveur}} : {{erreur}}"
+  },
+  "theme": {
+    "titre": "Apparence",
+    "clair": "Clair",
+    "sombre": "Sombre",
+    "systeme": "Auto"
+  },
+  "fonction": {
+    "medecin": "Médecin",
+    "infirmier": "Infirmier·e",
+    "sage_femme": "Sage-femme",
+    "pharmacien": "Pharmacien·ne",
+    "mediateur": "Médiateur·rice",
+    "autre": "Autre soignant"
+  },
+  "equipe": {
+    "titre": "Équipe soignante",
+    "moi": "vous",
+    "principal": "Soignant principal",
+    "retirer": "Retirer du suivi",
+    "choisir": "Choisir un soignant de la structure",
+    "rattacher": "Rattacher",
+    "aucun_candidat": "Aucun autre soignant actif dans votre structure.",
+    "reserve_medecin": "Seul le médecin peut rattacher un soignant à ce patient. Vous pouvez prescrire pour les patients qui vous sont rattachés.",
+    "attente_rattachement": "Aucun patient ne vous est encore rattaché. Un médecin de votre structure vous rattachera à ses patients.",
+    "prescrit_par": "Prescrit par {{nom}} ({{fonction}})",
+    "toast_ajoute": "Soignant rattaché au patient",
+    "toast_retire": "Soignant retiré du suivi",
+    "toast_erreur": "Impossible de modifier l'équipe"
   }
 }

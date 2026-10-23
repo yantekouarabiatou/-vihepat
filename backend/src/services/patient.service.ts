@@ -3,6 +3,7 @@ import {
   Patient, RendezVous, Traitement, Observation, Signalement, AuditLog, User, Soignant, Affectation, Communique,
 } from '../models';
 import { sendAlerteMedicaleEmail } from './mail.service';
+import { getAlertesExamens, getResumeObservance } from './observance.service';
 
 /** Actions tracées qui concernent le dossier d'un patient. */
 const ACTIONS_DOSSIER = [
@@ -81,6 +82,72 @@ export async function getTraitements(userId: number) {
     where: { patientId: patient.id, actif: true },
     order: [['dateDebut', 'DESC']],
   });
+}
+
+export type StatutTraitement = 'en_cours' | 'termine' | 'a_venir';
+
+function statutTraitement(t: Traitement, maintenant: Date): StatutTraitement {
+  if (!t.actif || (t.dateFin && new Date(t.dateFin) < maintenant)) return 'termine';
+  if (new Date(t.dateDebut) > maintenant) return 'a_venir';
+  return 'en_cours';
+}
+
+/**
+ * Tableau de bord du patient : tous ses traitements (en cours, à venir, terminés) avec leur
+ * prescripteur, ses compteurs de suivi et les communiqués de son équipe, en un seul appel.
+ */
+export async function getSynthese(userId: number) {
+  const patient = await getPatientOrThrow(userId);
+  const maintenant = new Date();
+
+  const [traitements, rendezVous, signalements, communiques, observance, alertes, equipe] = await Promise.all([
+    Traitement.findAll({
+      where: { patientId: patient.id },
+      include: [{
+        model: Soignant, as: 'prescripteur', attributes: ['id', 'fonction', 'structure'],
+        include: [{ model: User, as: 'user', attributes: ['nom', 'prenom'] }],
+      }],
+      order: [['dateDebut', 'DESC']],
+    }),
+    RendezVous.findAll({ where: { patientId: patient.id }, order: [['dateHeure', 'ASC']] }),
+    Signalement.findAll({ where: { patientId: patient.id }, attributes: ['statut'] }),
+    getCommuniques(userId),
+    getResumeObservance(patient.id),
+    getAlertesExamens(patient.id, patient.pathologie),
+    Affectation.count({ where: { patientId: patient.id } }),
+  ]);
+
+  const liste = traitements.map((t) => ({ ...t.toJSON(), statut: statutTraitement(t, maintenant) }));
+  const compter = (s: StatutTraitement) => liste.filter((t) => t.statut === s).length;
+  const aVenir = rendezVous.filter((r) => new Date(r.dateHeure) >= maintenant && ['prevu', 'confirme'].includes(r.statut));
+  const ilYA7j = maintenant.getTime() - 7 * 24 * 60 * 60 * 1000;
+
+  return {
+    traitements: {
+      enCours: compter('en_cours'),
+      aVenir: compter('a_venir'),
+      termines: compter('termine'),
+      total: liste.length,
+      liste,
+    },
+    rendezVous: {
+      aVenir: aVenir.length,
+      effectues: rendezVous.filter((r) => r.statut === 'effectue').length,
+      prochain: aVenir[0] ?? null,
+    },
+    signalements: {
+      enAttente: signalements.filter((s) => s.statut !== 'traite').length,
+      traites: signalements.filter((s) => s.statut === 'traite').length,
+    },
+    communiques: {
+      total: communiques.length,
+      recents: communiques.filter((c) => new Date((c as any).createdAt).getTime() >= ilYA7j).length,
+      liste: communiques.slice(0, 10),
+    },
+    observance: { taux7: observance.taux7, taux30: observance.taux30, serie: observance.serie },
+    examensEnRetard: alertes.filter((a) => a.statut === 'en_retard').length,
+    equipe,
+  };
 }
 
 export async function getObservations(userId: number) {

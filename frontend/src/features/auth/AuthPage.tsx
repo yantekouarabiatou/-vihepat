@@ -6,6 +6,7 @@ import { HeartPulse, Loader2, Stethoscope, ShieldCheck, Lock, Info, ArrowRight }
 import { toast } from "sonner";
 import { apiErrorMessage } from "@/lib/api-error";
 import { authApi, type RegisterSoignantInput } from "@/api/auth.api";
+import type { FonctionSoignant } from "@/api/patient.api";
 import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,8 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { InstallButton } from "@/components/install-button";
 import { ListenButton } from "@/components/listen-button";
 import { ForgotPasswordDialog } from "@/features/auth/ForgotPasswordDialog";
+
+const FONCTIONS: FonctionSoignant[] = ["medecin", "infirmier", "sage_femme", "pharmacien", "mediateur", "autre"];
 
 type Mode = "login" | "register";
 
@@ -40,6 +43,7 @@ export function AuthPage() {
   const [matricule, setMatricule] = useState("");
   const [structureId, setStructureId] = useState("");
   const [specialite, setSpecialite] = useState("");
+  const [fonction, setFonction] = useState("");
   const [codeInvitation, setCodeInvitation] = useState("");
 
   const { data: structures } = useQuery({
@@ -68,6 +72,7 @@ export function AuthPage() {
         matricule,
         structureId: Number(structureId),
         codeInvitation,
+        fonction: fonction as FonctionSoignant,
         ...(specialite ? { specialite } : {}),
       };
       const res = await authApi.registerSoignant(input);
@@ -235,6 +240,20 @@ export function AuthPage() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="fonction">{t("auth.fonction_label")}</Label>
+                  <SearchableSelect
+                    id="fonction"
+                    value={fonction}
+                    onChange={setFonction}
+                    options={FONCTIONS.map((f) => ({ value: f, label: t(`fonction.${f}`) }))}
+                    placeholder={t("auth.fonction_placeholder")}
+                  />
+                  {fonction === "medecin" && (
+                    <p className="text-xs text-muted-foreground">{t("auth.fonction_medecin_aide")}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="specialite">{t("auth.specialite_optional")}</Label>
                   <Input
                     id="specialite"
@@ -304,7 +323,7 @@ export function AuthPage() {
               type="submit"
               disabled={
                 loading ||
-                (mode === "register" && (!structureId || !codeInvitation || !matricule))
+                (mode === "register" && (!structureId || !codeInvitation || !matricule || !fonction))
               }
               className="h-12 w-full rounded-full text-base font-semibold transition-transform active:scale-[0.99]"
             >

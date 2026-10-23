@@ -86,6 +86,31 @@ const updateTraitementSchema = z.object({
   notes: z.string().max(1000).nullable().optional(),
 });
 
+export async function getMonProfil(req: Request, res: Response) {
+  res.json(await soignantService.getMonProfil(req.user!.userId));
+}
+
+export async function getEquipePatient(req: Request, res: Response) {
+  const patientId = idParam.parse(req.params.id);
+  res.json(await soignantService.getEquipePatient(req.user!.userId, patientId));
+}
+
+export async function rattacherSoignant(req: Request, res: Response) {
+  const patientId = idParam.parse(req.params.id);
+  const { soignantId } = z.object({ soignantId: idParam }).parse(req.body);
+  const result = await soignantService.rattacherSoignant(req.user!.userId, patientId, soignantId);
+  await logAudit(req, 'RATTACHER_SOIGNANT', `patient:${patientId}`, { soignantId });
+  res.status(201).json(result);
+}
+
+export async function detacherSoignant(req: Request, res: Response) {
+  const patientId = idParam.parse(req.params.id);
+  const soignantId = idParam.parse(req.params.soignantId);
+  const result = await soignantService.detacherSoignant(req.user!.userId, patientId, soignantId);
+  await logAudit(req, 'DETACHER_SOIGNANT', `patient:${patientId}`, { soignantId });
+  res.json(result);
+}
+
 export async function rattacherPatient(req: Request, res: Response) {
   const { codePatient } = rattacherSchema.parse(req.body);
   const patient = await soignantService.rattacherPatient(req.user!.userId, codePatient);

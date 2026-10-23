@@ -58,12 +58,23 @@ async function main() {
       where: { userId: user.id },
       defaults: {
         userId: user.id, matricule: s.matricule, structure: s.structure,
-        specialite: s.specialite, telephone: s.telephone,
+        fonction: 'medecin', specialite: s.specialite, telephone: s.telephone,
       },
     });
     soignants.push(soignant);
   }
-  console.log(`✅ ${soignants.length} soignants`);
+
+  // Infirmier : prescrit pour les patients auxquels un médecin l'a rattaché, ne rattache personne
+  const infirmierData = { email: 'koffi.zinsou@vihepat.org', nom: 'Zinsou', prenom: 'Koffi', matricule: 'SEED-INF-001', structure: 'CHU Cotonou' };
+  const infirmierUser = await seedUser({ email: infirmierData.email, nom: infirmierData.nom, prenom: infirmierData.prenom, role: 'soignant' });
+  const [infirmier] = await Soignant.findOrCreate({
+    where: { userId: infirmierUser.id },
+    defaults: {
+      userId: infirmierUser.id, matricule: infirmierData.matricule, structure: infirmierData.structure,
+      fonction: 'infirmier', specialite: 'Soins infirmiers', telephone: '+229 90 00 00 03',
+    },
+  });
+  console.log(`✅ ${soignants.length + 1} soignants (dont 1 infirmier)`);
 
   // ---------- Admin (accès complet à tous les patients, quelle que soit la structure) ----------
   const adminUser = await seedUser({
@@ -120,6 +131,11 @@ async function main() {
       defaults: { patientId: patients[i]!.id, soignantId: soignant.id, principal: true, dateDebut: daysFromNow(-400) },
     });
   }
+  // L'infirmier suit la première patiente de Dr Kouassi, rattaché par elle
+  await Affectation.findOrCreate({
+    where: { patientId: patients[0]!.id, soignantId: infirmier.id },
+    defaults: { patientId: patients[0]!.id, soignantId: infirmier.id, principal: false, dateDebut: daysFromNow(-30) },
+  });
   console.log('✅ Affectations');
 
   // ---------- Traitements ----------
@@ -315,7 +331,8 @@ async function main() {
   console.log('\n🎉 Seed terminé.');
   console.log(`   Mot de passe pour tous les comptes seedés : ${SEED_PASSWORD}`);
   console.log('   Admin     :', adminUser.email);
-  console.log('   Soignants :', soignantsData.map((s) => s.email).join(', '));
+  console.log('   Médecins  :', soignantsData.map((s) => s.email).join(', '));
+  console.log('   Infirmier :', infirmierData.email);
   console.log('   Patients  :', patientsData.map((p) => p.email).join(', '));
   console.log('   Codes d\'habilitation :', structuresData.map((s) => `${s.nom} → ${s.codeInvitation}`).join(' | '));
 

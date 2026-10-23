@@ -53,6 +53,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/store/auth.store";
+import { useProfilSoignant } from "@/hooks/use-profil-soignant";
 import { apiErrorMessage } from "@/lib/api-error";
 import { formatTaux, tauxStyle } from "@/lib/observance";
 import { localeAffichage } from "@/lib/date-locale";
@@ -82,6 +83,8 @@ export function PatientsPage() {
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const estAdmin = user?.role === "admin";
+  // Ouvrir un dossier ou rattacher un patient : réservé au médecin
+  const { medecin } = useProfilSoignant();
 
   // Filtres
   const [search, setSearch] = useState("");
@@ -129,12 +132,12 @@ export function PatientsPage() {
   // Détection URL ?action=nouveau
   useEffect(() => {
     if (searchParams.get("action") === "nouveau") {
-      setModalNouveauOpen(true);
+      if (medecin) setModalNouveauOpen(true);
       // Nettoyer le paramètre après ouverture
       searchParams.delete("action");
       setSearchParams(searchParams, { replace: true });
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, medecin]);
 
   // Requêtes
   const { data: patients = [], isLoading, isFetching } = useQuery({
@@ -435,7 +438,7 @@ export function PatientsPage() {
             {t("app_shell.site_public")}
           </Link>
 
-          {!estAdmin && (
+          {!estAdmin && medecin && (
             <Button
               variant="outline"
               size="sm"
@@ -458,14 +461,16 @@ export function PatientsPage() {
             {t("patients.exporter")}
           </Button>
 
-          <Button
-            size="sm"
-            onClick={() => setModalNouveauOpen(true)}
-            className="rounded-full gap-2 shadow-sm font-semibold"
-          >
-            <UserPlus className="h-4 w-4" />
-            {t("sidebar.patients_nouveau")}
-          </Button>
+          {medecin && (
+            <Button
+              size="sm"
+              onClick={() => setModalNouveauOpen(true)}
+              className="rounded-full gap-2 shadow-sm font-semibold"
+            >
+              <UserPlus className="h-4 w-4" />
+              {t("sidebar.patients_nouveau")}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -611,14 +616,18 @@ export function PatientsPage() {
                 ? t("patients.vide_filtres")
                 : t("patients.vide_aucun")}
             </p>
-            <Button
-              size="sm"
-              onClick={() => setModalNouveauOpen(true)}
-              className="mt-4 rounded-full gap-2 font-semibold"
-            >
-              <UserPlus className="h-4 w-4" />
-              {t("patients.creer_premier")}
-            </Button>
+            {medecin ? (
+              <Button
+                size="sm"
+                onClick={() => setModalNouveauOpen(true)}
+                className="mt-4 rounded-full gap-2 font-semibold"
+              >
+                <UserPlus className="h-4 w-4" />
+                {t("patients.creer_premier")}
+              </Button>
+            ) : (
+              <p className="mt-3 max-w-md text-xs">{t("equipe.attente_rattachement")}</p>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">

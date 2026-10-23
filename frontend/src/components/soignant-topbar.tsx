@@ -6,6 +6,7 @@ import { Bell, ExternalLink, Globe, History, Menu, Moon, Search, Sun } from "luc
 import { soignantApi } from "@/api/soignant.api";
 import { useAuthStore } from "@/store/auth.store";
 import { useTheme } from "@/hooks/use-theme";
+import { useProfilSoignant } from "@/hooks/use-profil-soignant";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -21,6 +22,7 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const { sombre, basculer } = useTheme();
+  const { fonction } = useProfilSoignant();
 
   const { data: communiques } = useQuery({
     queryKey: ["soignant", "communiques"],
@@ -144,7 +146,7 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
                 {user ? `${user.prenom} ${user.nom}` : ""}
               </p>
               <p className="truncate text-[11px] leading-tight text-muted-foreground">
-                {admin ? t("sidebar.role_admin") : t("sidebar.role_soignant")}
+                {admin ? t("sidebar.role_admin") : fonction ? t(`fonction.${fonction}`) : t("sidebar.role_soignant")}
               </p>
             </div>
           </div>

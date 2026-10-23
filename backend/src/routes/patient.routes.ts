@@ -10,6 +10,7 @@ r.use(authRequired, requireRole('patient'));
 
 r.get('/me/rendez-vous', perm('patient:read_own'), catchAsync(patientController.getRendezVous));
 r.post('/me/rendez-vous', perm('rendez_vous:request'), catchAsync(patientController.createRendezVous));
+r.get('/me/synthese', perm('patient:read_own'), catchAsync(patientController.getSynthese));
 r.get('/me/traitements', perm('traitement:read'), catchAsync(patientController.getTraitements));
 r.get('/me/observations', perm('observation:read'), catchAsync(patientController.getObservations));
 r.get('/me/signalements', perm('patient:read_own'), catchAsync(patientController.getSignalements));

@@ -36,6 +36,36 @@ export interface Traitement {
   dateFin: string | null;
   actif: boolean;
   notes: string | null;
+  prescripteurId?: number | null;
+  prescripteur?: Prescripteur | null;
+}
+
+export type FonctionSoignant = 'medecin' | 'infirmier' | 'sage_femme' | 'pharmacien' | 'mediateur' | 'autre';
+
+export interface Prescripteur {
+  id: number;
+  fonction: FonctionSoignant;
+  structure?: string;
+  user: { nom: string; prenom: string };
+}
+
+export type StatutTraitement = 'en_cours' | 'termine' | 'a_venir';
+
+/** Tableau de bord du patient, en un seul appel. */
+export interface SynthesePatient {
+  traitements: {
+    enCours: number;
+    aVenir: number;
+    termines: number;
+    total: number;
+    liste: Array<Traitement & { statut: StatutTraitement }>;
+  };
+  rendezVous: { aVenir: number; effectues: number; prochain: RendezVous | null };
+  signalements: { enAttente: number; traites: number };
+  communiques: { total: number; recents: number; liste: Communique[] };
+  observance: { taux7: number | null; taux30: number | null; serie: number };
+  examensEnRetard: number;
+  equipe: number;
 }
 
 export interface Observation {
@@ -149,6 +179,8 @@ export const patientApi = {
 
   createRendezVous: (input: { motif?: string; dateHeure: string }) =>
     api.post<RendezVous>('/patients/me/rendez-vous', input).then((r) => r.data),
+
+  getSynthese: () => api.get<SynthesePatient>('/patients/me/synthese').then((r) => r.data),
 
   getTraitements: () => api.get<Traitement[]>('/patients/me/traitements').then((r) => r.data),
 

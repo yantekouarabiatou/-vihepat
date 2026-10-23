@@ -3,9 +3,21 @@ import { z } from 'zod';
 import * as adminService from '../services/admin.service';
 import * as permissionsService from '../services/permissions.service';
 import { logAudit } from '../middlewares/audit';
+import { sendTestEmail } from '../services/mail.service';
+import { User } from '../models';
 
 const idParam = z.coerce.number().int().positive();
 const tableParam = (req: Request) => String(req.params.table);
+
+/** Envoie un e-mail de test (par défaut à l'admin connecté) et renvoie le diagnostic SMTP. */
+export async function testerMail(req: Request, res: Response) {
+  const { to } = z.object({ to: z.string().trim().email().optional() }).parse(req.body ?? {});
+  const destinataire = to ?? (await User.findByPk(req.user!.userId))?.email;
+  if (!destinataire) return res.status(400).json({ error: 'Aucune adresse de destination' });
+  const result = await sendTestEmail(destinataire);
+  await logAudit(req, 'TEST_MAIL', `mail:${destinataire}`, { success: result.success });
+  res.json({ ...result, destinataire });
+}
 
 export function getTables(_req: Request, res: Response) {
   res.json(adminService.listTables());

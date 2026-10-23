@@ -1,6 +1,6 @@
 import { api } from './client';
 import type {
-  AlerteExamen, Observation, Pathologie, RendezVous, ResumeObservance, Signalement, StatutRDV,
+  AlerteExamen, FonctionSoignant, Observation, Pathologie, RendezVous, ResumeObservance, Signalement, StatutRDV,
   StatutSignalement, Traitement,
 } from './patient.api';
 import type { TypeObservation } from '@/lib/observations';
@@ -145,7 +145,44 @@ export interface UpdatePatientInput {
   dateDiagnostic?: string | null;
 }
 
+export interface MonProfilSoignant {
+  fonction: FonctionSoignant | null;
+  structure: string | null;
+  /** Peut ouvrir des dossiers et rattacher des soignants à ses patients */
+  medecin: boolean;
+  admin: boolean;
+}
+
+export interface MembreEquipe {
+  soignantId: number;
+  principal: boolean;
+  depuis: string;
+  nom: string;
+  prenom: string;
+  fonction: FonctionSoignant;
+  specialite: string | null;
+  structure: string;
+  moi: boolean;
+}
+
+export interface EquipePatient {
+  peutGerer: boolean;
+  membres: MembreEquipe[];
+  candidats: Array<{ soignantId: number; nom: string; prenom: string; fonction: FonctionSoignant; structure: string }>;
+}
+
 export const soignantApi = {
+  getMonProfil: () => api.get<MonProfilSoignant>('/soignant/moi').then((r) => r.data),
+
+  getEquipe: (patientId: number) =>
+    api.get<EquipePatient>(`/soignant/patients/${patientId}/equipe`).then((r) => r.data),
+
+  rattacherSoignant: (patientId: number, soignantId: number) =>
+    api.post<EquipePatient>(`/soignant/patients/${patientId}/equipe`, { soignantId }).then((r) => r.data),
+
+  detacherSoignant: (patientId: number, soignantId: number) =>
+    api.delete<EquipePatient>(`/soignant/patients/${patientId}/equipe/${soignantId}`).then((r) => r.data),
+
   rattacherPatient: (codePatient: string) =>
     api.post<SoignantPatient>('/soignant/patients/rattacher', { codePatient }).then((r) => r.data),
 

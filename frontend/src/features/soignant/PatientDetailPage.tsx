@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
   ArrowLeft, FlaskConical, Pill, Plus, Loader2, ShieldCheck, AlertCircle, CalendarDays, Square, Activity,
-  FileDown, Printer, Edit3, KeyRound, AlarmClock,
+  FileDown, Printer, Edit3, KeyRound, AlarmClock, UsersRound, UserMinus, Crown,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -231,6 +231,7 @@ export function PatientDetailPage() {
 
           <ObservanceCard patient={patient} />
           <RappelsCard patient={patient} />
+          <EquipeCard patientId={patient.id} />
           <TraitementsSection patient={patient} onSaved={invalidate} />
           <SignalementsSection patient={patient} />
           <RendezVousSection patient={patient} />
@@ -672,6 +673,118 @@ function ObservationDialog({ open, onOpenChange, patientId, onSaved }: {
 }
 
 /* ------------------------------------------------------------------ */
+/* Équipe soignante : seul le médecin y rattache d'autres soignants     */
+/* ------------------------------------------------------------------ */
+
+function EquipeCard({ patientId }: { patientId: number }) {
+  const { t } = useT();
+  const queryClient = useQueryClient();
+  const [choix, setChoix] = useState("");
+  const cle = ["soignant", "patient", patientId, "equipe"];
+
+  const { data: equipe, isLoading } = useQuery({
+    queryKey: cle,
+    queryFn: () => soignantApi.getEquipe(patientId),
+  });
+
+  const surSucces = (message: string) => (data: Awaited<ReturnType<typeof soignantApi.getEquipe>>) => {
+    queryClient.setQueryData(cle, data);
+    toast.success(message);
+  };
+
+  const { mutate: rattacher, isPending: ajout } = useMutation({
+    mutationFn: (soignantId: number) => soignantApi.rattacherSoignant(patientId, soignantId),
+    onSuccess: (data) => {
+      surSucces(t("equipe.toast_ajoute"))(data);
+      setChoix("");
+    },
+    onError: (err) => toast.error(apiErrorMessage(err, t("equipe.toast_erreur"))),
+  });
+
+  const { mutate: detacher, isPending: retrait, variables: retraitId } = useMutation({
+    mutationFn: (soignantId: number) => soignantApi.detacherSoignant(patientId, soignantId),
+    onSuccess: surSucces(t("equipe.toast_retire")),
+    onError: (err) => toast.error(apiErrorMessage(err, t("equipe.toast_erreur"))),
+  });
+
+  return (
+    <Card>
+      <SectionTitle icon={UsersRound} title={t("equipe.titre")} />
+      {isLoading || !equipe ? (
+        <div className="flex justify-center py-6">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        </div>
+      ) : (
+        <>
+          <ul className="mt-4 space-y-2">
+            {equipe.membres.map((m) => (
+              <li key={m.soignantId} className="flex items-center gap-3 rounded-2xl bg-secondary/60 px-3 py-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  {`${m.prenom[0] ?? ""}${m.nom[0] ?? ""}`.toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-foreground">
+                    {m.prenom} {m.nom}
+                    {m.moi && <span className="text-xs font-normal text-muted-foreground">({t("equipe.moi")})</span>}
+                    {m.principal && <Crown className="h-3.5 w-3.5 text-[hsl(var(--gold))]" aria-label={t("equipe.principal")} />}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {t(`fonction.${m.fonction}`)}{m.specialite ? ` · ${m.specialite}` : ""}
+                  </p>
+                </div>
+                {equipe.peutGerer && !m.moi && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 shrink-0 rounded-full text-destructive"
+                    disabled={retrait && retraitId === m.soignantId}
+                    onClick={() => detacher(m.soignantId)}
+                    aria-label={t("equipe.retirer")}
+                    title={t("equipe.retirer")}
+                  >
+                    <UserMinus className="h-4 w-4" />
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          {equipe.peutGerer ? (
+            equipe.candidats.length > 0 ? (
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <SearchableSelect
+                  id="equipe-soignant"
+                  value={choix}
+                  onChange={setChoix}
+                  options={equipe.candidats.map((c) => ({
+                    value: String(c.soignantId),
+                    label: `${c.prenom} ${c.nom} · ${t(`fonction.${c.fonction}`)}`,
+                  }))}
+                  placeholder={t("equipe.choisir")}
+                  className="min-w-0 flex-1"
+                />
+                <Button
+                  className="rounded-full"
+                  disabled={!choix || ajout}
+                  onClick={() => rattacher(Number(choix))}
+                >
+                  {ajout ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Plus className="mr-1 h-4 w-4" />}
+                  {t("equipe.rattacher")}
+                </Button>
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-muted-foreground">{t("equipe.aucun_candidat")}</p>
+            )
+          ) : (
+            <p className="mt-3 text-xs text-muted-foreground">{t("equipe.reserve_medecin")}</p>
+          )}
+        </>
+      )}
+    </Card>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Traitements                                                         */
 /* ------------------------------------------------------------------ */
 
@@ -722,6 +835,14 @@ function TraitementsSection({ patient, onSaved }: { patient: PatientDetail; onSa
                 <p className="mt-1 text-sm text-muted-foreground">
                   {[tr.dosage, tr.frequence].filter(Boolean).join(" · ")}
                 </p>
+                {tr.prescripteur && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t("equipe.prescrit_par", {
+                      nom: `${tr.prescripteur.user.prenom} ${tr.prescripteur.user.nom}`,
+                      fonction: t(`fonction.${tr.prescripteur.fonction}`),
+                    })}
+                  </p>
+                )}
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
                     {t("patient_detail.depuis_le", { date: formatDate(tr.dateDebut) })}

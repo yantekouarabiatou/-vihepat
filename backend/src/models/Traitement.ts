@@ -4,6 +4,8 @@ import { sequelize } from '../config/database';
 export interface TraitementAttributes {
   id: number;
   patientId: number;
+  /** Soignant qui a prescrit (null pour les traitements saisis avant ce suivi) */
+  prescripteurId?: number | null;
   molecule: string;
   dosage?: string | null;
   frequence: string;
@@ -15,11 +17,12 @@ export interface TraitementAttributes {
 }
 
 type TraitementCreation = Optional<TraitementAttributes,
-  'id' | 'dosage' | 'heurePrise' | 'dateFin' | 'actif' | 'notes'>;
+  'id' | 'prescripteurId' | 'dosage' | 'heurePrise' | 'dateFin' | 'actif' | 'notes'>;
 
 export class Traitement extends Model<TraitementAttributes, TraitementCreation> implements TraitementAttributes {
   declare id: number;
   declare patientId: number;
+  declare prescripteurId?: number | null;
   declare molecule: string;
   declare dosage?: string | null;
   declare frequence: string;
@@ -34,6 +37,7 @@ Traitement.init(
   {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     patientId: { type: DataTypes.INTEGER, allowNull: false },
+    prescripteurId: { type: DataTypes.INTEGER, allowNull: true },
     molecule: { type: DataTypes.STRING(150), allowNull: false },
     dosage: { type: DataTypes.STRING(50), allowNull: true },
     frequence: { type: DataTypes.STRING(50), allowNull: false },

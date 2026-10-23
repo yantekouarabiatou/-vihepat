@@ -11,6 +11,7 @@ import { soignantApi, type CreatePatientResult } from "@/api/soignant.api";
 import { adminApi } from "@/api/admin.api";
 import type { Pathologie } from "@/api/patient.api";
 import { useAuthStore } from "@/store/auth.store";
+import { useProfilSoignant } from "@/hooks/use-profil-soignant";
 import { AppShell } from "@/components/app-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,6 +64,7 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const estAdmin = user?.role === "admin";
+  const { medecin } = useProfilSoignant();
   const [search, setSearch] = useState("");
   const [rattacherOpen, setRattacherOpen] = useState(false);
   const [codePatient, setCodePatient] = useState("");
@@ -243,12 +245,14 @@ export function DashboardPage() {
             >
               <Globe className="h-4 w-4" /> {t("app_shell.site_public")}
             </Link>
-            <Button
-              className="h-11 rounded-full bg-white px-5 text-primary hover:bg-white/90 font-semibold"
-              onClick={() => setNouveauPatientOpen(true)}
-            >
-              <UserPlus className="mr-2 h-4 w-4" /> {t("dashboard_soignant.hero_nouveau_patient")}
-            </Button>
+            {medecin && (
+              <Button
+                className="h-11 rounded-full bg-white px-5 text-primary hover:bg-white/90 font-semibold"
+                onClick={() => setNouveauPatientOpen(true)}
+              >
+                <UserPlus className="mr-2 h-4 w-4" /> {t("dashboard_soignant.hero_nouveau_patient")}
+              </Button>
+            )}
             <a
               href="#patients-section"
               className={cn(
@@ -296,9 +300,11 @@ export function DashboardPage() {
                   className="h-10 rounded-full pl-9"
                 />
               </div>
-              <Button size="sm" className="h-10 rounded-full" onClick={() => setRattacherOpen(true)}>
-                <UserPlus className="mr-1 h-4 w-4" /> {t("dashboard_soignant.patients_ajouter")}
-              </Button>
+              {medecin && (
+                <Button size="sm" className="h-10 rounded-full" onClick={() => setRattacherOpen(true)}>
+                  <UserPlus className="mr-1 h-4 w-4" /> {t("dashboard_soignant.patients_ajouter")}
+                </Button>
+              )}
             </div>
           </div>
           {patientsLoading ? (

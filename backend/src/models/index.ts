@@ -37,6 +37,7 @@ Affectation.belongsTo(Soignant, { foreignKey: 'soignantId', as: 'soignant' });
 // Patient ↔ Traitement (1-N)
 Patient.hasMany(Traitement, { foreignKey: 'patientId', as: 'traitements' });
 Traitement.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
+Traitement.belongsTo(Soignant, { foreignKey: 'prescripteurId', as: 'prescripteur' });
 
 // Patient ↔ RendezVous (1-N)
 Patient.hasMany(RendezVous, { foreignKey: 'patientId', as: 'rendezVous' });

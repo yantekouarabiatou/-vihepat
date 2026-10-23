@@ -97,7 +97,19 @@ export interface MiseAJourPermissions {
   retirees: string[];
 }
 
+export interface TestMailResult {
+  success: boolean;
+  etape: 'connexion' | 'envoi';
+  serveur: string;
+  destinataire: string;
+  expediteur?: string;
+  error?: string;
+}
+
 export const adminApi = {
+  testerMail: (to?: string) =>
+    api.post<TestMailResult>('/admin/mail/test', to ? { to } : {}, { timeout: 45000 }).then((r) => r.data),
+
   getTables: () => api.get<AdminTableDef[]>('/admin/tables').then((r) => r.data),
 
   getRolesAndPermissions: () =>

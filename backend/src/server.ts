@@ -3,9 +3,11 @@ import { connectDB } from './config/database';
 import { env } from './config/env';
 import { verifySmtpConnection } from './services/mail.service';
 import { chargerPermissions } from './services/permissions.service';
+import { mettreAJourSchema } from './services/schema.service';
 
 async function main() {
   await connectDB();
+  await mettreAJourSchema();
   await chargerPermissions();
   void verifySmtpConnection();
 

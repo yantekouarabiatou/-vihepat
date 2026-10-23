@@ -20,9 +20,9 @@ const schema = z.object({
   GEMINI_MODEL: z.string().default('gemini-3.5-flash-lite'),
   GEMINI_FALLBACK_MODEL: z.string().default('gemini-3.8-flash'),
 
-  // Configuration SMTP (Brevo)
+  // Configuration SMTP (Gmail : mot de passe d'application ; l'expéditeur doit être le compte lui-même)
   MAIL_MAILER: z.string().default('smtp'),
-  MAIL_HOST: z.string().default('smtp-relay.brevo.com'),
+  MAIL_HOST: z.string().default('smtp.gmail.com'),
   MAIL_PORT: z.coerce.number().default(587),
   MAIL_USERNAME: z.string().optional(),
   MAIL_PASSWORD: z.string().optional(),

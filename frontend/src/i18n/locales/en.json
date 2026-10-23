@@ -246,7 +246,10 @@
     "email_placeholder": "you@example.com",
     "pro_question": "Are you a healthcare professional without an account yet?",
     "patients_credentials_note": "Patients: your secure login details are handed to you in person by your health facility.",
-    "back_to_login": "Back to sign in"
+    "back_to_login": "Back to sign in",
+    "fonction_label": "Role",
+    "fonction_placeholder": "Choose your role",
+    "fonction_medecin_aide": "As a doctor, you can open records and assign caregivers to your patients."
   },
   "app_shell": {
     "groupes_tooltip": "Support groups",
@@ -299,7 +302,30 @@
     "rdv_dialog_motif_placeholder": "E.g. treatment renewal",
     "rdv_dialog_submit": "Send the request",
     "toast_rdv_success": "Appointment request sent",
-    "toast_rdv_error": "Couldn't send the request"
+    "toast_rdv_error": "Couldn't send the request",
+    "kpi_en_cours": "Ongoing treatments",
+    "kpi_a_venir": "Upcoming treatments",
+    "kpi_termines": "Completed treatments",
+    "kpi_rdv": "Upcoming appointments",
+    "kpi_communiques": "Announcements",
+    "kpi_communiques_nouveaux_one": "{{count}} new this week",
+    "kpi_communiques_nouveaux_other": "{{count}} new this week",
+    "kpi_signalements": "Pending reports",
+    "prochain_rdv": "Next appointment",
+    "mes_traitements": "My treatments",
+    "onglet_en_cours": "Ongoing",
+    "onglet_a_venir": "Upcoming",
+    "onglet_termine": "Completed",
+    "onglet_vide_en_cours": "No ongoing treatment.",
+    "onglet_vide_a_venir": "No scheduled treatment.",
+    "onglet_vide_termine": "No completed treatment yet.",
+    "commence_le": "Starts on {{date}}",
+    "periode": "From {{debut}} to {{fin}}",
+    "depuis": "Since {{date}}",
+    "progression": "{{pct}}% of the treatment done",
+    "communiques_empty": "No announcement from your care team yet.",
+    "communique_perso": "For you",
+    "nouveau_badge": "New"
   },
   "observance": {
     "today_title": "Today",
@@ -1205,6 +1231,39 @@
     "toutes": "All ({{count}})",
     "utilisateurs_desc": "Change user roles, activate or suspend their access in real time.",
     "utilisateurs_titre": "Users and role assignment",
-    "utilisateurs_vide": "No user found for this search."
+    "utilisateurs_vide": "No user found for this search.",
+    "mail_tester": "Test e-mail",
+    "mail_tester_aide": "Sends a test e-mail to your address and checks the SMTP connection",
+    "mail_ok": "Test e-mail sent to {{to}}. Check the inbox (and spam folder).",
+    "mail_echec": "Sending through {{serveur}} failed: {{erreur}}"
+  },
+  "theme": {
+    "titre": "Appearance",
+    "clair": "Light",
+    "sombre": "Dark",
+    "systeme": "Auto"
+  },
+  "fonction": {
+    "medecin": "Doctor",
+    "infirmier": "Nurse",
+    "sage_femme": "Midwife",
+    "pharmacien": "Pharmacist",
+    "mediateur": "Community health worker",
+    "autre": "Other caregiver"
+  },
+  "equipe": {
+    "titre": "Care team",
+    "moi": "you",
+    "principal": "Lead caregiver",
+    "retirer": "Remove from follow-up",
+    "choisir": "Choose a caregiver from the facility",
+    "rattacher": "Assign",
+    "aucun_candidat": "No other active caregiver in your facility.",
+    "reserve_medecin": "Only the doctor can assign a caregiver to this patient. You can prescribe for patients assigned to you.",
+    "attente_rattachement": "No patient is assigned to you yet. A doctor from your facility will assign you to their patients.",
+    "prescrit_par": "Prescribed by {{nom}} ({{fonction}})",
+    "toast_ajoute": "Caregiver assigned to the patient",
+    "toast_retire": "Caregiver removed from follow-up",
+    "toast_erreur": "Could not update the care team"
   }
 }

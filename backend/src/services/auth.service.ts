@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { Op } from 'sequelize';
 import { User, Patient, Soignant, Structure } from '../models';
+import type { FonctionSoignant } from '../models/Soignant';
 import { env } from '../config/env';
 import { memoriserVersion } from '../utils/token-version';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
@@ -93,6 +94,7 @@ export async function registerSoignant(input: {
   matricule: string;
   structureId: number;
   codeInvitation: string;
+  fonction: FonctionSoignant;
   specialite?: string;
   telephone?: string;
 }) {
@@ -132,6 +134,7 @@ export async function registerSoignant(input: {
     userId: user.id,
     matricule: input.matricule,
     structure: structure.nom,
+    fonction: input.fonction,
     specialite: input.specialite ?? null,
     telephone: input.telephone ?? null,
   });
@@ -153,7 +156,7 @@ export async function registerSoignant(input: {
     },
     soignant: {
       id: soignant.id, matricule: soignant.matricule,
-      structure: soignant.structure,
+      structure: soignant.structure, fonction: soignant.fonction,
     },
     accessToken: signAccessToken(payload),
     refreshToken: signRefreshToken(payload),

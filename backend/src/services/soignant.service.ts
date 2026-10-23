@@ -10,7 +10,8 @@ import { getEtatAgrege } from './rappels.service';
 import { memoriserVersion } from '../utils/token-version';
 import { genererCodePatient } from './auth.service';
 import { roleAPermission } from './permissions.service';
-import { sendPasswordResetEmail, sendWelcomePatientEmail } from './mail.service';
+import { sendNouvelleInfoEmail, sendPasswordResetEmail, sendWelcomePatientEmail } from './mail.service';
+import type { FonctionSoignant } from '../models/Soignant';
 
 const SALT_ROUNDS = 12;
 
@@ -28,8 +29,11 @@ function genererMotDePasseTemporaire(): string {
   return mdp;
 }
 
-/** Contexte d'accès d'un soignant : un `admin` voit et gère l'ensemble des patients. */
-interface Contexte { soignant?: Soignant | null; admin: boolean; user: User; }
+/**
+ * Contexte d'accès d'un soignant : un `admin` voit et gère l'ensemble des patients.
+ * `medecin` : peut ouvrir des dossiers et rattacher des soignants à ses patients.
+ */
+interface Contexte { soignant?: Soignant | null; admin: boolean; medecin: boolean; user: User; }
 
 async function getContexte(userId: number): Promise<Contexte> {
   const [soignant, user] = await Promise.all([
@@ -42,7 +46,34 @@ async function getContexte(userId: number): Promise<Contexte> {
   if (!soignant && !admin) {
     throw httpError(403, 'Profil soignant ou administrateur introuvable');
   }
-  return { soignant: soignant ?? null, admin, user };
+  const medecin = admin || soignant?.fonction === 'medecin';
+  return { soignant: soignant ?? null, admin, medecin, user };
+}
+
+/** Rattacher un patient à une équipe est une décision médicale : réservée au médecin (et à l'admin). */
+function assertMedecin(ctx: Contexte) {
+  if (!ctx.medecin) {
+    throw httpError(403, 'Seul le médecin peut rattacher un patient ou un soignant');
+  }
+}
+
+/** Profil du soignant connecté : l'interface s'adapte à sa fonction. */
+export async function getMonProfil(userId: number) {
+  const ctx = await getContexte(userId);
+  return {
+    fonction: ctx.soignant?.fonction ?? null,
+    structure: ctx.soignant?.structure ?? null,
+    medecin: ctx.medecin,
+    admin: ctx.admin,
+  };
+}
+
+/** Avertit le patient, sans aucun détail médical (la boîte mail peut être lue par l'entourage). */
+async function avertirPatient(patientId: number) {
+  const patient = await Patient.findByPk(patientId, { include: [{ model: User, as: 'user', attributes: ['email', 'actif'] }] });
+  const user = (patient as any)?.user;
+  if (!patient || !user?.email || !user.actif) return;
+  void sendNouvelleInfoEmail({ to: user.email, langue: patient.languePreferee ?? 'fr' });
 }
 
 async function getSoignantOrThrow(userId: number): Promise<Soignant> {
@@ -77,6 +108,7 @@ async function assertPatientAffecte(ctx: Contexte, patientId: number) {
 }
 
 export async function rattacherPatient(userId: number, codePatient: string) {
+  assertMedecin(await getContexte(userId));
   const soignant = await getSoignantOrThrow(userId);
   const patient = await Patient.findOne({
     where: { codePatient: codePatient.trim().toUpperCase() },
@@ -119,6 +151,8 @@ export async function creerPatient(
   }
 ) {
   const ctx = await getContexte(userId);
+  // Le créateur est aussitôt rattaché au dossier : même règle que le rattachement
+  assertMedecin(ctx);
 
   const exists = await User.findOne({ where: { email: input.email } });
   if (exists) throw httpError(409, 'Email déjà utilisé');
@@ -194,7 +228,13 @@ export async function getPatientDetail(userId: number, patientId: number) {
   const patient = await Patient.findByPk(patientId, {
     include: [
       { model: User, as: 'user', attributes: ['id', 'nom', 'prenom', 'email'] },
-      { model: Traitement, as: 'traitements', separate: true, order: [['actif', 'DESC'], ['dateDebut', 'DESC']] },
+      {
+        model: Traitement, as: 'traitements', separate: true, order: [['actif', 'DESC'], ['dateDebut', 'DESC']],
+        include: [{
+          model: Soignant, as: 'prescripteur', attributes: ['id', 'fonction'],
+          include: [{ model: User, as: 'user', attributes: ['nom', 'prenom'] }],
+        }],
+      },
       {
         model: Observation,
         as: 'observations',
@@ -364,9 +404,11 @@ export async function createTraitement(
   }
 ) {
   const ctx = await getContexte(userId);
+  // Prescription limitée aux patients rattachés au soignant
   await assertPatientAffecte(ctx, patientId);
-  return Traitement.create({
+  const traitement = await Traitement.create({
     patientId,
+    prescripteurId: ctx.soignant?.id ?? null,
     molecule: input.molecule,
     dosage: input.dosage ?? null,
     frequence: input.frequence,
@@ -376,6 +418,90 @@ export async function createTraitement(
     actif: true,
     notes: input.notes ?? null,
   });
+  void avertirPatient(patientId);
+  return traitement;
+}
+
+/** Équipe qui suit un patient, et soignants que le médecin peut y ajouter. */
+export async function getEquipePatient(userId: number, patientId: number) {
+  const ctx = await getContexte(userId);
+  await assertPatientAffecte(ctx, patientId);
+
+  const affectations = await Affectation.findAll({
+    where: { patientId },
+    include: [{
+      model: Soignant, as: 'soignant',
+      include: [{ model: User, as: 'user', attributes: ['nom', 'prenom', 'email', 'actif'] }],
+    }],
+    order: [['principal', 'DESC'], ['dateDebut', 'ASC']],
+  });
+  const membres = affectations.map((a) => {
+    const s = (a as any).soignant;
+    return {
+      soignantId: a.soignantId,
+      principal: a.principal,
+      depuis: a.dateDebut,
+      nom: s?.user?.nom ?? '',
+      prenom: s?.user?.prenom ?? '',
+      fonction: (s?.fonction ?? 'autre') as FonctionSoignant,
+      specialite: s?.specialite ?? null,
+      structure: s?.structure ?? '',
+      moi: s?.id === ctx.soignant?.id,
+    };
+  });
+
+  // Candidats : soignants actifs de la même structure (toutes structures pour l'admin)
+  let candidats: Array<{ soignantId: number; nom: string; prenom: string; fonction: FonctionSoignant; structure: string }> = [];
+  if (ctx.medecin) {
+    const dejaLa = membres.map((m) => m.soignantId);
+    const soignants = await Soignant.findAll({
+      where: {
+        id: { [Op.notIn]: dejaLa.length ? dejaLa : [0] },
+        ...(ctx.admin || !ctx.soignant ? {} : { structure: ctx.soignant.structure }),
+      },
+      include: [{ model: User, as: 'user', attributes: ['nom', 'prenom'], where: { actif: true, role: 'soignant' } }],
+      order: [['fonction', 'ASC']],
+    });
+    candidats = soignants.map((s) => ({
+      soignantId: s.id,
+      nom: (s as any).user.nom,
+      prenom: (s as any).user.prenom,
+      fonction: s.fonction,
+      structure: s.structure,
+    }));
+  }
+  return { peutGerer: ctx.medecin, membres, candidats };
+}
+
+export async function rattacherSoignant(userId: number, patientId: number, soignantId: number) {
+  const ctx = await getContexte(userId);
+  assertMedecin(ctx);
+  await assertPatientAffecte(ctx, patientId);
+
+  const cible = await Soignant.findByPk(soignantId, { include: [{ model: User, as: 'user', attributes: ['actif'] }] });
+  if (!cible || !(cible as any).user?.actif) throw httpError(404, 'Soignant introuvable');
+  if (!ctx.admin && ctx.soignant && cible.structure !== ctx.soignant.structure) {
+    throw httpError(403, "Ce soignant n'appartient pas à votre structure");
+  }
+  const [, created] = await Affectation.findOrCreate({
+    where: { patientId, soignantId },
+    defaults: { patientId, soignantId, principal: false },
+  });
+  if (!created) throw httpError(409, 'Ce soignant suit déjà ce patient');
+  return getEquipePatient(userId, patientId);
+}
+
+export async function detacherSoignant(userId: number, patientId: number, soignantId: number) {
+  const ctx = await getContexte(userId);
+  assertMedecin(ctx);
+  await assertPatientAffecte(ctx, patientId);
+  if (!ctx.admin && ctx.soignant?.id === soignantId) {
+    throw httpError(400, 'Vous ne pouvez pas vous retirer vous-même du suivi');
+  }
+  const affectation = await Affectation.findOne({ where: { patientId, soignantId } });
+  if (!affectation) throw httpError(404, 'Ce soignant ne suit pas ce patient');
+  await affectation.destroy();
+  return getEquipePatient(userId, patientId);
 }
 
 export async function updateTraitement(
@@ -546,13 +672,15 @@ export async function createCommunique(
     await assertPatientAffecte(ctx, input.patientId);
   }
   const defaultSoignantId = ctx.soignant?.id ?? (await Soignant.findOne())?.id ?? 1;
-  return Communique.create({
+  const communique = await Communique.create({
     soignantId: defaultSoignantId,
     titre: input.titre,
     contenu: input.contenu,
     cible: input.cible,
     patientId: input.cible === 'patient' ? input.patientId : null,
   });
+  if (input.cible === 'patient' && input.patientId) void avertirPatient(input.patientId);
+  return communique;
 }
 
 export async function getSignalements(userId: number, statut?: string) {

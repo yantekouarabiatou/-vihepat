@@ -36,6 +36,11 @@ const OPT_PATHOLOGIE = [
   { value: 'vih_vhb', label: 'VIH + Hépatite B' }, { value: 'vih_vhc', label: 'VIH + Hépatite C' },
   { value: 'vhb_vhc', label: 'Hépatite B + C' },
 ];
+const OPT_FONCTION = [
+  { value: 'medecin', label: 'Médecin' }, { value: 'infirmier', label: 'Infirmier·e' },
+  { value: 'sage_femme', label: 'Sage-femme' }, { value: 'pharmacien', label: 'Pharmacien·ne' },
+  { value: 'mediateur', label: 'Médiateur·rice' }, { value: 'autre', label: 'Autre' },
+];
 const OPT_SEXE = [{ value: 'M', label: 'Homme' }, { value: 'F', label: 'Femme' }];
 const OPT_STATUT_RDV = [
   { value: 'prevu', label: 'Prévu' }, { value: 'confirme', label: 'Confirmé' }, { value: 'effectue', label: 'Effectué' },
@@ -92,6 +97,7 @@ export const ADMIN_TABLES: Record<string, TableDef> = {
       { key: 'userId', label: 'Utilisateur', type: 'fk', fkTable: 'users', required: true },
       { key: 'matricule', label: 'Matricule', type: 'text', required: true },
       { key: 'structure', label: 'Structure', type: 'text', required: true },
+      { key: 'fonction', label: 'Fonction', type: 'select', required: true, options: OPT_FONCTION },
       { key: 'specialite', label: 'Spécialité', type: 'text' },
       { key: 'telephone', label: 'Téléphone', type: 'text' },
     ],
@@ -110,6 +116,7 @@ export const ADMIN_TABLES: Record<string, TableDef> = {
     key: 'traitements', label: 'Traitements', model: Traitement, allowCreate: true, allowUpdate: true, allowDelete: true,
     fields: [
       { key: 'patientId', label: 'Patient', type: 'fk', fkTable: 'patients', required: true },
+      { key: 'prescripteurId', label: 'Prescripteur', type: 'fk', fkTable: 'soignants' },
       { key: 'molecule', label: 'Molécule', type: 'text', required: true },
       { key: 'dosage', label: 'Dosage', type: 'text' },
       { key: 'frequence', label: 'Fréquence', type: 'text', required: true },
