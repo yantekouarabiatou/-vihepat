@@ -1,0 +1,124 @@
+{
+  "modele": "Régression logistique",
+  "version": "1.0.0",
+  "date": "2026-10-28",
+  "usage": "Aide à la priorisation des relances ; ne constitue pas une décision clinique.",
+  "cible": "Perte de suivi (>= 6 mois sans service) au 31/12/2016, cohorte LUTH 2010-2014",
+  "donnees": {
+    "source": "Balogun et al., PLoS ONE 2019, doi:10.1371/journal.pone.0219903 (S3, CC BY 4.0)",
+    "sha256": "4266193e27d6e51dcdb1b588b70936fb9708f3e519ffd16ac2da277c468f44fa",
+    "patients": 6092,
+    "ltfu": 3400
+  },
+  "variables_entree": [
+    "Age",
+    "annees_exposition",
+    "nb_examens_manquants",
+    "log_ALT",
+    "sqrt_CD4",
+    "log_Creatin",
+    "Hemoglob",
+    "log_Platelet",
+    "log10_CV",
+    "TotProt",
+    "log_Urea",
+    "log_WBC",
+    "vih_avance",
+    "cv_inf_1000",
+    "Sex",
+    "MaritalStatus",
+    "Education",
+    "WHOStage"
+  ],
+  "pretraitement_requis": "nettoyer() puis creer_variables() (sections 5.1-5.2) ; la classe ImputationAleatoire (section 6.3) doit être importable pour recharger le pipeline",
+  "hyperparametres": {
+    "C": 0.1
+  },
+  "seuils": {
+    "alerte_sensibilite_80": 0.4223286285934806,
+    "risque_eleve_precision_85": 0.77
+  },
+  "performances_test": {
+    "ROC-AUC": {
+      "valeur": 0.7647839116977547,
+      "ic95": [
+        0.7375347301256632,
+        0.7893647119829479
+      ]
+    },
+    "PR-AUC": {
+      "valeur": 0.817076816498289,
+      "ic95": [
+        0.789519786107343,
+        0.8440031637157578
+      ]
+    },
+    "Brier": {
+      "valeur": 0.1952675619665171,
+      "ic95": [
+        0.18599389013793602,
+        0.20540699298649287
+      ]
+    },
+    "Log-loss": {
+      "valeur": 0.570477860794149,
+      "ic95": [
+        0.5497809601884782,
+        0.5934758895651033
+      ]
+    },
+    "Sensibilité": {
+      "valeur": 0.8135095447870778,
+      "ic95": [
+        0.7817109144542773,
+        0.8419809156302168
+      ]
+    },
+    "Spécificité": {
+      "valeur": 0.5315985130111525,
+      "ic95": [
+        0.4925608152995887,
+        0.5701279140621929
+      ]
+    },
+    "VPP": {
+      "valeur": 0.6873449131513648,
+      "ic95": [
+        0.6554101255381125,
+        0.7179215408850901
+      ]
+    },
+    "VPN": {
+      "valeur": 0.6924939467312349,
+      "ic95": [
+        0.6483245739617476,
+        0.7340159701255363
+      ]
+    },
+    "F1": {
+      "valeur": 0.7451244115669132,
+      "ic95": [
+        0.7185355813755834,
+        0.7692307692307693
+      ]
+    },
+    "F2": {
+      "valeur": 0.7847025495750708,
+      "ic95": [
+        0.7571521163024116,
+        0.8106313056926137
+      ]
+    }
+  },
+  "environnement": {
+    "python": "3.10.7",
+    "numpy": "2.2.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.6.1",
+    "xgboost": "3.2.0",
+    "shap": "0.49.1",
+    "lifelines": "0.30.0",
+    "matplotlib": "3.10.0",
+    "seaborn": "0.13.2"
+  }
+}
