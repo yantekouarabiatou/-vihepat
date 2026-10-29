@@ -1265,5 +1265,93 @@
     "toast_ajoute": "Soignant rattaché au patient",
     "toast_retire": "Soignant retiré du suivi",
     "toast_erreur": "Impossible de modifier l'équipe"
+  },
+  "perte_suivi": {
+    "titre": "Risque de perte de suivi",
+    "niveau": {
+      "faible": "Faible",
+      "modere": "Modéré",
+      "eleve": "Élevé"
+    },
+    "badge": "Risque {{niveau}}",
+    "probabilite": "Risque estimé : {{p}} %",
+    "cohorte": "Dans la cohorte d'étude, {{taux}} % des patients de ce niveau ont été perdus de vue.",
+    "hausse": "Ce qui augmente le risque",
+    "baisse": "Ce qui le diminue",
+    "examens_manquants_one": "{{count}} élément du bilan d'inclusion non renseigné sur 10",
+    "examens_manquants_other": "{{count}} éléments du bilan d'inclusion non renseignés sur 10",
+    "bilan_absent": "Saisissez le bilan d'inclusion (stade OMS, CD4, charge virale…) pour estimer le risque que ce patient sorte du parcours de soins.",
+    "indisponible": "Le score est momentanément indisponible.",
+    "saisir_bilan": "Saisir le bilan d'inclusion",
+    "modifier_bilan": "Modifier le bilan",
+    "avertissement": "Aide à la priorisation des relances : le score priorise, le soignant décide. Modèle appris sur une cohorte VIH nigériane (2010-2014), pas encore recalibré sur des patients béninois.",
+    "details_modele": "Régression logistique v{{version}} · repère 81 % des patients perdus de vue",
+    "non_mesure": "non mesuré",
+    "non_renseigne": "non renseigné",
+    "oui": "oui",
+    "non": "non",
+    "ans": "{{n}} ans",
+    "sur_10": "{{n}} sur 10",
+    "variables": {
+      "Age": "Âge",
+      "annees_exposition": "Ancienneté dans le parcours",
+      "nb_examens_manquants": "Bilan d'inclusion incomplet",
+      "log_ALT": "ALAT",
+      "sqrt_CD4": "CD4",
+      "log_Creatin": "Créatinine",
+      "Hemoglob": "Hémoglobine",
+      "log_Platelet": "Plaquettes",
+      "log10_CV": "Charge virale",
+      "TotProt": "Protéines totales",
+      "log_Urea": "Urée",
+      "log_WBC": "Leucocytes",
+      "vih_avance": "VIH avancé (OMS)",
+      "cv_inf_1000": "Charge virale < 1 000 copies/mL",
+      "Sex": "Sexe",
+      "MaritalStatus": "Situation familiale",
+      "Education": "Niveau d'études",
+      "WHOStage": "Stade OMS"
+    },
+    "form": {
+      "titre": "Bilan d'inclusion",
+      "description": "Valeurs à l'entrée dans le parcours de soins. Laissez vide un examen non réalisé : le modèle en tient compte.",
+      "date_bilan": "Date du bilan",
+      "profil": "Profil",
+      "situation": "Situation familiale",
+      "etudes": "Niveau d'études",
+      "stade": "Stade clinique OMS",
+      "stade_n": "Stade {{n}}",
+      "non_renseigne": "Non renseigné",
+      "examens": "Examens biologiques",
+      "hors_bornes": "Valeur inhabituelle : vérifiez l'unité ({{unite}}). Elle sera ignorée par le modèle.",
+      "enregistrer": "Enregistrer",
+      "annuler": "Annuler",
+      "toast_ok": "Bilan d'inclusion enregistré, score recalculé",
+      "toast_erreur": "Impossible d'enregistrer le bilan",
+      "situations": {
+        "marie": "Marié(e)",
+        "celibataire": "Célibataire",
+        "divorce": "Divorcé(e)",
+        "separe": "Séparé(e)",
+        "veuf": "Veuf / veuve"
+      },
+      "niveaux_etudes": {
+        "aucun": "Aucune scolarité",
+        "primaire": "Primaire",
+        "secondaire": "Secondaire",
+        "superieur": "Supérieur"
+      },
+      "champs": {
+        "cd4": "CD4",
+        "chargeVirale": "Charge virale",
+        "alat": "ALAT (transaminases)",
+        "creatinine": "Créatinine",
+        "hemoglobine": "Hémoglobine",
+        "plaquettes": "Plaquettes",
+        "proteinesTotales": "Protéines totales",
+        "uree": "Urée",
+        "leucocytes": "Leucocytes"
+      }
+    }
   }
 }

@@ -17,6 +17,7 @@ r.post('/patients/:id/equipe', perm('patient:attach'), catchAsync(soignantContro
 r.delete('/patients/:id/equipe/:soignantId', perm('patient:attach'), catchAsync(soignantController.detacherSoignant));
 r.patch('/patients/:id', perm('patient:update'), catchAsync(soignantController.updatePatient));
 r.post('/patients/:id/reinitialiser-acces', perm('patient:update'), catchAsync(soignantController.reinitialiserAccesPatient));
+r.put('/patients/:id/bilan-inclusion', perm('observation:create'), catchAsync(soignantController.enregistrerBilanInclusion));
 r.post('/patients/:id/observations', perm('observation:create'), catchAsync(soignantController.createObservation));
 r.post('/patients/:id/traitements', perm('traitement:manage'), catchAsync(soignantController.createTraitement));
 r.patch('/traitements/:id', perm('traitement:manage'), catchAsync(soignantController.updateTraitement));

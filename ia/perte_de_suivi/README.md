@@ -63,3 +63,15 @@ jupyter nbconvert --to notebook --execute --inplace notebooks/01_modele_perte_de
 ## Source des données
 
 Balogun M., Meloni S.T., Igwilo U.U. *et al.* (2019). Status of HIV-infected patients classified as lost to follow up from a large antiretroviral program in southwest Nigeria. *PLoS ONE* 14(7): e0219903. [doi:10.1371/journal.pone.0219903](https://doi.org/10.1371/journal.pone.0219903). Données S3, licence CC BY 4.0.
+
+## Intégration dans l'application
+
+Le modèle tourne dans l'API Node, sans Python en production :
+
+1. `scripts/exporter_modele_node.py` lit `models/ltfu_modele_final.joblib` et écrit ses paramètres (médianes, moyennes, écarts-types, modalités, coefficients, seuils) dans `backend/src/ia/perte-de-suivi.modele.json`. Il reconstruit aussi le jeu d'entraînement pour fixer le « patient moyen » qui sert à expliquer chaque score, et vérifie que le calcul linéaire redonne exactement les probabilités de scikit-learn.
+2. `backend/src/ia/perte-de-suivi.ts` refait le calcul (imputation, standardisation, one-hot, sigmoïde) et revérifie au démarrage de l'API 30 cas calculés par scikit-learn ; en cas d'écart, le score n'est pas affiché.
+3. Le soignant saisit le **bilan d'inclusion** (table `bilans_inclusion`) dans le dossier patient ; le score, son niveau et les principaux facteurs s'affichent dans la carte « Risque de perte de suivi », et une pastille apparaît dans la liste des patients. Seuls les patients VIH sont concernés.
+
+Après un réentraînement : relancer `python scripts/exporter_modele_node.py` (avec `scikit-learn==1.6.1`, `pandas`, `openpyxl`, `joblib`), puis recompiler et redéployer l'API.
+
+Écarts assumés avec le notebook : l'âge manquant est imputé par la moyenne (au lieu d'un tirage aléatoire) pour que le score soit reproductible ; la durée d'exposition est l'ancienneté dans le parcours, ramenée entre 2,5 et 6,5 ans (plage de la cohorte) ; « aucune scolarité », absente de la cohorte, n'active aucune modalité (comportement de scikit-learn pour une modalité inconnue).

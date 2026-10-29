@@ -4,11 +4,13 @@ import { env } from './config/env';
 import { verifySmtpConnection } from './services/mail.service';
 import { chargerPermissions } from './services/permissions.service';
 import { mettreAJourSchema } from './services/schema.service';
+import { verifierModelePerteSuivi } from './ia/perte-de-suivi';
 
 async function main() {
   await connectDB();
   await mettreAJourSchema();
   await chargerPermissions();
+  verifierModelePerteSuivi();
   void verifySmtpConnection();
 
   const app = createApp();

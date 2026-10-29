@@ -1265,5 +1265,93 @@
     "toast_ajoute": "Caregiver assigned to the patient",
     "toast_retire": "Caregiver removed from follow-up",
     "toast_erreur": "Could not update the care team"
+  },
+  "perte_suivi": {
+    "titre": "Risk of loss to follow-up",
+    "niveau": {
+      "faible": "Low",
+      "modere": "Moderate",
+      "eleve": "High"
+    },
+    "badge": "{{niveau}} risk",
+    "probabilite": "Estimated risk: {{p}}%",
+    "cohorte": "In the study cohort, {{taux}}% of patients at this level were lost to follow-up.",
+    "hausse": "What increases the risk",
+    "baisse": "What lowers it",
+    "examens_manquants_one": "{{count}} baseline item missing out of 10",
+    "examens_manquants_other": "{{count}} baseline items missing out of 10",
+    "bilan_absent": "Enter the baseline assessment (WHO stage, CD4, viral load…) to estimate the risk of this patient dropping out of care.",
+    "indisponible": "The score is temporarily unavailable.",
+    "saisir_bilan": "Enter baseline assessment",
+    "modifier_bilan": "Edit assessment",
+    "avertissement": "Helps prioritise follow-up calls: the score prioritises, the clinician decides. Trained on a Nigerian HIV cohort (2010-2014), not yet recalibrated on Beninese patients.",
+    "details_modele": "Logistic regression v{{version}} · finds 81% of patients lost to follow-up",
+    "non_mesure": "not measured",
+    "non_renseigne": "not provided",
+    "oui": "yes",
+    "non": "no",
+    "ans": "{{n}} years",
+    "sur_10": "{{n}} of 10",
+    "variables": {
+      "Age": "Age",
+      "annees_exposition": "Time in care",
+      "nb_examens_manquants": "Incomplete baseline assessment",
+      "log_ALT": "ALT",
+      "sqrt_CD4": "CD4",
+      "log_Creatin": "Creatinine",
+      "Hemoglob": "Haemoglobin",
+      "log_Platelet": "Platelets",
+      "log10_CV": "Viral load",
+      "TotProt": "Total protein",
+      "log_Urea": "Urea",
+      "log_WBC": "White blood cells",
+      "vih_avance": "Advanced HIV (WHO)",
+      "cv_inf_1000": "Viral load < 1,000 copies/mL",
+      "Sex": "Sex",
+      "MaritalStatus": "Marital status",
+      "Education": "Education",
+      "WHOStage": "WHO stage"
+    },
+    "form": {
+      "titre": "Baseline assessment",
+      "description": "Values at entry into care. Leave a test blank if it was not done: the model takes it into account.",
+      "date_bilan": "Assessment date",
+      "profil": "Profile",
+      "situation": "Marital status",
+      "etudes": "Education",
+      "stade": "WHO clinical stage",
+      "stade_n": "Stage {{n}}",
+      "non_renseigne": "Not provided",
+      "examens": "Laboratory tests",
+      "hors_bornes": "Unusual value: check the unit ({{unite}}). It will be ignored by the model.",
+      "enregistrer": "Save",
+      "annuler": "Cancel",
+      "toast_ok": "Baseline assessment saved, score updated",
+      "toast_erreur": "Could not save the assessment",
+      "situations": {
+        "marie": "Married",
+        "celibataire": "Single",
+        "divorce": "Divorced",
+        "separe": "Separated",
+        "veuf": "Widowed"
+      },
+      "niveaux_etudes": {
+        "aucun": "No schooling",
+        "primaire": "Primary",
+        "secondaire": "Secondary",
+        "superieur": "Higher education"
+      },
+      "champs": {
+        "cd4": "CD4",
+        "chargeVirale": "Viral load",
+        "alat": "ALT (transaminases)",
+        "creatinine": "Creatinine",
+        "hemoglobine": "Haemoglobin",
+        "plaquettes": "Platelets",
+        "proteinesTotales": "Total protein",
+        "uree": "Urea",
+        "leucocytes": "White blood cells"
+      }
+    }
   }
 }

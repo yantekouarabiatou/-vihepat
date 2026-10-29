@@ -26,6 +26,7 @@ import { apiErrorMessage } from "@/lib/api-error";
 import { formatTaux, tauxStyle } from "@/lib/observance";
 import { telechargerFichePatientPdf, imprimerFichePatient, type PatientCredentialsDoc } from "@/lib/patient-pdf";
 import { localeAffichage } from "@/lib/date-locale";
+import { BadgeRisquePerteSuivi } from "./RisquePerteSuivi";
 
 const PATHOLOGIE_VALUES: Pathologie[] = ["vih", "vhb", "vhc", "vih_vhb", "vih_vhc", "vhb_vhc"];
 
@@ -45,13 +46,13 @@ function KpiCard({
 }: { icon: LucideIcon; label: string; value: string | number; tint: keyof typeof KPI_TINTS }) {
   const c = KPI_TINTS[tint];
   return (
-    <div className="relative overflow-hidden rounded-card bg-card p-5 shadow-dash">
-      <Icon className={`pointer-events-none absolute -bottom-4 -right-4 h-24 w-24 ${c.icon} opacity-[0.07]`} />
-      <div className={`relative flex h-11 w-11 items-center justify-center rounded-2xl ${c.chip}`}>
+    <div className="relative overflow-hidden rounded-card bg-card p-4 shadow-dash sm:p-5">
+      <Icon className={`pointer-events-none absolute -bottom-4 -right-4 h-20 w-20 sm:h-24 sm:w-24 ${c.icon} opacity-[0.07]`} />
+      <div className={`relative flex h-9 w-9 items-center justify-center rounded-2xl sm:h-11 sm:w-11 ${c.chip}`}>
         <Icon className={`h-5 w-5 ${c.icon}`} />
       </div>
-      <p className="relative mt-4 text-sm font-medium text-muted-foreground">{label}</p>
-      <p className="relative mt-1 text-3xl font-extrabold text-foreground">{value}</p>
+      <p className="relative mt-3 text-xs font-medium leading-snug text-muted-foreground sm:mt-4 sm:text-sm">{label}</p>
+      <p className="relative mt-1 text-2xl font-extrabold text-foreground sm:text-3xl">{value}</p>
       <div className={`absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t ${c.blob} to-transparent`} />
     </div>
   );
@@ -222,10 +223,27 @@ export function DashboardPage() {
     onError: () => toast.error(t("dashboard_soignant.toast_signalement_error")),
   });
 
+  const badgesPatient = (p: NonNullable<typeof patients>[number]) => [
+    <span key="patho" className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">
+      {t(`shared.pathologie.${p.pathologie}`, { defaultValue: p.pathologie })}
+    </span>,
+    ...(p.examensEnRetard
+      ? [
+          <span key="exam" className="rounded-full bg-destructive/15 px-2 py-0.5 text-[11px] font-semibold text-destructive">
+            {t("dashboard_soignant.examens_retard", { count: p.examensEnRetard })}
+          </span>,
+        ]
+      : []),
+    <span key="obs" className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${tauxStyle(p.observance?.taux30)}`}>
+      {t("dashboard_soignant.obs_label", { taux: formatTaux(p.observance?.taux30) })}
+    </span>,
+    ...(p.risquePerteSuivi ? [<BadgeRisquePerteSuivi key="ltfu" risque={p.risquePerteSuivi} />] : []),
+  ];
+
   return (
     <AppShell title={t("sidebar.role_soignant")}>
       {/* Bannière d'accueil */}
-      <section className="relative overflow-hidden rounded-card bg-[linear-gradient(135deg,hsl(var(--brand))_0%,hsl(var(--brand-light))_100%)] p-6 sm:p-8">
+      <section className="relative overflow-hidden rounded-card bg-[linear-gradient(135deg,hsl(var(--brand))_0%,hsl(var(--brand-light))_100%)] p-5 sm:p-8">
         <div className="pointer-events-none absolute -right-8 -top-16 h-56 w-56 rounded-full bg-white/10" />
         <div className="pointer-events-none absolute -bottom-20 right-28 h-40 w-40 rounded-full bg-white/10" />
         <div className="relative flex flex-wrap items-end justify-between gap-6">
@@ -267,7 +285,7 @@ export function DashboardPage() {
       </section>
 
       {/* KPI */}
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <KpiCard icon={Users} label={t("dashboard_soignant.stat_patients")} value={patients?.length ?? 0} tint="brand" />
         <KpiCard icon={CalendarDays} label={t("dashboard_soignant.stat_rdv")} value={rendezVous?.length ?? 0} tint="success" />
         <KpiCard
@@ -286,7 +304,7 @@ export function DashboardPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-5">
         {/* Patients */}
-        <section id="patients-section" className="min-w-0 rounded-card bg-card p-6 shadow-dash lg:col-span-3">
+        <section id="patients-section" className="min-w-0 rounded-card bg-card p-4 shadow-dash sm:p-6 lg:col-span-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-foreground">{t("dashboard_soignant.patients_title")}</h2>
             <div className="flex items-center gap-2">
@@ -321,34 +339,22 @@ export function DashboardPage() {
                 <li key={p.id}>
                   <Link
                     to={`/soignant/patients/${p.id}`}
-                    className="flex items-center gap-4 rounded-input border-2 border-border p-4 transition-colors duration-150 hover:border-primary/40 hover:bg-secondary/40"
+                    className="flex items-center gap-3 rounded-input border-2 border-border p-3 transition-colors sm:gap-4 sm:p-4 duration-150 hover:border-primary/40 hover:bg-secondary/40"
                   >
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-bold text-primary">
                       {initials(p.user.nom, p.user.prenom)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-foreground">{p.user.prenom} {p.user.nom}</p>
-                      <p className="text-sm text-muted-foreground">{p.codePatient}</p>
+                      <p className="truncate font-semibold text-foreground">{p.user.prenom} {p.user.nom}</p>
+                      <p className="truncate text-sm text-muted-foreground">{p.codePatient}</p>
+                      {/* Téléphone : les badges passent sous le nom */}
+                      <div className="mt-1.5 flex flex-wrap gap-1 sm:hidden">{badgesPatient(p)}</div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">
-                        {t(`shared.pathologie.${p.pathologie}`, { defaultValue: p.pathologie })}
-                      </span>
-                      <div className="flex gap-1">
-                        {!!p.examensEnRetard && (
-                          <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-[11px] font-semibold text-destructive" title={t("dashboard_soignant.examens_retard", { count: p.examensEnRetard })}>
-                            {t("dashboard_soignant.examens_retard", { count: p.examensEnRetard })}
-                          </span>
-                        )}
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${tauxStyle(p.observance?.taux30)}`}
-                          title={t("dashboard_soignant.obs_label", { taux: formatTaux(p.observance?.taux30) })}
-                        >
-                          {t("dashboard_soignant.obs_label", { taux: formatTaux(p.observance?.taux30) })}
-                        </span>
-                      </div>
+                    <div className="hidden flex-col items-end gap-1 sm:flex">
+                      <div className="flex gap-1">{badgesPatient(p).slice(0, 1)}</div>
+                      <div className="flex gap-1">{badgesPatient(p).slice(1)}</div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
 
                   </Link>
                 </li>
@@ -381,11 +387,11 @@ export function DashboardPage() {
                       {rdv.patient.user.prenom} {rdv.patient.user.nom}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">{formatDate(rdv.dateHeure)}</p>
-                    <div className="mt-2 flex items-center justify-between gap-2">
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                       <span className="rounded-full bg-background px-2 py-0.5 text-xs font-semibold text-primary">
                         {t(`shared.statut_rdv.${rdv.statut}`, { defaultValue: rdv.statut })}
                       </span>
-                      <div className="flex items-center gap-1">
+                      <div className="flex flex-wrap items-center gap-1">
                         {rdv.rappelEnvoyeLe ? (
                           <span className="flex items-center gap-1 rounded-full bg-background px-2 py-0.5 text-xs font-semibold text-muted-foreground">
                             <BellOff className="h-3.5 w-3.5" /> {t("dashboard_soignant.rappel_envoye")}
@@ -442,12 +448,12 @@ export function DashboardPage() {
                     </div>
                     <p className="mt-1 text-sm text-foreground">{s.symptome}</p>
                     {s.notes && <p className="mt-1 text-sm text-muted-foreground">{s.notes}</p>}
-                    <div className="mt-2 flex items-center justify-between">
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                       <span className="text-xs text-muted-foreground">
                         {new Date(s.createdAt).toLocaleDateString(locale)}
                       </span>
                       {s.statut !== "traite" && (
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-1">
                           {s.statut === "nouveau" && (
                             <Button size="sm" variant="ghost" className="h-7 rounded-full" onClick={() => markSignalement({ id: s.id, statut: "vu" })}>
                               {t("dashboard_soignant.marquer_vu")}
@@ -571,7 +577,7 @@ export function DashboardPage() {
             }}
             className="space-y-4"
           >
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="npPrenom">{t("auth.first_name")}</Label>
                 <Input id="npPrenom" value={npPrenom} onChange={(e) => setNpPrenom(e.target.value)} required className="h-11 rounded-input" />
@@ -602,7 +608,7 @@ export function DashboardPage() {
                 placeholder={t("auth.pathologie_label")}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="npSexe">{t("dashboard_soignant.np_sexe")}</Label>
                 <SearchableSelect

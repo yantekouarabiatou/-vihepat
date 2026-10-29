@@ -1,0 +1,1060 @@
+{
+ "modele": "Régression logistique",
+ "version": "1.0.0",
+ "date": "2026-10-28",
+ "usage": "Aide à la priorisation des relances ; ne constitue pas une décision clinique.",
+ "cible": "Perte de suivi (>= 6 mois sans service) au 31/12/2016, cohorte LUTH 2010-2014",
+ "source": "Balogun et al., PLoS ONE 2019, doi:10.1371/journal.pone.0219903 (S3, CC BY 4.0)",
+ "performances_test": {
+  "ROC-AUC": 0.765,
+  "PR-AUC": 0.817,
+  "Brier": 0.195,
+  "Log-loss": 0.57,
+  "Sensibilité": 0.814,
+  "Spécificité": 0.532,
+  "VPP": 0.687,
+  "VPN": 0.692,
+  "F1": 0.745,
+  "F2": 0.785
+ },
+ "seuils": {
+  "modere": 0.4223286285934806,
+  "eleve": 0.77
+ },
+ "date_reference_annee": 2016,
+ "gen": [
+  {
+   "nom": "Age",
+   "moyenne": 41.772030651341,
+   "ecart": 9.710803230395802,
+   "min": 17.0,
+   "max": 84.0
+  },
+  {
+   "nom": "annees_exposition",
+   "moyenne": 4.7701149425287355,
+   "ecart": 1.30788486574211,
+   "min": 2.5,
+   "max": 6.5
+  },
+  {
+   "nom": "nb_examens_manquants",
+   "moyenne": 1.7506841817186645,
+   "ecart": 2.4612972052460855,
+   "min": 0.0,
+   "max": 10.0
+  }
+ ],
+ "bio": {
+  "variables": [
+   {
+    "nom": "log_ALT",
+    "mediane": 3.022857980969949
+   },
+   {
+    "nom": "sqrt_CD4",
+    "mediane": 15.066519173319364
+   },
+   {
+    "nom": "log_Creatin",
+    "mediane": 4.4261631230095375
+   },
+   {
+    "nom": "Hemoglob",
+    "mediane": 10.4
+   },
+   {
+    "nom": "log_Platelet",
+    "mediane": 5.429345628954441
+   },
+   {
+    "nom": "log10_CV",
+    "mediane": 4.725020622556814
+   },
+   {
+    "nom": "TotProt",
+    "mediane": 90.975
+   },
+   {
+    "nom": "log_Urea",
+    "mediane": 1.1314021114911006
+   },
+   {
+    "nom": "log_WBC",
+    "mediane": 1.667706820558076
+   }
+  ],
+  "indicateurs": [
+   "log_ALT",
+   "sqrt_CD4",
+   "log_Creatin",
+   "Hemoglob",
+   "log_Platelet",
+   "log10_CV",
+   "TotProt",
+   "log_Urea",
+   "log_WBC"
+  ],
+  "standardisation": [
+   {
+    "nom": "log_ALT",
+    "moyenne": 3.0674119505898347,
+    "ecart": 0.7270016660780011
+   },
+   {
+    "nom": "sqrt_CD4",
+    "moyenne": 15.176587441310748,
+    "ecart": 6.812034602128413
+   },
+   {
+    "nom": "log_Creatin",
+    "moyenne": 4.482053827686043,
+    "ecart": 0.47234056661417007
+   },
+   {
+    "nom": "Hemoglob",
+    "moyenne": 10.289652435686918,
+    "ecart": 2.1535156055196265
+   },
+   {
+    "nom": "log_Platelet",
+    "moyenne": 5.412373557201972,
+    "ecart": 0.41486889577491814
+   },
+   {
+    "nom": "log10_CV",
+    "moyenne": 4.514409480666167,
+    "ecart": 1.0910143361014024
+   },
+   {
+    "nom": "TotProt",
+    "moyenne": 91.7437096332786,
+    "ecart": 11.328338783323131
+   },
+   {
+    "nom": "log_Urea",
+    "moyenne": 1.1912094622288438,
+    "ecart": 0.6397462779419623
+   },
+   {
+    "nom": "log_WBC",
+    "moyenne": 1.6795901170775056,
+    "ecart": 0.3835768835308856
+   },
+   {
+    "nom": "missingindicator_log_ALT",
+    "moyenne": 0.10946907498631636,
+    "ecart": 0.31222683518230243
+   },
+   {
+    "nom": "missingindicator_sqrt_CD4",
+    "moyenne": 0.08483853311439518,
+    "ecart": 0.27864126832433284
+   },
+   {
+    "nom": "missingindicator_log_Creatin",
+    "moyenne": 0.11056376573617953,
+    "ecart": 0.3135911660784065
+   },
+   {
+    "nom": "missingindicator_Hemoglob",
+    "moyenne": 0.09906951286261631,
+    "ecart": 0.29875532544840133
+   },
+   {
+    "nom": "missingindicator_log_Platelet",
+    "moyenne": 0.09797482211275314,
+    "ecart": 0.2972806020323686
+   },
+   {
+    "nom": "missingindicator_log10_CV",
+    "moyenne": 0.2673782156540777,
+    "ecart": 0.44259135265809163
+   },
+   {
+    "nom": "missingindicator_TotProt",
+    "moyenne": 0.2627257799671593,
+    "ecart": 0.4401146947192368
+   },
+   {
+    "nom": "missingindicator_log_Urea",
+    "moyenne": 0.21455938697318008,
+    "ecart": 0.4105163290721494
+   },
+   {
+    "nom": "missingindicator_log_WBC",
+    "moyenne": 0.09688013136288999,
+    "ecart": 0.29579447511743545
+   }
+  ]
+ },
+ "binaire": [
+  {
+   "nom": "vih_avance",
+   "mode": 1.0
+  },
+  {
+   "nom": "cv_inf_1000",
+   "mode": 0.0
+  }
+ ],
+ "categorielles": [
+  {
+   "nom": "Sex",
+   "categories": [
+    "Female",
+    "Male"
+   ],
+   "supprimee": "Female"
+  },
+  {
+   "nom": "MaritalStatus",
+   "categories": [
+    "Divorced",
+    "Inconnu",
+    "Married",
+    "Separated",
+    "Single",
+    "Widowed"
+   ],
+   "supprimee": null
+  },
+  {
+   "nom": "Education",
+   "categories": [
+    "Inconnu",
+    "Primary",
+    "Secondary",
+    "Tertiary"
+   ],
+   "supprimee": null
+  },
+  {
+   "nom": "WHOStage",
+   "categories": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "Inconnu"
+   ],
+   "supprimee": null
+  }
+ ],
+ "colonnes": [
+  "Age",
+  "annees_exposition",
+  "nb_examens_manquants",
+  "log_ALT",
+  "sqrt_CD4",
+  "log_Creatin",
+  "Hemoglob",
+  "log_Platelet",
+  "log10_CV",
+  "TotProt",
+  "log_Urea",
+  "log_WBC",
+  "missingindicator_log_ALT",
+  "missingindicator_sqrt_CD4",
+  "missingindicator_log_Creatin",
+  "missingindicator_Hemoglob",
+  "missingindicator_log_Platelet",
+  "missingindicator_log10_CV",
+  "missingindicator_TotProt",
+  "missingindicator_log_Urea",
+  "missingindicator_log_WBC",
+  "vih_avance",
+  "cv_inf_1000",
+  "Sex_Male",
+  "MaritalStatus_Divorced",
+  "MaritalStatus_Inconnu",
+  "MaritalStatus_Married",
+  "MaritalStatus_Separated",
+  "MaritalStatus_Single",
+  "MaritalStatus_Widowed",
+  "Education_Inconnu",
+  "Education_Primary",
+  "Education_Secondary",
+  "Education_Tertiary",
+  "WHOStage_1",
+  "WHOStage_2",
+  "WHOStage_3",
+  "WHOStage_4",
+  "WHOStage_Inconnu"
+ ],
+ "reference": [
+  -2.1578554791701866e-16,
+  3.402982450958334e-18,
+  -2.7375778467084457e-16,
+  -1.167344515766243e-16,
+  1.466016993381604e-16,
+  -1.9545880452691932e-16,
+  3.401007505785903e-16,
+  -6.753400976558116e-16,
+  4.432536561232648e-16,
+  -1.9351044515488626e-16,
+  2.451970391003014e-17,
+  -7.823213584578142e-16,
+  1.834982327249573e-15,
+  6.377249880639685e-16,
+  4.4380056401716883e-16,
+  1.0655133042985031e-15,
+  -5.784158653472661e-16,
+  3.0453654558888737e-16,
+  2.0600197337051344e-17,
+  -4.135535191070883e-16,
+  2.0852382643684864e-16,
+  0.5758073344280241,
+  0.1319102353585112,
+  0.32922824302134646,
+  0.019157088122605363,
+  0.14942528735632185,
+  0.49261083743842365,
+  0.029556650246305417,
+  0.23700054734537493,
+  0.0722495894909688,
+  0.2260536398467433,
+  0.17350848385331144,
+  0.3727422003284072,
+  0.22769567597153803,
+  0.1956759715380405,
+  0.10673234811165845,
+  0.1893814997263273,
+  0.07142857142857142,
+  0.4367816091954023
+ ],
+ "coefficients": [
+  -0.06249830344730206,
+  0.237271732342586,
+  0.236127930712149,
+  -0.0025303540954161124,
+  -0.07724995242111225,
+  0.05654754323278055,
+  -0.24220567292088466,
+  -0.026044746902468153,
+  0.05175887728168171,
+  -0.08398639194148916,
+  0.10930430217995883,
+  0.1092904181875081,
+  -0.02078639148743652,
+  0.056356985068684355,
+  0.09057074063965675,
+  -0.1319477516717089,
+  0.12219810483689303,
+  -0.05449168786540428,
+  0.002779939004561739,
+  -0.21449887406086754,
+  0.021376787800080024,
+  -0.024344249228996688,
+  0.10656590549315086,
+  0.327171310638974,
+  0.2462633287170262,
+  0.5991055085481042,
+  -0.41885641746914826,
+  0.015296179736717288,
+  -0.09146218327043343,
+  -0.31561716502599796,
+  0.41491777578303174,
+  0.05429057809957283,
+  -0.19561809389798954,
+  -0.23886100874834612,
+  -0.2569483662609493,
+  -0.36897075420533876,
+  -0.4395365014475024,
+  0.15313606178825204,
+  0.9470488113618069
+ ],
+ "intercept": 0.14329066152037492,
+ "cas_de_test": [
+  {
+   "entree": {
+    "Age": 51.122007740715624,
+    "annees_exposition": 4.5,
+    "nb_examens_manquants": 8.0,
+    "log_ALT": 3.1070896356802082,
+    "sqrt_CD4": 16.484799839322577,
+    "log_Creatin": 4.644897956261273,
+    "Hemoglob": 11.840989717207288,
+    "log_Platelet": 4.509462971166348,
+    "log10_CV": 3.192180679613887,
+    "TotProt": null,
+    "log_Urea": 0.6268943333564405,
+    "log_WBC": 1.6442542599564014,
+    "vih_avance": 0.0,
+    "cv_inf_1000": 1.0,
+    "Sex": "Male",
+    "MaritalStatus": "Married",
+    "Education": "Secondary",
+    "WHOStage": null
+   },
+   "probabilite": 0.7733868140660223
+  },
+  {
+   "entree": {
+    "Age": 32.028909115721255,
+    "annees_exposition": 2.5,
+    "nb_examens_manquants": 2.0,
+    "log_ALT": null,
+    "sqrt_CD4": 6.58468836713349,
+    "log_Creatin": 6.026489984338684,
+    "Hemoglob": 7.504408406002494,
+    "log_Platelet": null,
+    "log10_CV": null,
+    "TotProt": null,
+    "log_Urea": null,
+    "log_WBC": null,
+    "vih_avance": null,
+    "cv_inf_1000": 1.0,
+    "Sex": "Female",
+    "MaritalStatus": "Married",
+    "Education": "Tertiary",
+    "WHOStage": "3"
+   },
+   "probabilite": 0.3263566277188696
+  },
+  {
+   "entree": {
+    "Age": 20.130623244682123,
+    "annees_exposition": 2.5,
+    "nb_examens_manquants": 2.0,
+    "log_ALT": 5.241794595383996,
+    "sqrt_CD4": 20.843291901209646,
+    "log_Creatin": null,
+    "Hemoglob": 6.63784951933523,
+    "log_Platelet": null,
+    "log10_CV": 5.175081085272934,
+    "TotProt": 84.3695677051751,
+    "log_Urea": null,
+    "log_WBC": 1.4886546185057468,
+    "vih_avance": 0.0,
+    "cv_inf_1000": 1.0,
+    "Sex": "Male",
+    "MaritalStatus": "Divorced",
+    "Education": "Secondary",
+    "WHOStage": "2"
+   },
+   "probabilite": 0.6543011096000083
+  },
+  {
+   "entree": {
+    "Age": 18.859437047483514,
+    "annees_exposition": 6.5,
+    "nb_examens_manquants": 8.0,
+    "log_ALT": 3.759654917136901,
+    "sqrt_CD4": null,
+    "log_Creatin": 5.0858973477463,
+    "Hemoglob": 12.236479965883824,
+    "log_Platelet": 5.535817706819535,
+    "log10_CV": 4.202601608965022,
+    "TotProt": 105.1931833141946,
+    "log_Urea": 0.3630649736964803,
+    "log_WBC": null,
+    "vih_avance": 0.0,
+    "cv_inf_1000": 0.0,
+    "Sex": "Female",
+    "MaritalStatus": "Separated",
+    "Education": "Primary",
+    "WHOStage": "4"
+   },
+   "probabilite": 0.799705119288047
+  },
+  {
+   "entree": {
+    "Age": 60.290052438414165,
+    "annees_exposition": 4.5,
+    "nb_examens_manquants": 3.0,
+    "log_ALT": 1.6088993998633496,
+    "sqrt_CD4": null,
+    "log_Creatin": 5.847365326053529,
+    "Hemoglob": 8.974492784970817,
+    "log_Platelet": null,
+    "log10_CV": null,
+    "TotProt": 105.0674117377719,
+    "log_Urea": 1.0555599646559528,
+    "log_WBC": 1.989183409984443,
+    "vih_avance": 1.0,
+    "cv_inf_1000": null,
+    "Sex": "Female",
+    "MaritalStatus": "Widowed",
+    "Education": "Secondary",
+    "WHOStage": "2"
+   },
+   "probabilite": 0.5178723118609645
+  },
+  {
+   "entree": {
+    "Age": 65.46329001844153,
+    "annees_exposition": 6.5,
+    "nb_examens_manquants": 8.0,
+    "log_ALT": 0.3476933145545553,
+    "sqrt_CD4": 10.923890703571423,
+    "log_Creatin": null,
+    "Hemoglob": null,
+    "log_Platelet": null,
+    "log10_CV": 4.6864538178750905,
+    "TotProt": 145.776095425979,
+    "log_Urea": null,
+    "log_WBC": 1.3109123686046955,
+    "vih_avance": null,
+    "cv_inf_1000": 0.0,
+    "Sex": "Male",
+    "MaritalStatus": "Divorced",
+    "Education": "Primary",
+    "WHOStage": "4"
+   },
+   "probabilite": 0.7358060665325166
+  },
+  {
+   "entree": {
+    "Age": 49.545060339893354,
+    "annees_exposition": 2.5,
+    "nb_examens_manquants": 10.0,
+    "log_ALT": 2.9277480479644886,
+    "sqrt_CD4": 14.394540475426604,
+    "log_Creatin": 5.613910100360146,
+    "Hemoglob": null,
+    "log_Platelet": 5.128134045717618,
+    "log10_CV": null,
+    "TotProt": 142.46391379816305,
+    "log_Urea": 1.3740871797086107,
+    "log_WBC": null,
+    "vih_avance": 0.0,
+    "cv_inf_1000": 0.0,
+    "Sex": null,
+    "MaritalStatus": "Widowed",
+    "Education": "Tertiary",
+    "WHOStage": "1"
+   },
+   "probabilite": 0.28476629757798916
+  },
+  {
+   "entree": {
+    "Age": 55.933821171167914,
+    "annees_exposition": 3.5,
+    "nb_examens_manquants": 9.0,
+    "log_ALT": 3.0947359548762927,
+    "sqrt_CD4": 21.85967218526641,
+    "log_Creatin": 5.31867992384133,
+    "Hemoglob": 11.611288165420541,
+    "log_Platelet": null,
+    "log10_CV": 4.922774509642958,
+    "TotProt": null,
+    "log_Urea": 1.0097320322432577,
+    "log_WBC": 1.70914307414655,
+    "vih_avance": 0.0,
+    "cv_inf_1000": 1.0,
+    "Sex": "Male",
+    "MaritalStatus": "Single",
+    "Education": "Secondary",
+    "WHOStage": "1"
+   },
+   "probabilite": 0.6898410340895226
+  },
+  {
+   "entree": {
+    "Age": 46.26849955620199,
+    "annees_exposition": 4.5,
+    "nb_examens_manquants": 8.0,
+    "log_ALT": 1.8530172517610954,
+    "sqrt_CD4": 16.04988778040849,
+    "log_Creatin": 4.023353701842981,
+    "Hemoglob": 5.7820689978086435,
+    "log_Platelet": 5.513487150916809,
+    "log10_CV": 2.942111818184758,
+    "TotProt": null,
+    "log_Urea": null,
+    "log_WBC": 1.0847343656335882,
+    "vih_avance": 0.0,
+    "cv_inf_1000": null,
+    "Sex": null,
+    "MaritalStatus": "Separated",
+    "Education": "Tertiary",
+    "WHOStage": "2"
+   },
+   "probabilite": 0.4614840971497393
+  },
+  {
+   "entree": {
+    "Age": 66.62376603696396,
+    "annees_exposition": 2.5,
+    "nb_examens_manquants": 1.0,
+    "log_ALT": 3.296755549796637,
+    "sqrt_CD4": 10.758224749932335,
+    "log_Creatin": null,
+    "Hemoglob": 7.531730617385268,
+    "log_Platelet": 6.877733421754479,
+    "log10_CV": 4.163993494976866,
+    "TotProt": 97.65938172825929,
+    "log_Urea": 0.9366494631658843,
+    "log_WBC": 2.5686830515234904,
+    "vih_avance": null,
+    "cv_inf_1000": 1.0,
+    "Sex": "Male",
+    "MaritalStatus": "Married",
+    "Education": "Secondary",
+    "WHOStage": "3"
+   },
+   "probabilite": 0.413841660888233
+  },
+  {
+   "entree": {
+    "Age": 60.42438481431967,
+    "annees_exposition": 3.5,
+    "nb_examens_manquants": 5.0,
+    "log_ALT": 2.2506591859497704,
+    "sqrt_CD4": 13.461753691650266,
+    "log_Creatin": null,
+    "Hemoglob": 4.508050792199312,
+    "log_Platelet": null,
+    "log10_CV": 7.436703091662882,
+    "TotProt": 73.319243321998,
+    "log_Urea": 1.7770712801196549,
+    "log_WBC": null,
+    "vih_avance": 1.0,
+    "cv_inf_1000": 0.0,
+    "Sex": "Male",
+    "MaritalStatus": "Married",
+    "Education": "Primary",
+    "WHOStage": "1"
+   },
+   "probabilite": 0.8445900830695334
+  },
+  {
+   "entree": {
+    "Age": 18.1424020088477,
+    "annees_exposition": 4.5,
+    "nb_examens_manquants": 8.0,
+    "log_ALT": 3.428288978878315,
+    "sqrt_CD4": 17.535668692435305,
+    "log_Creatin": 3.826239774613981,
+    "Hemoglob": null,
+    "log_Platelet": null,
+    "log10_CV": null,
+    "TotProt": 116.75652457690165,
+    "log_Urea": null,
+    "log_WBC": null,
+    "vih_avance": null,
+    "cv_inf_1000": null,
+    "Sex": "Male",
+    "MaritalStatus": "Widowed",
+    "Education": "Tertiary",
+    "WHOStage": "3"
+   },
+   "probabilite": 0.3406823678022051
+  },
+  {
+   "entree": {
+    "Age": 62.5850223825536,
+    "annees_exposition": 3.5,
+    "nb_examens_manquants": 9.0,
+    "log_ALT": 2.6951076015371713,
+    "sqrt_CD4": 15.460717231361242,
+    "log_Creatin": null,
+    "Hemoglob": 7.5346837345453785,
+    "log_Platelet": 5.253940335338827,
+    "log10_CV": null,
+    "TotProt": null,
+    "log_Urea": 0.7756745839271666,
+    "log_WBC": 3.0610125788104003,
+    "vih_avance": null,
+    "cv_inf_1000": 0.0,
+    "Sex": "Male",
+    "MaritalStatus": "Single",
+    "Education": "Primary",
+    "WHOStage": "1"
+   },
+   "probabilite": 0.8026017355797522
+  },
+  {
+   "entree": {
+    "Age": 19.746449915884146,
+    "annees_exposition": 2.5,
+    "nb_examens_manquants": 5.0,
+    "log_ALT": 3.4230461293951024,
+    "sqrt_CD4": null,
+    "log_Creatin": 5.200140843791929,
+    "Hemoglob": 15.434585439933196,
+    "log_Platelet": null,
+    "log10_CV": 6.327373369420191,
+    "TotProt": 176.76026749297904,
+    "log_Urea": null,
+    "log_WBC": 1.2059178066974279,
+    "vih_avance": 1.0,
+    "cv_inf_1000": 1.0,
+    "Sex": "Female",
+    "MaritalStatus": "Divorced",
+    "Education": "Secondary",
+    "WHOStage": "2"
+   },
+   "probabilite": 0.2600850404278357
+  },
+  {
+   "entree": {
+    "Age": 55.94208321435709,
+    "annees_exposition": 6.5,
+    "nb_examens_manquants": 2.0,
+    "log_ALT": 1.267709010092386,
+    "sqrt_CD4": null,
+    "log_Creatin": 6.724295796353056,
+    "Hemoglob": 12.476688689774189,
+    "log_Platelet": null,
+    "log10_CV": null,
+    "TotProt": 77.10206292259403,
+    "log_Urea": 1.5033481727046816,
+    "log_WBC": 2.27412079207608,
+    "vih_avance": 1.0,
+    "cv_inf_1000": 0.0,
+    "Sex": null,
+    "MaritalStatus": "Widowed",
+    "Education": "Secondary",
+    "WHOStage": "2"
+   },
+   "probabilite": 0.6091409432473441
+  },
+  {
+   "entree": {
+    "Age": 33.0,
+    "annees_exposition": 4.5,
+    "nb_examens_manquants": 1.0,
+    "log_ALT": 2.91235066461494,
+    "sqrt_CD4": 9.9498743710662,
+    "log_Creatin": 4.410614091525794,
+    "Hemoglob": 10.3,
+    "log_Platelet": 5.564520407322694,
+    "log10_CV": 6.1038040629199815,
+    "TotProt": 115.3,
+    "log_Urea": 1.33500106673234,
+    "log_WBC": 1.4701758451005926,
+    "vih_avance": 1.0,
+    "cv_inf_1000": 0.0,
+    "Sex": "Female",
+    "MaritalStatus": "Single",
+    "Education": null,
+    "WHOStage": null
+   },
+   "probabilite": 0.7906977526104217
+  },
+  {
+   "entree": {
+    "Age": 38.0,
+    "annees_exposition": 2.5,
+    "nb_examens_manquants": 1.0,
+    "log_ALT": 2.4159137783010487,
+    "sqrt_CD4": 20.952326839756964,
+    "log_Creatin": 4.201253877869777,
+    "Hemoglob": 8.4,
+    "log_Platelet": 5.081404364984463,
+    "log10_CV": null,
+    "TotProt": 84.28,
+    "log_Urea": null,
+    "log_WBC": 1.547562508716013,
+    "vih_avance": 0.0,
+    "cv_inf_1000": null,
+    "Sex": "Female",
+    "MaritalStatus": "Married",
+    "Education": null,
+    "WHOStage": "1"
+   },
+   "probabilite": 0.27471948719695705
+  },
+  {
+   "entree": {
+    "Age": 31.0,
+    "annees_exposition": 2.5,
+    "nb_examens_manquants": 5.0,
+    "log_ALT": null,
+    "sqrt_CD4": 22.93468988235943,
+    "log_Creatin": null,
+    "Hemoglob": 11.2,
+    "log_Platelet": 6.3080984415095305,
+    "log10_CV": null,
+    "TotProt": null,
+    "log_Urea": null,
+    "log_WBC": 1.62924053973028,
+    "vih_avance": 1.0,
+    "cv_inf_1000": null,
+    "Sex": "Female",
+    "MaritalStatus": "Single",
+    "Education": "Secondary",
+    "WHOStage": "3"
+   },
+   "probabilite": 0.22802772785807907
+  },
+  {
+   "entree": {
+    "Age": 34.0,
+    "annees_exposition": 2.5,
+    "nb_examens_manquants": 2.0,
+    "log_ALT": 2.388762789235098,
+    "sqrt_CD4": 20.8806130178211,
+    "log_Creatin": 4.215529213226812,
+    "Hemoglob": 10.4,
+    "log_Platelet": 5.75890177387728,
+    "log10_CV": null,
+    "TotProt": 87.7,
+    "log_Urea": 1.410986973710262,
+    "log_WBC": 1.667706820558076,
+    "vih_avance": 0.0,
+    "cv_inf_1000": null,
+    "Sex": "Female",
+    "MaritalStatus": "Single",
+    "Education": "Tertiary",
+    "WHOStage": null
+   },
+   "probabilite": 0.5848669001947142
+  },
+  {
+   "entree": {
+    "Age": 34.0,
+    "annees_exposition": 6.5,
+    "nb_examens_manquants": 0.0,
+    "log_ALT": 2.624668592163159,
+    "sqrt_CD4": 11.180339887498949,
+    "log_Creatin": 4.480740107609915,
+    "Hemoglob": 8.5,
+    "log_Platelet": 5.783825182329737,
+    "log10_CV": 5.4369350993043035,
+    "TotProt": 111.1,
+    "log_Urea": 1.0647107369924282,
+    "log_WBC": 1.5686159179138452,
+    "vih_avance": 1.0,
+    "cv_inf_1000": 0.0,
+    "Sex": "Female",
+    "MaritalStatus": "Single",
+    "Education": "Tertiary",
+    "WHOStage": "4"
+   },
+   "probabilite": 0.5762492510630238
+  },
+  {
+   "entree": {
+    "Age": 62.0,
+    "annees_exposition": 5.5,
+    "nb_examens_manquants": 0.0,
+    "log_ALT": 3.339321977944068,
+    "sqrt_CD4": 15.394804318340652,
+    "log_Creatin": 4.728979471714378,
+    "Hemoglob": 9.4,
+    "log_Platelet": 4.927253685157205,
+    "log10_CV": 3.196496803502378,
+    "TotProt": 104.29,
+    "log_Urea": 0.8754687373538999,
+    "log_WBC": 1.8718021769015913,
+    "vih_avance": 0.0,
+    "cv_inf_1000": 0.0,
+    "Sex": "Male",
+    "MaritalStatus": "Married",
+    "Education": "Secondary",
+    "WHOStage": "2"
+   },
+   "probabilite": 0.3592249092920955
+  },
+  {
+   "entree": {
+    "Age": 35.0,
+    "annees_exposition": 3.5,
+    "nb_examens_manquants": 2.0,
+    "log_ALT": 2.954910279033736,
+    "sqrt_CD4": 16.55294535724685,
+    "log_Creatin": 4.397038392294319,
+    "Hemoglob": 8.0,
+    "log_Platelet": 5.298317366548036,
+    "log10_CV": 5.725707498574766,
+    "TotProt": null,
+    "log_Urea": 1.0986122886681098,
+    "log_WBC": 1.7404661748405046,
+    "vih_avance": 0.0,
+    "cv_inf_1000": 0.0,
+    "Sex": "Female",
+    "MaritalStatus": null,
+    "Education": "Secondary",
+    "WHOStage": null
+   },
+   "probabilite": 0.8505910060637161
+  },
+  {
+   "entree": {
+    "Age": 32.0,
+    "annees_exposition": 3.5,
+    "nb_examens_manquants": 0.0,
+    "log_ALT": 3.462606009790799,
+    "sqrt_CD4": 4.123105625617661,
+    "log_Creatin": 4.66617120754549,
+    "Hemoglob": 9.2,
+    "log_Platelet": 5.231108616854587,
+    "log10_CV": 6.049218410432939,
+    "TotProt": 91.6,
+    "log_Urea": 2.2925347571405443,
+    "log_WBC": 1.6094379124341003,
+    "vih_avance": 1.0,
+    "cv_inf_1000": 0.0,
+    "Sex": "Female",
+    "MaritalStatus": null,
+    "Education": null,
+    "WHOStage": "3"
+   },
+   "probabilite": 0.7267119306672225
+  },
+  {
+   "entree": {
+    "Age": 35.0,
+    "annees_exposition": 5.5,
+    "nb_examens_manquants": 1.0,
+    "log_ALT": 2.917770732084279,
+    "sqrt_CD4": 33.391615714128,
+    "log_Creatin": 4.175309921045206,
+    "Hemoglob": 11.5,
+    "log_Platelet": 5.093750200806762,
+    "log10_CV": 3.2271150825891253,
+    "TotProt": 76.5,
+    "log_Urea": -0.5108256237659907,
+    "log_WBC": 2.0541237336955462,
+    "vih_avance": 0.0,
+    "cv_inf_1000": 0.0,
+    "Sex": "Female",
+    "MaritalStatus": "Married",
+    "Education": "Secondary",
+    "WHOStage": null
+   },
+   "probabilite": 0.5465786441192566
+  },
+  {
+   "entree": {
+    "Age": 32.0,
+    "annees_exposition": 5.5,
+    "nb_examens_manquants": 3.0,
+    "log_ALT": 2.766319109226186,
+    "sqrt_CD4": 28.24889378365107,
+    "log_Creatin": 4.495801648932726,
+    "Hemoglob": 12.2,
+    "log_Platelet": 5.262690188904886,
+    "log10_CV": null,
+    "TotProt": null,
+    "log_Urea": 0.9932517730102834,
+    "log_WBC": 1.7404661748405046,
+    "vih_avance": 0.0,
+    "cv_inf_1000": null,
+    "Sex": "Female",
+    "MaritalStatus": "Married",
+    "Education": "Secondary",
+    "WHOStage": null
+   },
+   "probabilite": 0.60359639203277
+  },
+  {
+   "entree": {
+    "Age": 26.0,
+    "annees_exposition": 6.5,
+    "nb_examens_manquants": 0.0,
+    "log_ALT": 3.5115454388310208,
+    "sqrt_CD4": 16.3707055437449,
+    "log_Creatin": 4.376385754783795,
+    "Hemoglob": 10.5,
+    "log_Platelet": 5.497168225293202,
+    "log10_CV": 2.303196057420489,
+    "TotProt": null,
+    "log_Urea": 0.9162907318741551,
+    "log_WBC": 2.151762203259462,
+    "vih_avance": 0.0,
+    "cv_inf_1000": 1.0,
+    "Sex": "Female",
+    "MaritalStatus": "Single",
+    "Education": "Secondary",
+    "WHOStage": "1"
+   },
+   "probabilite": 0.4973034018518032
+  },
+  {
+   "entree": {
+    "Age": 61.0,
+    "annees_exposition": 6.5,
+    "nb_examens_manquants": 1.0,
+    "log_ALT": 3.126760535960395,
+    "sqrt_CD4": 23.515952032609693,
+    "log_Creatin": 4.371471120734365,
+    "Hemoglob": 14.2,
+    "log_Platelet": 5.241747015059643,
+    "log10_CV": 3.697316541732383,
+    "TotProt": 84.08,
+    "log_Urea": 1.33500106673234,
+    "log_WBC": 1.916922612182061,
+    "vih_avance": 0.0,
+    "cv_inf_1000": 0.0,
+    "Sex": "Male",
+    "MaritalStatus": "Married",
+    "Education": "Secondary",
+    "WHOStage": null
+   },
+   "probabilite": 0.6438895645942407
+  },
+  {
+   "entree": {
+    "Age": 31.0,
+    "annees_exposition": 6.5,
+    "nb_examens_manquants": 0.0,
+    "log_ALT": 3.3105430133940246,
+    "sqrt_CD4": 15.427248620541512,
+    "log_Creatin": 4.730833203983749,
+    "Hemoglob": 10.9,
+    "log_Platelet": 5.0106352940962555,
+    "log10_CV": 5.4504754368836705,
+    "TotProt": 90.0,
+    "log_Urea": 1.4350845252893227,
+    "log_WBC": 1.6486586255873816,
+    "vih_avance": 0.0,
+    "cv_inf_1000": 0.0,
+    "Sex": "Female",
+    "MaritalStatus": "Single",
+    "Education": "Secondary",
+    "WHOStage": "2"
+   },
+   "probabilite": 0.4683792966268923
+  },
+  {
+   "entree": {
+    "Age": 48.0,
+    "annees_exposition": 3.5,
+    "nb_examens_manquants": 0.0,
+    "log_ALT": 3.40452517175483,
+    "sqrt_CD4": 18.49324200890693,
+    "log_Creatin": 4.915738362226573,
+    "Hemoglob": 13.5,
+    "log_Platelet": 5.472270673671475,
+    "log10_CV": 3.944532020991981,
+    "TotProt": 83.0,
+    "log_Urea": 0.8754687373538999,
+    "log_WBC": 1.5686159179138452,
+    "vih_avance": 0.0,
+    "cv_inf_1000": 0.0,
+    "Sex": "Male",
+    "MaritalStatus": null,
+    "Education": "Tertiary",
+    "WHOStage": "1"
+   },
+   "probabilite": 0.4585646815545855
+  },
+  {
+   "entree": {
+    "Age": 33.0,
+    "annees_exposition": 6.5,
+    "nb_examens_manquants": 0.0,
+    "log_ALT": 3.2108436531709366,
+    "sqrt_CD4": 16.0312195418814,
+    "log_Creatin": 4.487737089095996,
+    "Hemoglob": 8.9,
+    "log_Platelet": 5.420534999272286,
+    "log10_CV": 2.303196057420489,
+    "TotProt": 106.7,
+    "log_Urea": 1.308332819650179,
+    "log_WBC": 1.308332819650179,
+    "vih_avance": 1.0,
+    "cv_inf_1000": 1.0,
+    "Sex": "Female",
+    "MaritalStatus": "Married",
+    "Education": "Secondary",
+    "WHOStage": "3"
+   },
+   "probabilite": 0.33550181374693594
+  }
+ ]
+}

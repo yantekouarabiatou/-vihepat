@@ -15,7 +15,51 @@ export interface SoignantPatient {
   examensEnRetard?: number;
   /** Série de rappels non confirmés : aide à la priorisation, sans décision automatique */
   rappelsARegarder?: boolean;
+  /** Null tant qu'aucun bilan d'inclusion n'est saisi (ou hors VIH) */
+  risquePerteSuivi?: { niveau: NiveauRisque; probabilite: number } | null;
 }
+
+export type SituationMatrimoniale = 'marie' | 'celibataire' | 'divorce' | 'separe' | 'veuf';
+export type NiveauEtudes = 'aucun' | 'primaire' | 'secondaire' | 'superieur';
+
+/** Bilan d'inclusion : entrées du modèle de perte de suivi. Null = examen non réalisé. */
+export interface BilanInclusion {
+  dateBilan: string | null;
+  situationMatrimoniale: SituationMatrimoniale | null;
+  niveauEtudes: NiveauEtudes | null;
+  stadeOms: number | null;
+  cd4: number | null;
+  chargeVirale: number | null;
+  alat: number | null;
+  creatinine: number | null;
+  hemoglobine: number | null;
+  plaquettes: number | null;
+  proteinesTotales: number | null;
+  uree: number | null;
+  leucocytes: number | null;
+}
+
+export type NiveauRisque = 'faible' | 'modere' | 'eleve';
+
+/** Variable du modèle expliquée au soignant (voir backend/src/ia/perte-de-suivi.ts) */
+export type VariableRisque =
+  | 'Age' | 'annees_exposition' | 'nb_examens_manquants'
+  | 'log_ALT' | 'sqrt_CD4' | 'log_Creatin' | 'Hemoglob' | 'log_Platelet' | 'log10_CV' | 'TotProt' | 'log_Urea' | 'log_WBC'
+  | 'vih_avance' | 'cv_inf_1000' | 'Sex' | 'MaritalStatus' | 'Education' | 'WHOStage';
+
+export interface FacteurRisque { variable: VariableRisque; contribution: number }
+
+export type RisquePerteSuivi =
+  | { statut: 'non_concerne' | 'bilan_absent' | 'indisponible' }
+  | {
+      statut: 'calcule';
+      probabilite: number;
+      niveau: NiveauRisque;
+      examensManquants: number;
+      hausse: FacteurRisque[];
+      baisse: FacteurRisque[];
+      modele: { version: string; date: string; source: string; seuils: { modere: number; eleve: number } };
+    };
 
 /** État agrégé des rappels du patient : jamais le libellé ni l'heure personnelle. */
 export interface EtatRappels {
@@ -74,6 +118,8 @@ export interface PatientDetail {
   observance: ResumeObservance;
   alertesExamens: AlerteExamen[];
   rappels?: EtatRappels;
+  bilanInclusion: (BilanInclusion & { updatedAt: string }) | null;
+  risquePerteSuivi: RisquePerteSuivi;
 }
 
 
@@ -197,6 +243,9 @@ export const soignantApi = {
 
   getPatient: (id: number) =>
     api.get<PatientDetail>(`/soignant/patients/${id}`).then((r) => r.data),
+
+  enregistrerBilanInclusion: (patientId: number, input: BilanInclusion) =>
+    api.put<PatientDetail>(`/soignant/patients/${patientId}/bilan-inclusion`, input).then((r) => r.data),
 
   createObservation: (patientId: number, input: CreateObservationInput) =>
     api.post<ObservationDetail>(`/soignant/patients/${patientId}/observations`, input).then((r) => r.data),

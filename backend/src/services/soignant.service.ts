@@ -1,8 +1,10 @@
 import { Op } from 'sequelize';
 import bcrypt from 'bcrypt';
 import {
-  Soignant, Patient, User, Affectation, RendezVous, Signalement, Observation, Traitement, Communique,
+  Soignant, Patient, User, Affectation, RendezVous, Signalement, Observation, Traitement, Communique, BilanInclusion,
 } from '../models';
+import type { BilanInclusionAttributes } from '../models/BilanInclusion';
+import { evaluerRisquePatient } from './perte-de-suivi.service';
 import type { TypeObservation } from '../models/Observation';
 import type { Pathologie } from '../models/Patient';
 import { getAlertesExamens, getResumeObservance } from './observance.service';
@@ -247,16 +249,44 @@ export async function getPatientDetail(userId: number, patientId: number) {
       },
       { model: Signalement, as: 'signalements', separate: true, order: [['createdAt', 'DESC']], limit: 20 },
       { model: RendezVous, as: 'rendezVous', separate: true, order: [['dateHeure', 'DESC']], limit: 20 },
+      { model: BilanInclusion, as: 'bilanInclusion', required: false },
     ],
   });
   if (!patient) throw httpError(404, 'Patient introuvable');
+  const bilan = (patient as any).bilanInclusion as BilanInclusion | null;
 
   const [observance, alertesExamens, rappels] = await Promise.all([
     getResumeObservance(patient.id),
     getAlertesExamens(patient.id, patient.pathologie),
     getEtatAgrege(patient.id),
   ]);
-  return { ...patient.toJSON(), observance, alertesExamens, rappels };
+  return {
+    ...patient.toJSON(), observance, alertesExamens, rappels,
+    // Aide à la priorisation des relances : le soignant décide
+    risquePerteSuivi: evaluerRisquePatient(patient, bilan),
+  };
+}
+
+export type SaisieBilanInclusion = Omit<BilanInclusionAttributes, 'id' | 'patientId' | 'soignantId' | 'dateBilan'> & {
+  dateBilan?: string | null;
+};
+
+/** Saisie ou correction du bilan d'inclusion (une fiche par patient) : le score est recalculé à la lecture. */
+export async function enregistrerBilanInclusion(userId: number, patientId: number, input: SaisieBilanInclusion) {
+  const ctx = await getContexte(userId);
+  await assertPatientAffecte(ctx, patientId);
+  const patient = await Patient.findByPk(patientId);
+  if (!patient) throw httpError(404, 'Patient introuvable');
+
+  const valeurs = {
+    ...input,
+    dateBilan: input.dateBilan ? new Date(input.dateBilan) : null,
+    soignantId: ctx.soignant?.id ?? null,
+  };
+  const existant = await BilanInclusion.findOne({ where: { patientId } });
+  if (existant) await existant.update(valeurs);
+  else await BilanInclusion.create({ ...valeurs, patientId });
+  return getPatientDetail(userId, patientId);
 }
 
 export async function updatePatient(
@@ -559,6 +589,7 @@ export async function getPatients(userId: number, search?: string) {
             }
           : undefined,
       },
+      { model: BilanInclusion, as: 'bilanInclusion', required: false },
     ],
     order: [['createdAt', 'DESC']],
   });
@@ -571,9 +602,13 @@ export async function getPatients(userId: number, search?: string) {
         getAlertesExamens(p.id, p.pathologie),
         getEtatAgrege(p.id),
       ]);
+      // Le bilan lui-même n'est pas utile à la liste : seul le niveau de risque est renvoyé
+      const { bilanInclusion: _bilan, ...patient } = p.toJSON() as any;
+      const risque = evaluerRisquePatient(p, (p as any).bilanInclusion);
       return {
-        ...p.toJSON(),
+        ...patient,
         observance: { taux7: resume.taux7, taux30: resume.taux30 },
+        risquePerteSuivi: risque.statut === 'calcule' ? { niveau: risque.niveau, probabilite: risque.probabilite } : null,
         examensEnRetard: alertes.filter((a) => a.statut === 'en_retard').length,
         // Aide à la priorisation seulement : aucune décision automatique
         rappelsARegarder: rappels.aRegarder,
