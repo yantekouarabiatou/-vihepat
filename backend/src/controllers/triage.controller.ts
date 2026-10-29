@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { appendFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { GeminiError, geminiConfigure } from '../ia/gemini.client';
+import { ElevenLabsError, elevenlabsConfigure } from '../ia/elevenlabs.client';
 import { trierNoteVocale } from '../ia/voice-triage.service';
 import { transcrire } from '../ia/transcription.service';
 
@@ -43,6 +44,8 @@ export async function triageVocal(req: Request, res: Response) {
     const r = await trierNoteVocale({ audioBase64: body.audioBase64, mimeType, traitementRecent: body.traitementRecent });
     void journaliserMesure({
       ok: true,
+      transcription: r.mesures.fournisseurTranscription,
+      latenceTranscriptionMs: r.mesures.latenceTranscriptionMs,
       modele: r.mesures.modele,
       prompt: r.mesures.promptVersion,
       latenceGeminiMs: r.mesures.latenceGeminiMs,
@@ -69,7 +72,7 @@ export async function triageVocal(req: Request, res: Response) {
 
 /** Chatbot : note vocale -> texte, relu par l'utilisateur avant envoi. Ouvert aux visiteurs (rate limit dans app.ts). */
 export async function transcrireAudio(req: Request, res: Response) {
-  if (!geminiConfigure()) {
+  if (!elevenlabsConfigure() && !geminiConfigure()) {
     return res.status(503).json({ error: 'Transcription indisponible : écrivez votre message.', code: 'non_configure' });
   }
   const body = audioSchema.parse(req.body);
@@ -79,14 +82,14 @@ export async function transcrireAudio(req: Request, res: Response) {
   try {
     const r = await transcrire(body.audioBase64, mimeSimple(body.mimeType));
     void journaliserMesure({
-      ok: true, usage: 'chat', modele: r.mesures.modele, prompt: r.mesures.promptVersion,
+      ok: true, usage: 'chat', fournisseur: r.mesures.fournisseur, modele: r.mesures.modele, prompt: r.mesures.promptVersion,
       latenceGeminiMs: r.mesures.latenceMs, tentatives: r.mesures.tentatives, tokens: r.mesures.tokens,
       langue: r.langue, utilisable: r.utilisable,
     });
     res.json({ transcription: r.utilisable ? r.transcription : '', langue: r.langue, utilisable: r.utilisable });
   } catch (e) {
-    if (e instanceof GeminiError) {
-      void journaliserMesure({ ok: false, usage: 'chat', code: e.code, httpStatus: e.httpStatus });
+    if (e instanceof GeminiError || e instanceof ElevenLabsError) {
+      void journaliserMesure({ ok: false, usage: 'chat', fournisseur: e instanceof ElevenLabsError ? 'elevenlabs' : 'gemini', code: e.code, httpStatus: e.httpStatus });
       return res.status(e.code === 'delai_depasse' ? 504 : 502).json({
         error: "La transcription a échoué. Vous pouvez écrire votre message.",
         code: e.code,

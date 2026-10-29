@@ -19,6 +19,9 @@ const schema = z.object({
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default('gemini-3.5-flash-lite'),
   GEMINI_FALLBACK_MODEL: z.string().default('gemini-3.8-flash'),
+  // Transcription prioritaire (ElevenLabs Scribe) ; Gemini prend le relais si absente ou en échec
+  ELEVENLABS_API_KEY: z.string().optional(),
+  ELEVENLABS_STT_MODEL: z.string().default('scribe_v2'),
 
   // Configuration SMTP (Gmail : mot de passe d'application ; l'expéditeur doit être le compte lui-même)
   MAIL_MAILER: z.string().default('smtp'),
