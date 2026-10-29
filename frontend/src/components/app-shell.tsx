@@ -120,7 +120,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
         <div className="flex min-w-0 flex-1 flex-col">
           <SoignantTopbar admin={estAdmin} onOpenSidebar={() => setSidebarOpen(true)} />
           <OfflineBanner enLigne={enLigne} enAttente={enAttente} />
-          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+          <main className="min-w-0 flex-1 px-4 pt-6 pb-32 sm:px-6 lg:px-8 lg:py-8">{children}</main>
         </div>
 
         {/* Bouton flottant « paramètres » */}
@@ -130,9 +130,9 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               type="button"
               aria-label={t("app_shell.parametres_tooltip")}
               title={t("app_shell.parametres_tooltip")}
-              className="fixed bottom-24 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-dash transition-transform duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="fixed bottom-[4.5rem] right-4 z-30 flex h-11 w-11 items-center sm:bottom-24 sm:right-6 sm:h-14 sm:w-14 justify-center rounded-full bg-primary text-primary-foreground shadow-dash transition-transform duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <Settings className="h-6 w-6" />
+              <Settings className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-64 rounded-card p-3 shadow-dash">
@@ -186,10 +186,10 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               <span className="block truncate text-xs text-muted-foreground">{t("app_shell.patient_space")}</span>
             </div>
           </Link>
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
             <Link
               to="/"
-              className="flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-secondary hover:text-primary transition-all shadow-xs"
+              className="hidden items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3 py-1.5 sm:flex text-xs font-semibold text-foreground/80 hover:bg-secondary hover:text-primary transition-all shadow-xs"
               title={t("app_shell.site_public_tooltip")}
             >
               <Globe className="h-3.5 w-3.5 text-primary" />
@@ -201,7 +201,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               variant="ghost"
               size="icon"
               onClick={() => navigate("/rappels")}
-              className="rounded-full text-muted-foreground"
+              className="h-9 w-9 rounded-full text-muted-foreground sm:h-10 sm:w-10"
               aria-label={t("app_shell.rappels_tooltip")}
               title={t("app_shell.rappels_tooltip")}
             >
@@ -211,7 +211,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               variant="ghost"
               size="icon"
               onClick={() => navigate("/groupes")}
-              className="rounded-full text-muted-foreground"
+              className="h-9 w-9 rounded-full text-muted-foreground sm:h-10 sm:w-10"
               aria-label={t("app_shell.groupes_tooltip")}
               title={t("app_shell.groupes_tooltip")}
             >
@@ -221,7 +221,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               variant="ghost"
               size="icon"
               onClick={() => setConfidentialiteOpen(true)}
-              className="rounded-full text-muted-foreground"
+              className="h-9 w-9 rounded-full text-muted-foreground sm:h-10 sm:w-10"
               aria-label={t("app_shell.confidentialite_tooltip")}
               title={t("app_shell.confidentialite_tooltip")}
             >
@@ -231,7 +231,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               variant="ghost"
               size="icon"
               onClick={surVerrouiller}
-              className="rounded-full text-muted-foreground"
+              className="h-9 w-9 rounded-full text-muted-foreground sm:h-10 sm:w-10"
               aria-label={t("app_shell.verrouiller_tooltip")}
               title={t("app_shell.verrouiller_tooltip")}
             >
@@ -241,7 +241,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="rounded-full text-muted-foreground"
+              className="h-9 rounded-full px-2 text-muted-foreground sm:h-9 sm:px-3"
               aria-label={t("app_shell.deconnexion")}
             >
               <LogOut className="h-4 w-4 sm:mr-2" />
@@ -251,7 +251,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
         </div>
       </header>
       <OfflineBanner enLigne={enLigne} enAttente={enAttente} />
-      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">{children}</main>
+      <main className="mx-auto w-full max-w-5xl px-4 pt-8 pb-28 sm:px-6 sm:pb-8">{children}</main>
 
       <ConfidentialiteDialog open={confidentialiteOpen} onOpenChange={setConfidentialiteOpen} />
       <ChatWidget />

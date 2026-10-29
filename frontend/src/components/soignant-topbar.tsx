@@ -50,7 +50,7 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
           <Menu className="h-5 w-5" />
         </Button>
 
-        <div className="relative min-w-0 flex-1 max-w-md">
+        <div className="relative hidden min-w-0 max-w-md flex-1 md:block">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
@@ -60,10 +60,10 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
           />
         </div>
 
-        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
           <Link
             to="/"
-            className="flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3 py-1.5 text-xs font-semibold text-foreground/85 hover:bg-secondary hover:text-primary transition-all shadow-xs"
+            className="hidden items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3 py-1.5 sm:flex text-xs font-semibold text-foreground/85 hover:bg-secondary hover:text-primary transition-all shadow-xs"
             title={t("app_shell.site_public_tooltip")}
           >
             <Globe className="h-3.5 w-3.5 text-primary" />
@@ -88,7 +88,7 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
             <Button
               size="icon"
               variant="ghost"
-              className="h-10 w-10 rounded-input text-muted-foreground hover:text-foreground"
+              className="hidden h-10 w-10 rounded-input text-muted-foreground hover:text-foreground sm:inline-flex"
               onClick={() => navigate("/soignant/administration?table=audit_logs")}
               aria-label={t("app_shell.historique_tooltip")}
               title={t("app_shell.historique_tooltip")}
@@ -112,7 +112,7 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 rounded-card p-0 shadow-dash">
+            <PopoverContent align="end" className="w-[min(20rem,calc(100vw-2rem))] rounded-card p-0 shadow-dash">
               <div className="border-b border-border px-4 py-3">
                 <p className="text-sm font-bold text-foreground">{t("app_shell.notifications_title")}</p>
               </div>

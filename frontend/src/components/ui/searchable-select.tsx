@@ -12,7 +12,7 @@ export interface SearchableSelectOption {
   label: string;
 }
 
-/** Select avec recherche intégrée (équivalent « Select2 ») — utile dès qu'une liste dépasse quelques options. */
+/** Select avec recherche intégrée (équivalent « Select2 »)  utile dès qu'une liste dépasse quelques options. */
 export function SearchableSelect({
   value, onChange, options, placeholder, searchPlaceholder, emptyText, className, id,
 }: {
@@ -47,7 +47,7 @@ export function SearchableSelect({
         <Command>
           <CommandInput placeholder={searchPlaceholder ?? placeholder} className="h-11" />
           <CommandList>
-            <CommandEmpty>{emptyText ?? "—"}</CommandEmpty>
+            <CommandEmpty>{emptyText ?? ""}</CommandEmpty>
             <CommandGroup>
               {options.map((o) => (
                 <CommandItem
