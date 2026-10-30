@@ -30,12 +30,22 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
     staleTime: 60_000,
   });
 
+  // Signalements de mots sensibles dans les groupes de soutien (sans la permission, la requête échoue sans bruit)
+  const { data: alertesGroupes } = useQuery({
+    queryKey: ["soignant", "communautes", "alertes"],
+    queryFn: soignantApi.getAlertesCommunautes,
+    refetchInterval: 60_000,
+    retry: false,
+  });
+  const nbAlertes = alertesGroupes?.aTraiter.length ?? 0;
+
   const recents = useMemo(() => (communiques ?? []).slice(0, 5), [communiques]);
   const nouveau = useMemo(() => {
+    if (nbAlertes > 0) return true;
     if (!communiques || communiques.length === 0) return false;
     const dernier = new Date(communiques[0]!.createdAt).getTime();
     return Date.now() - dernier < 24 * 60 * 60 * 1000;
-  }, [communiques]);
+  }, [communiques, nbAlertes]);
 
   return (
     <header className="sticky top-0 z-20 border-b border-border/60 bg-card/95 backdrop-blur">
@@ -116,7 +126,16 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
               <div className="border-b border-border px-4 py-3">
                 <p className="text-sm font-bold text-foreground">{t("app_shell.notifications_title")}</p>
               </div>
-              {recents.length === 0 ? (
+              {nbAlertes > 0 && (
+                <Link
+                  to="/soignant/communautes"
+                  className="flex items-center gap-2 border-b border-border bg-destructive/5 px-4 py-3 text-sm font-semibold text-destructive hover:bg-destructive/10"
+                >
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-destructive" />
+                  {t("communautes.cloche", { count: nbAlertes })}
+                </Link>
+              )}
+              {recents.length === 0 && nbAlertes === 0 ? (
                 <p className="px-4 py-6 text-center text-sm text-muted-foreground">
                   {t("app_shell.notifications_empty")}
                 </p>

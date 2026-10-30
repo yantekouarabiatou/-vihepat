@@ -635,7 +635,7 @@
   },
   "groupes": {
     "title": "Support groups",
-    "subtitle": "Chat with other patients, in full confidentiality.",
+    "subtitle": "Talk with other patients under your first name. The care team can read the conversations.",
     "empty": "No group available yet.",
     "membres_count_one": "{{count}} member",
     "membres_count_other": "{{count}} members",
@@ -645,7 +645,12 @@
     "thread_empty": "No message yet. Be the first to write!",
     "message_placeholder": "Write a message…",
     "toast_rejoindre_error": "Couldn't join this group",
-    "toast_message_error": "Couldn't send the message"
+    "toast_message_error": "Couldn't send the message",
+    "veille_info": "The care team can read these conversations to keep everyone safe. Messages containing certain words (distress, stopping treatment, insults, personal contact details) are flagged to them.",
+    "soutien_titre": "You are not alone",
+    "soutien_texte": "Talk to someone you trust right away and call emergency services or go to the nearest health centre. Your care team has been notified.",
+    "soutien_fermer": "Close",
+    "masque_par_equipe": "Hidden by the care team: other members cannot see it."
   },
   "language": {
     "fr": "Français",
@@ -665,7 +670,8 @@
     "section_patients": "Patient management",
     "patients_index": "Patient directory",
     "patients_nouveau": "New patient",
-    "patients_gestion": "Edit records and sheets"
+    "patients_gestion": "Edit records and sheets",
+    "communautes": "Communities"
   },
   "admin": {
     "page_title": "Administration",
@@ -1352,6 +1358,39 @@
         "uree": "Urea",
         "leucocytes": "White blood cells"
       }
+    }
+  },
+  "communautes": {
+    "titre": "Communities",
+    "sous_titre": "Support group conversations, under the first names members see. Messages with sensitive words are flagged here; nothing is blocked automatically.",
+    "signalements_titre": "Flags to review",
+    "signalements_vide": "No pending flags.",
+    "mots_detectes": "Words detected: {{mots}}",
+    "consigne_detresse": "Possible distress: contact the patient as soon as possible. The referring clinician was notified by email.",
+    "groupes": "Groups",
+    "aucun_groupe": "No support groups.",
+    "compteurs": "{{membres}} members · {{messages}} messages",
+    "discussion": "Conversation",
+    "lecture_seule": "Read only: the team does not post in groups. Every view is recorded in the audit log.",
+    "aucun_message": "No messages in this group.",
+    "marquer_traite": "Mark as reviewed",
+    "masquer": "Hide",
+    "reafficher": "Show again",
+    "voir_dossier": "Record {{code}}",
+    "traite": "Reviewed",
+    "masque": "Hidden",
+    "toast_traite": "Flag closed",
+    "toast_masque": "Message hidden from group members",
+    "toast_reaffiche": "Message visible again",
+    "toast_erreur": "Action failed",
+    "cloche_one": "{{count}} flag in communities",
+    "cloche_other": "{{count}} flags in communities",
+    "categories": {
+      "detresse": "Distress",
+      "traitement": "Stopping treatment",
+      "injure": "Insult",
+      "stigmatisation": "Stigma",
+      "coordonnees": "Contact details"
     }
   }
 }

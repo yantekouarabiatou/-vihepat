@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as soignantController from '../controllers/soignant.controller';
+import * as groupeController from '../controllers/groupe.controller';
 import { authRequired, requireRole, requirePermission as perm } from '../middlewares/auth';
 import { catchAsync } from '../utils/catchAsync';
 
@@ -28,6 +29,11 @@ r.patch('/rendez-vous/:id', perm('rendez_vous:manage'), catchAsync(soignantContr
 r.post('/rendez-vous/:id/rappel', perm('rendez_vous:manage'), catchAsync(soignantController.envoyerRappelRdv));
 r.get('/signalements', perm('signalement:manage'), catchAsync(soignantController.getSignalements));
 r.patch('/signalements/:id', perm('signalement:manage'), catchAsync(soignantController.updateSignalement));
+// Groupes de soutien : l'équipe lit les discussions et traite les signalements de mots sensibles
+r.get('/communautes', perm('signalement:manage'), catchAsync(groupeController.getGroupesEquipe));
+r.get('/communautes/alertes', perm('signalement:manage'), catchAsync(groupeController.getAlertesEquipe));
+r.get('/communautes/:id/messages', perm('signalement:manage'), catchAsync(groupeController.getMessagesEquipe));
+r.patch('/communautes/messages/:id', perm('signalement:manage'), catchAsync(groupeController.modererMessage));
 r.get('/communiques', perm('communique:read'), catchAsync(soignantController.getCommuniques));
 r.post('/communiques', perm('communique:publish'), catchAsync(soignantController.createCommunique));
 

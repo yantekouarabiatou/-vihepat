@@ -635,7 +635,7 @@
   },
   "groupes": {
     "title": "Groupes de soutien",
-    "subtitle": "Échangez avec d'autres patients, en toute confidentialité.",
+    "subtitle": "Échangez avec d'autres patients sous votre prénom. L'équipe soignante peut lire les échanges.",
     "empty": "Aucun groupe disponible pour le moment.",
     "membres_count_one": "{{count}} membre",
     "membres_count_other": "{{count}} membres",
@@ -645,7 +645,12 @@
     "thread_empty": "Aucun message pour le moment. Soyez le premier à écrire !",
     "message_placeholder": "Écrire un message…",
     "toast_rejoindre_error": "Impossible de rejoindre ce groupe",
-    "toast_message_error": "Impossible d'envoyer le message"
+    "toast_message_error": "Impossible d'envoyer le message",
+    "veille_info": "L'équipe soignante peut lire ces échanges pour veiller à la sécurité de tous. Les messages qui contiennent certains mots (détresse, arrêt du traitement, insultes, coordonnées personnelles) lui sont signalés.",
+    "soutien_titre": "Vous n'êtes pas seul(e)",
+    "soutien_texte": "Parlez-en tout de suite à une personne de confiance et contactez les secours ou rendez-vous au centre de santé le plus proche. Votre équipe soignante est prévenue.",
+    "soutien_fermer": "Fermer",
+    "masque_par_equipe": "Masqué par l'équipe soignante : les autres membres ne le voient pas."
   },
   "language": {
     "fr": "Français",
@@ -665,7 +670,8 @@
     "section_patients": "Gestion des patients",
     "patients_index": "Répertoire des patients",
     "patients_nouveau": "Nouveau patient",
-    "patients_gestion": "Modification et fiches"
+    "patients_gestion": "Modification et fiches",
+    "communautes": "Communautés"
   },
   "admin": {
     "page_title": "Administration",
@@ -1352,6 +1358,39 @@
         "uree": "Urée",
         "leucocytes": "Leucocytes"
       }
+    }
+  },
+  "communautes": {
+    "titre": "Communautés",
+    "sous_titre": "Les discussions des groupes de soutien, sous les prénoms que voient les membres. Les messages contenant des mots sensibles sont signalés ici ; rien n'est bloqué automatiquement.",
+    "signalements_titre": "Signalements à traiter",
+    "signalements_vide": "Aucun signalement en attente.",
+    "mots_detectes": "Mots détectés : {{mots}}",
+    "consigne_detresse": "Possible détresse : contactez le patient au plus vite. Le soignant référent a été prévenu par e-mail.",
+    "groupes": "Groupes",
+    "aucun_groupe": "Aucun groupe de soutien.",
+    "compteurs": "{{membres}} membres · {{messages}} messages",
+    "discussion": "Discussion",
+    "lecture_seule": "Lecture seule : l'équipe ne publie pas dans les groupes. Chaque consultation est tracée dans le journal d'audit.",
+    "aucun_message": "Aucun message dans ce groupe.",
+    "marquer_traite": "Marquer traité",
+    "masquer": "Masquer",
+    "reafficher": "Réafficher",
+    "voir_dossier": "Dossier {{code}}",
+    "traite": "Traité",
+    "masque": "Masqué",
+    "toast_traite": "Signalement classé",
+    "toast_masque": "Message masqué aux membres du groupe",
+    "toast_reaffiche": "Message de nouveau visible",
+    "toast_erreur": "Action impossible",
+    "cloche_one": "{{count}} signalement dans les communautés",
+    "cloche_other": "{{count}} signalements dans les communautés",
+    "categories": {
+      "detresse": "Détresse",
+      "traitement": "Arrêt du traitement",
+      "injure": "Insulte",
+      "stigmatisation": "Stigmatisation",
+      "coordonnees": "Coordonnées"
     }
   }
 }

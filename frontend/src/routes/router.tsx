@@ -9,6 +9,7 @@ import { DashboardPage as SoignantDashboardPage } from '../features/soignant/Das
 import { PatientsPage } from '../features/soignant/PatientsPage';
 import { PatientDetailPage } from '../features/soignant/PatientDetailPage';
 import { CommuniquesPage } from '../features/soignant/CommuniquesPage';
+import { CommunautesPage } from '../features/soignant/CommunautesPage';
 import { AdminPage } from '../features/admin/AdminPage';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
       { path: '/soignant/patients', element: <PatientsPage /> },
       { path: '/soignant/patients/:id', element: <PatientDetailPage /> },
       { path: '/soignant/communiques', element: <CommuniquesPage /> },
+      { path: '/soignant/communautes', element: <CommunautesPage /> },
     ],
 
   },

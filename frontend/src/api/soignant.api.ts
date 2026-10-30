@@ -19,6 +19,41 @@ export interface SoignantPatient {
   risquePerteSuivi?: { niveau: NiveauRisque; probabilite: number } | null;
 }
 
+/* Groupes de soutien vus par l'équipe soignante */
+
+export type CategorieAlerteGroupe = 'detresse' | 'traitement' | 'injure' | 'stigmatisation' | 'coordonnees';
+
+export interface GroupeEquipe {
+  id: number;
+  nom: string;
+  description: string;
+  pathologie: Pathologie | null;
+  actif: boolean;
+  nbMembres: number;
+  nbMessages: number;
+  alertesATraiter: number;
+}
+
+export interface MessageGroupeEquipe {
+  id: number;
+  groupeId: number;
+  /** Présent dans la liste des signalements */
+  groupe?: string;
+  contenu: string;
+  createdAt: string;
+  /** Prénom, comme les membres le voient */
+  auteur: string;
+  /** Seulement pour un patient que ce soignant suit (tous pour un admin) */
+  patient: { id: number; codePatient: string } | null;
+  masque: boolean;
+  alerte: { categorie: CategorieAlerteGroupe; mots: string; statut: 'a_traiter' | 'traitee' | null; traiteeLe: string | null } | null;
+}
+
+export interface AlertesGroupes {
+  aTraiter: MessageGroupeEquipe[];
+  traitees: MessageGroupeEquipe[];
+}
+
 export type SituationMatrimoniale = 'marie' | 'celibataire' | 'divorce' | 'separe' | 'veuf';
 export type NiveauEtudes = 'aucun' | 'primaire' | 'secondaire' | 'superieur';
 
@@ -243,6 +278,16 @@ export const soignantApi = {
 
   getPatient: (id: number) =>
     api.get<PatientDetail>(`/soignant/patients/${id}`).then((r) => r.data),
+
+  getCommunautes: () => api.get<GroupeEquipe[]>('/soignant/communautes').then((r) => r.data),
+
+  getAlertesCommunautes: () => api.get<AlertesGroupes>('/soignant/communautes/alertes').then((r) => r.data),
+
+  getMessagesCommunaute: (groupeId: number) =>
+    api.get<MessageGroupeEquipe[]>(`/soignant/communautes/${groupeId}/messages`).then((r) => r.data),
+
+  modererMessage: (messageId: number, input: { traitee?: boolean; masque?: boolean }) =>
+    api.patch<MessageGroupeEquipe>(`/soignant/communautes/messages/${messageId}`, input).then((r) => r.data),
 
   enregistrerBilanInclusion: (patientId: number, input: BilanInclusion) =>
     api.put<PatientDetail>(`/soignant/patients/${patientId}/bilan-inclusion`, input).then((r) => r.data),

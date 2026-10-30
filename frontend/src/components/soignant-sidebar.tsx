@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Database, Globe, HeartPulse, LayoutDashboard, LogOut, Megaphone, Users, UserPlus, UserCog } from "lucide-react";
+import { Database, Globe, HeartPulse, LayoutDashboard, LogOut, Megaphone, MessagesSquare, Users, UserPlus, UserCog } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
@@ -52,7 +52,10 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
     },
     {
       title: t("sidebar.section_communication"),
-      items: [{ to: "/soignant/communiques", icon: Megaphone, label: t("sidebar.communiques") }],
+      items: [
+        { to: "/soignant/communiques", icon: Megaphone, label: t("sidebar.communiques") },
+        { to: "/soignant/communautes", icon: MessagesSquare, label: t("sidebar.communautes") },
+      ],
     },
     ...(admin
       ? [

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Loader2, Send, Users } from "lucide-react";
+import { ArrowLeft, HeartHandshake, Loader2, Send, ShieldCheck, Users } from "lucide-react";
 import { toast } from "sonner";
 import { groupeApi } from "@/api/groupe.api";
 import { AppShell } from "@/components/app-shell";
@@ -16,6 +16,8 @@ export function PeerGroupsPage() {
   const queryClient = useQueryClient();
   const [groupeSelectionne, setGroupeSelectionne] = useState<number | null>(null);
   const [message, setMessage] = useState("");
+  // Affiché après un message qui laisse penser à une détresse : les numéros d'aide, tout de suite
+  const [soutien, setSoutien] = useState(false);
 
   const { data: groupes, isLoading } = useQuery({
     queryKey: ["patient", "groupes"],
@@ -42,8 +44,9 @@ export function PeerGroupsPage() {
 
   const { mutate: envoyer, isPending: envoiPending } = useMutation({
     mutationFn: () => groupeApi.postMessage(groupeSelectionne!, message.trim()),
-    onSuccess: () => {
+    onSuccess: (envoye) => {
       setMessage("");
+      if (envoye.soutien) setSoutien(true);
       queryClient.invalidateQueries({ queryKey: ["patient", "groupes", groupeSelectionne, "messages"] });
     },
     onError: () => toast.error(t("groupes.toast_message_error")),
@@ -62,7 +65,23 @@ export function PeerGroupsPage() {
           </div>
         </div>
 
-        <div className="mt-6 flex h-[55vh] flex-col rounded-3xl bg-card p-4 shadow-[var(--shadow-card)]">
+        <p className="mt-4 flex items-start gap-2 rounded-2xl bg-secondary px-4 py-3 text-xs text-muted-foreground">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+          {t("groupes.veille_info")}
+        </p>
+
+        {soutien && (
+          <div role="alert" className="mt-3 flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-foreground">
+            <HeartHandshake className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden="true" />
+            <div className="flex-1">
+              <p className="font-semibold">{t("groupes.soutien_titre")}</p>
+              <p className="mt-1 text-muted-foreground">{t("groupes.soutien_texte")}</p>
+            </div>
+            <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setSoutien(false)}>{t("groupes.soutien_fermer")}</Button>
+          </div>
+        )}
+
+        <div className="mt-4 flex h-[55vh] flex-col rounded-3xl bg-card p-4 shadow-[var(--shadow-card)]">
           <div className="flex-1 space-y-3 overflow-y-auto px-2 py-2">
             {messagesLoading ? (
               <div className="flex h-full items-center justify-center">
@@ -83,6 +102,7 @@ export function PeerGroupsPage() {
                   >
                     {!m.deMoi && <p className="mb-0.5 text-xs font-semibold text-primary">{m.auteur}</p>}
                     {m.contenu}
+                    {m.masque && <p className="mt-1 text-[11px] font-medium opacity-80">{t("groupes.masque_par_equipe")}</p>}
                   </div>
                 </div>
               ))

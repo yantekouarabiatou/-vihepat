@@ -16,6 +16,10 @@ export interface MessageGroupe {
   createdAt: string;
   auteur: string;
   deMoi: boolean;
+  /** Masqué par l'équipe soignante (visible de son seul auteur) */
+  masque?: boolean;
+  /** Réponse à un envoi : le message laisse penser à une détresse, on affiche les numéros d'aide */
+  soutien?: boolean;
 }
 
 export const groupeApi = {
