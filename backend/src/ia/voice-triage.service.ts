@@ -3,6 +3,7 @@ import prompt from './extraction.json';
 import { genererContenu, GeminiError, type GeminiPart, type GeminiUsage } from './gemini.client';
 import { elevenlabsConfigure, transcrireElevenLabs, versLangue, type ResultatElevenLabs } from './elevenlabs.client';
 import { evaluerTriage, type EntreeTriage, type ResultatTriage } from './triage';
+import { detecterSignesGraves } from './signes-graves';
 
 /**
  * Chaîne « note vocale -> transcription -> structuration -> priorité ».
@@ -133,6 +134,11 @@ export async function trierNoteVocale(params: {
   if (transcrit) {
     extraction.transcription = transcrit.texte;
     extraction.langue = 'fr';
+  }
+  // Union avec le lexique déterministe : rater un signe grave coûte plus cher qu'une alerte en trop
+  // (mesure : ia/resultats/signes_graves_*). Seulement en français, seule langue mesurée.
+  if (extraction.langue === 'fr') {
+    extraction.signes_graves = Array.from(new Set([...extraction.signes_graves, ...detecterSignesGraves(extraction.transcription)]));
   }
   const entree = versEntree(extraction, params.traitementRecent);
   const triage = evaluerTriage(entree);

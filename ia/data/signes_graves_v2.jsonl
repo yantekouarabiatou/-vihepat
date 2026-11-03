@@ -1,0 +1,110 @@
+{"id": "R01", "texte": "Depuis hier soir j'ai du mal à respirer, je dois m'asseoir pour reprendre mon souffle.", "attendus": ["respiration"]}
+{"id": "R02", "texte": "Quand je monte les escaliers je m'étouffe, l'air ne passe plus bien.", "attendus": ["respiration"]}
+{"id": "R03", "texte": "je suis essouflé meme couché, je respire tres vite", "attendus": ["respiration"]}
+{"id": "R04", "texte": "Ma poitrine siffle et j'ai l'impression de manquer d'air depuis trois jours.", "attendus": ["respiration"]}
+{"id": "R05", "texte": "La nuit je me réveille en cherchant mon air, c'est la panique.", "attendus": ["respiration"]}
+{"id": "R06", "texte": "J'ai une grosse toux et je n'arrive plus à respirer correctement.", "attendus": ["respiration"]}
+{"id": "R07", "texte": "Mes lèvres deviennent bleues et je halète.", "attendus": ["respiration"]}
+{"id": "R08", "texte": "Respirer me fait mal et je suis vite à bout de souffle en marchant.", "attendus": ["respiration"]}
+{"id": "R09", "texte": "j'ai le souffle coupé depuis ce matin, je peux pas parler longtemps", "attendus": ["respiration"]}
+{"id": "R10", "texte": "J'étouffe un peu quand je suis allongé, je dors assis.", "attendus": ["respiration"]}
+{"id": "P01", "texte": "J'ai une douleur qui serre dans la poitrine et qui descend dans le bras gauche.", "attendus": ["poitrine"]}
+{"id": "P02", "texte": "Ça me fait très mal au milieu du thorax depuis une heure.", "attendus": ["poitrine"]}
+{"id": "P03", "texte": "Comme un poids sur la poitrine, ça ne passe pas.", "attendus": ["poitrine"]}
+{"id": "P04", "texte": "douleur thoracique forte quand je bouge", "attendus": ["poitrine"]}
+{"id": "P05", "texte": "Mon coeur me fait mal, ça brûle dans la poitrine.", "attendus": ["poitrine"]}
+{"id": "P06", "texte": "J'ai mal à la poitrine et je respire difficilement.", "attendus": ["poitrine", "respiration"]}
+{"id": "P07", "texte": "Ça pique fort dans ma cage thoracique à chaque inspiration.", "attendus": ["poitrine"]}
+{"id": "P08", "texte": "Une douleur dans le torse qui me réveille la nuit.", "attendus": ["poitrine"]}
+{"id": "P09", "texte": "J'ai la poitrine qui serre comme un étau depuis ce matin.", "attendus": ["poitrine"]}
+{"id": "P10", "texte": "Mal au thorax, ça m'inquiète beaucoup.", "attendus": ["poitrine"]}
+{"id": "C01", "texte": "Ma femme dit que je raconte n'importe quoi depuis hier et je ne reconnais plus bien les gens.", "attendus": ["confusion"]}
+{"id": "C02", "texte": "J'ai la nuque raide et très mal à la tête, je supporte pas la lumière.", "attendus": ["confusion"]}
+{"id": "C03", "texte": "Je n'arrive pas à baisser la tête, mon cou est tout bloqué, et j'ai de la fièvre.", "attendus": ["confusion"]}
+{"id": "C04", "texte": "Je m'endors partout, même en mangeant, je n'arrive pas à rester éveillé.", "attendus": ["confusion"]}
+{"id": "C05", "texte": "Je me perds dans mon propre quartier, je ne sais plus où je suis.", "attendus": ["confusion"]}
+{"id": "C06", "texte": "mon frère est tout mélangé, il oublie son nom et il parle bizarre", "attendus": ["confusion"]}
+{"id": "C07", "texte": "J'ai le cou raide et je vomis, la tête va exploser.", "attendus": ["confusion"]}
+{"id": "C08", "texte": "Depuis ce matin j'ai l'esprit embrouillé, je ne comprends plus ce qu'on me dit.", "attendus": ["confusion"]}
+{"id": "C09", "texte": "Je suis désorienté, je ne sais plus quel jour on est.", "attendus": ["confusion"]}
+{"id": "C10", "texte": "Ma mère dort tout le temps et répond à peine quand on lui parle.", "attendus": ["confusion"]}
+{"id": "V01", "texte": "Chaque fois que j'avale mes ARV je les vomis dix minutes après.", "attendus": ["vomit_traitement"]}
+{"id": "V02", "texte": "Les comprimés ne restent pas dans mon ventre, je les rejette.", "attendus": ["vomit_traitement"]}
+{"id": "V03", "texte": "je rend mes medocs a chaque prise depuis 2 jours", "attendus": ["vomit_traitement"]}
+{"id": "V04", "texte": "Je n'arrive pas à garder le traitement, je vomis tout.", "attendus": ["vomit_traitement"]}
+{"id": "V05", "texte": "Après la prise du matin, tout ressort, même l'eau.", "attendus": ["vomit_traitement"]}
+{"id": "V06", "texte": "Mon estomac refuse les médicaments, ils remontent tout de suite.", "attendus": ["vomit_traitement"]}
+{"id": "V07", "texte": "Je vomis mes cachets du soir depuis lundi.", "attendus": ["vomit_traitement"]}
+{"id": "V08", "texte": "Dès que je prends le Dolutégravir je vomis.", "attendus": ["vomit_traitement"]}
+{"id": "V09", "texte": "Impossible de garder mes pilules, je les recrache en vomissant.", "attendus": ["vomit_traitement"]}
+{"id": "V10", "texte": "J'ai vomi ma dose de ce matin et celle d'hier.", "attendus": ["vomit_traitement"]}
+{"id": "S01", "texte": "Il y a du sang dans mes selles depuis deux jours.", "attendus": ["saignement"]}
+{"id": "S02", "texte": "Mes règles coulent comme jamais, je change de serviette toutes les heures.", "attendus": ["saignement"]}
+{"id": "S03", "texte": "Je crache du sang quand je tousse.", "attendus": ["saignement"]}
+{"id": "S04", "texte": "Mon nez saigne sans s'arrêter depuis ce matin.", "attendus": ["saignement"]}
+{"id": "S05", "texte": "J'ai vomi quelque chose de rouge, comme du sang.", "attendus": ["saignement"]}
+{"id": "S06", "texte": "Mes selles sont noires comme du goudron.", "attendus": ["saignement"]}
+{"id": "S07", "texte": "Mes gencives saignent beaucoup quand je me brosse et ça ne s'arrête pas.", "attendus": ["saignement"]}
+{"id": "S08", "texte": "Il y a du rouge dans mon pipi.", "attendus": ["saignement"]}
+{"id": "S09", "texte": "je perds beaucoup de sang par en bas alors que c'est pas la période", "attendus": ["saignement"]}
+{"id": "S10", "texte": "Des bleus apparaissent partout sur mon corps et je saigne facilement.", "attendus": ["saignement"]}
+{"id": "S11", "texte": "Hémorragie après l'accouchement, ça coule encore beaucoup.", "attendus": ["saignement"]}
+{"id": "S12", "texte": "Il y a des traces de sang dans ce que je crache le matin.", "attendus": ["saignement"]}
+{"id": "M01", "texte": "Je suis tombé dans la cuisine, tout est devenu noir.", "attendus": ["malaise"]}
+{"id": "M02", "texte": "J'ai perdu connaissance quelques minutes ce matin.", "attendus": ["malaise"]}
+{"id": "M03", "texte": "Je me suis évanoui au marché.", "attendus": ["malaise"]}
+{"id": "M04", "texte": "Mes jambes ont lâché et je me suis retrouvé par terre sans comprendre.", "attendus": ["malaise"]}
+{"id": "M05", "texte": "j'ai fait un malaise a l'eglise, on m'a ramene a la maison", "attendus": ["malaise"]}
+{"id": "M06", "texte": "Ma vue s'est brouillée et je me suis effondré.", "attendus": ["malaise"]}
+{"id": "M07", "texte": "J'ai eu une syncope en me levant.", "attendus": ["malaise"]}
+{"id": "M08", "texte": "Je me suis réveillé allongé dans la douche sans savoir comment.", "attendus": ["malaise"]}
+{"id": "M09", "texte": "J'ai senti que j'allais tomber dans les pommes et je suis tombé.", "attendus": ["malaise"]}
+{"id": "M10", "texte": "Je perds l'équilibre et je m'écroule depuis hier.", "attendus": ["malaise"]}
+{"id": "I01", "texte": "Je n'ai plus envie de vivre, à quoi bon continuer.", "attendus": ["idees_noires"]}
+{"id": "I02", "texte": "Je pense à mettre fin à mes jours.", "attendus": ["idees_noires"]}
+{"id": "I03", "texte": "Tout le monde serait mieux sans moi.", "attendus": ["idees_noires"]}
+{"id": "I04", "texte": "J'ai envie de disparaître pour de bon.", "attendus": ["idees_noires"]}
+{"id": "I05", "texte": "je veux plus me reveiller le matin", "attendus": ["idees_noires"]}
+{"id": "I06", "texte": "Je garde des comprimés de côté pour tout prendre d'un coup.", "attendus": ["idees_noires"]}
+{"id": "I07", "texte": "Ma vie n'a plus de sens depuis le diagnostic.", "attendus": ["idees_noires"]}
+{"id": "I08", "texte": "J'ai envie de me faire du mal.", "attendus": ["idees_noires"]}
+{"id": "I09", "texte": "Parfois je pense que la mort serait un soulagement.", "attendus": ["idees_noires"]}
+{"id": "I10", "texte": "Je vais en finir avec tout ça, je suis fatigué de lutter.", "attendus": ["idees_noires"]}
+{"id": "X01", "texte": "Je saigne du nez et je me sens partir, tout tourne et je suis tombé.", "attendus": ["saignement", "malaise"]}
+{"id": "X02", "texte": "J'ai vomi mes ARV et maintenant je crache du sang.", "attendus": ["vomit_traitement", "saignement"]}
+{"id": "X03", "texte": "J'ai mal à la poitrine et je me suis évanoui ce matin.", "attendus": ["poitrine", "malaise"]}
+{"id": "X04", "texte": "Je suis à bout, je ne veux plus vivre et je n'arrive plus à respirer la nuit.", "attendus": ["idees_noires", "respiration"]}
+{"id": "X05", "texte": "Fièvre forte, nuque raide, et je ne sais plus où je suis.", "attendus": ["confusion"]}
+{"id": "X06", "texte": "Sang dans les selles et j'ai fait un malaise en me levant.", "attendus": ["saignement", "malaise"]}
+{"id": "X07", "texte": "J'étouffe et j'ai une douleur au thorax.", "attendus": ["respiration", "poitrine"]}
+{"id": "X08", "texte": "Je rends mes comprimés et je suis tellement confus que je ne reconnais plus ma fille.", "attendus": ["vomit_traitement", "confusion"]}
+{"id": "N01", "texte": "Je n'ai pas de sang dans les selles, juste un peu de diarrhée.", "attendus": []}
+{"id": "N02", "texte": "Je respire bien, c'est seulement une petite toux sèche.", "attendus": []}
+{"id": "N03", "texte": "Aucune douleur dans la poitrine, j'ai juste mal au dos.", "attendus": []}
+{"id": "N04", "texte": "J'ai donné mon sang au centre de transfusion samedi, tout va bien.", "attendus": []}
+{"id": "N05", "texte": "Mon fils m'a fait mourir de rire hier soir.", "attendus": []}
+{"id": "N06", "texte": "Je prends bien mes comprimés, je ne les vomis jamais.", "attendus": []}
+{"id": "N07", "texte": "J'ai un peu mal à la tête mais je suis bien réveillé et lucide.", "attendus": []}
+{"id": "N08", "texte": "Je ne suis jamais tombé, je marche bien.", "attendus": []}
+{"id": "N09", "texte": "Je suis motivé pour vivre longtemps avec mon traitement.", "attendus": []}
+{"id": "N10", "texte": "Mes règles sont normales ce mois-ci.", "attendus": []}
+{"id": "N11", "texte": "J'ai le nez qui coule et j'éternue, rien de plus.", "attendus": []}
+{"id": "N12", "texte": "Petite fatigue depuis deux jours, je dors bien la nuit.", "attendus": []}
+{"id": "N13", "texte": "J'ai des boutons sur les bras qui grattent.", "attendus": []}
+{"id": "N14", "texte": "Je tue le temps en regardant la télé, je m'ennuie un peu.", "attendus": []}
+{"id": "N15", "texte": "Le souffle de l'harmattan me dessèche la peau.", "attendus": []}
+{"id": "N16", "texte": "Pas de vomissement, juste un peu de nausée le matin.", "attendus": []}
+{"id": "N17", "texte": "Je me suis piqué le doigt en cuisinant, une goutte de sang, c'est déjà fini.", "attendus": []}
+{"id": "N18", "texte": "J'ai couru pour le bus et j'étais essoufflé une minute, puis ça allait.", "attendus": []}
+{"id": "N19", "texte": "J'ai mal au ventre après avoir mangé épicé.", "attendus": []}
+{"id": "N20", "texte": "Je suis triste parfois mais j'ai envie de me battre.", "attendus": []}
+{"id": "N21", "texte": "Ma tête tourne un peu quand je me lève vite, sans tomber.", "attendus": []}
+{"id": "N22", "texte": "Mes yeux sont un peu jaunes depuis une semaine.", "attendus": []}
+{"id": "N23", "texte": "Je ne crache pas de sang, la toux est grasse.", "attendus": []}
+{"id": "N24", "texte": "Mon cou me fait un peu mal parce que j'ai mal dormi, je le tourne sans problème.", "attendus": []}
+{"id": "N25", "texte": "J'ai fini mon traitement contre le palu, je me sens mieux.", "attendus": []}
+{"id": "N26", "texte": "Les résultats de mon bilan sanguin sont bons.", "attendus": []}
+{"id": "N27", "texte": "Je suis fatigué de faire la queue à l'hôpital mais ça va.", "attendus": []}
+{"id": "N28", "texte": "J'ai la diarrhée depuis hier, je bois beaucoup d'eau.", "attendus": []}
+{"id": "N29", "texte": "Pas de fièvre, pas de malaise, juste des démangeaisons.", "attendus": []}
+{"id": "N30", "texte": "Je dors un peu plus que d'habitude le week-end, je récupère.", "attendus": []}
