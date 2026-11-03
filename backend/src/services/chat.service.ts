@@ -289,6 +289,27 @@ export function deciderReponseGemini(isPatient: boolean, history: ChatTurn[], te
   return { reply, signalement };
 }
 
+/** Sans IA : si le message décrit un signe grave, consigne d'orientation (et signalement « severe » pour un patient) */
+async function reponseUrgenceSansIA(userId: number | null | undefined, role: string | null | undefined, history: ChatTurn[]): Promise<ChatResult | null> {
+  const dernier = [...history].reverse().find((h) => h.role === 'user')?.content ?? '';
+  const graves = detecterSignesGraves(dernier);
+  if (graves.length === 0) return null;
+  const isPatient = role === 'patient' && !!userId;
+  const dejaSignale = history.some((h) => h.role === 'assistant' && h.content.includes(CONFIRMATION_SIGNALEMENT));
+  let reply = consigneUrgence(graves, isPatient);
+  let signalementCreated = false;
+  if (isPatient && !dejaSignale) {
+    await patientService.createSignalement(userId!, {
+      symptome: graves.map((g) => LIBELLE_SIGNE[g]).join(', ').slice(0, 150),
+      gravite: 'severe',
+      notes: `Message du patient : « ${dernier.slice(0, 400)} »\nSigne(s) de gravité détecté(s) par l'assistant (sans IA, Gemini indisponible).`,
+    });
+    signalementCreated = true;
+    reply = `${reply}\n\n${CONFIRMATION_SIGNALEMENT}`;
+  }
+  return { reply, signalementCreated };
+}
+
 const LIBELLE_SIGNE: Record<SigneGrave, string> = {
   respiration: 'difficulté à respirer',
   poitrine: 'douleur dans la poitrine',
@@ -327,6 +348,10 @@ export async function sendChatMessage(
         console.warn('Échec du chat Gemini, utilisation du fallback médical :', (error as Error).message);
       }
     }
+    // Gemini indisponible (surcharge, quota) : le filet de sécurité passe AVANT l'assistant de secours,
+    // dont les réponses toutes faites ne conviennent pas à un signe grave (ex. traitement vomi)
+    const urgence = await reponseUrgenceSansIA(userId, role, history);
+    if (urgence) return urgence;
     return generateSmartFallback(userId, role, history);
   }
 
