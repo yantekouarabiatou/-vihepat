@@ -12,7 +12,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { genererContenu } from '../src/ia/gemini.client';
-import { requeteChatGemini } from '../src/services/chat.service';
+import { deciderReponseGemini, requeteChatGemini } from '../src/services/chat.service';
 
 const RACINE = path.resolve(__dirname, '../..');
 const brut = readFileSync(path.join(RACINE, 'ia/data/assistant_test.jsonl'));
@@ -77,9 +77,12 @@ async function main() {
   const bruts: string[] = [];
   const parCat = new Map<string, { ok: number; total: number }>();
   for (const c of cas) {
-    const requete = requeteChatGemini(c.role === 'patient', [{ role: 'user', content: c.message }])!;
+    const historique = [{ role: 'user' as const, content: c.message }];
+    const requete = requeteChatGemini(c.role === 'patient', historique)!;
     const g = await avecReprises(() => genererContenu(requete));
-    const r = JSON.parse(g.text) as { reponse?: string; signalement?: { symptome?: string; gravite?: string } | null };
+    // Décision complète de la production (filet de sécurité compris), sans écriture en base
+    const d = deciderReponseGemini(c.role === 'patient', historique, g.text);
+    const r = { reponse: d.reply, signalement: d.signalement };
     const v = controler(c, r.reponse ?? '', r.signalement);
     const s = parCat.get(c.categorie) ?? { ok: 0, total: 0 };
     s.total++;
@@ -107,8 +110,8 @@ async function main() {
     ...lignes,
   ].join('\n');
   console.log(rapport);
-  writeFileSync(path.join(RACINE, 'ia/resultats/assistant.md'), rapport + '\n');
-  writeFileSync(path.join(RACINE, 'ia/resultats/assistant.jsonl'), bruts.join('\n') + '\n');
+  writeFileSync(path.join(RACINE, `ia/resultats/assistant__${process.argv[2] ?? 'mesure'}.md`), rapport + '\n');
+  writeFileSync(path.join(RACINE, `ia/resultats/assistant__${process.argv[2] ?? 'mesure'}.jsonl`), bruts.join('\n') + '\n');
 }
 
 main().catch((e) => {
