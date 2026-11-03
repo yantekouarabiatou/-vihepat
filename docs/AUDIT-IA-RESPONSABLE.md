@@ -106,7 +106,7 @@ Perte de suivi (`ia/perte_de_suivi/README.md`, 1 219 patients de test) : AUC ROC
 | Exigence | Statut | Preuve | Écart | Gravité |
 |---|---|---|---|---|
 | Rien d'exposé sans authentification | Partiel | Routes patient, soignant et admin protégées | `/api/chat` et `/api/chat/transcrire` ouverts aux visiteurs (avec limite de requêtes) | Mineure |
-| Dépendances épinglées et scannées | Partiel | `npm audit --omit=dev` du 3/11/2026, **après correction** : API 0 haute, 2 modérées (`uuid` dans Sequelize, non exploitable : Sequelize ne passe pas de tampon) ; site 0 vulnérabilité. Corrections : zod 4 dans l'API, `shadcn` déplacé dans les outils de développement, vite 8.3.5, zod inutilisé retiré du site. Avant : API 2 hautes + 4 modérées, site 9 hautes + 8 modérées | Versions en `^` ; aucun scan automatique ; la production doit encore réinstaller ses modules (zod 4) | Majeure |
+| Dépendances épinglées et scannées | Partiel | `npm audit --omit=dev` du 3/11/2026, **après correction** : API 0 haute, 2 modérées (`uuid` dans Sequelize, non exploitable : Sequelize ne passe pas de tampon) ; site 0 vulnérabilité. Corrections : zod 4 dans l'API, `shadcn` déplacé dans les outils de développement, vite 8.3.5, zod inutilisé retiré du site. Avant : API 2 hautes + 4 modérées, site 9 hautes + 8 modérées | Versions en `^` ; aucun scan automatique. *zod 4 actif en production depuis le 3/11 (embarqué dans `dist/node_modules`, vérifié par son format d'erreur)* | Majeure |
 | Aucun secret dans le code ni l'historique | Partiel | Recherche dans tout l'historique git : 0 occurrence des secrets connus. Fichiers `.env` non suivis | gitleaks non exécuté. Mot de passe FTP et deux clés ElevenLabs échangés en clair pendant le développement, non régénérés | **Critique** |
 | Moindre privilège | Partiel | Permissions par rôle, modifiables | Le médecin a désormais un accès global ; un seul compte FTP sert à tout | Mineure |
 | Analyse de code et de modèles | Non conforme | — | Ni semgrep, ni bandit ; `ltfu_modele_final.joblib` (format pickle) non scanné | Mineure |
@@ -136,7 +136,7 @@ Perte de suivi (`ia/perte_de_suivi/README.md`, 1 219 patients de test) : AUC ROC
 |---|---|---|---|
 | Critique | Séparer la démo de la production ; changer tous les mots de passe de démonstration | phpMyAdmin, page Administration | 0 compte avec un mot de passe partagé ; démo sur une base distincte |
 | Critique | Régénérer le mot de passe FTP et les clés ElevenLabs | cPanel LWS, console ElevenLabs | Anciennes valeurs refusées |
-| Fait (3/11) | Corriger les vulnérabilités hautes : 0 haute dans l'API et le site ; reste à réinstaller les modules sur le serveur | `npm audit fix`, zod 4 ; puis Dependabot | 0 vulnérabilité haute ou critique en production |
+| Fait (3/11) | Corriger les vulnérabilités hautes : 0 haute dans l'API et le site, zod 4 actif en production | `npm audit fix`, zod 4 ; puis Dependabot | 0 vulnérabilité haute ou critique en production |
 | En cours (3/11) | Rappel des signes graves : prompt v2 + lexique v2 en union, 0/49 alerte ratée sur un jeu de contrôle figé ; reste à élargir à 20 cas par signe, idéalement écrits par d'autres personnes | `backend/scripts/evaluer-signes-graves.ts` | Rappel ≥ 95 % par signe grave, sur au moins 20 cas par signe |
 | Majeure | Faire valider les règles de triage par un infectiologue | Grille de relecture signée | Règles approuvées et versionnées |
 | Fait | ~~Fermer l'inscription patient publique~~ : déjà fermée, vérifié le 3/11 (403) | — | — |
