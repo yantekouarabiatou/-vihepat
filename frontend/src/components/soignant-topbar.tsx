@@ -39,13 +39,23 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
   });
   const nbAlertes = alertesGroupes?.aTraiter.length ?? 0;
 
+  // Signalements de symptômes pas encore ouverts : la même requête que le tableau de bord
+  const { data: signalements } = useQuery({
+    queryKey: ["soignant", "signalements"],
+    queryFn: () => soignantApi.getSignalements(),
+    refetchInterval: 60_000,
+    retry: false,
+  });
+  const nouveauxSignalements = useMemo(() => (signalements ?? []).filter((s) => s.statut === "nouveau"), [signalements]);
+  const total = nouveauxSignalements.length + nbAlertes;
+
   const recents = useMemo(() => (communiques ?? []).slice(0, 5), [communiques]);
   const nouveau = useMemo(() => {
-    if (nbAlertes > 0) return true;
+    if (total > 0) return true;
     if (!communiques || communiques.length === 0) return false;
     const dernier = new Date(communiques[0]!.createdAt).getTime();
     return Date.now() - dernier < 24 * 60 * 60 * 1000;
-  }, [communiques, nbAlertes]);
+  }, [communiques, total]);
 
   return (
     <header className="sticky top-0 z-20 border-b border-border/60 bg-card/95 backdrop-blur">
@@ -117,7 +127,11 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
                 title={t("app_shell.notifications_tooltip")}
               >
                 <Bell className="h-4 w-4" />
-                {nouveau && (
+                {total > 0 ? (
+                  <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white">
+                    {total > 99 ? "99+" : total}
+                  </span>
+                ) : nouveau && (
                   <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" />
                 )}
               </Button>
@@ -126,6 +140,31 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
               <div className="border-b border-border px-4 py-3">
                 <p className="text-sm font-bold text-foreground">{t("app_shell.notifications_title")}</p>
               </div>
+              {nouveauxSignalements.length > 0 && (
+                <div className="border-b border-border">
+                  <p className="px-4 pt-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    {t("signalements_page.cloche", { count: nouveauxSignalements.length })}
+                  </p>
+                  <ul className="max-h-56 overflow-y-auto py-1">
+                    {nouveauxSignalements.slice(0, 5).map((s) => (
+                      <li key={s.id}>
+                        <Link to={`/soignant/patients/${s.patient.id}`} className="flex items-start gap-2 px-4 py-2 hover:bg-secondary/50">
+                          <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${s.gravite === "severe" ? "bg-destructive" : s.gravite === "modere" ? "bg-[hsl(var(--gold))]" : "bg-primary"}`} />
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-semibold text-foreground">{s.symptome}</span>
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {s.patient.user.prenom} {s.patient.user.nom} · {t(`shared.gravite.${s.gravite}`)}
+                            </span>
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to="/soignant/signalements" className="block px-4 pb-3 text-xs font-semibold text-primary hover:underline">
+                    {t("signalements_page.voir_tous")}
+                  </Link>
+                </div>
+              )}
               {nbAlertes > 0 && (
                 <Link
                   to="/soignant/communautes"
@@ -135,7 +174,7 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
                   {t("communautes.cloche", { count: nbAlertes })}
                 </Link>
               )}
-              {recents.length === 0 && nbAlertes === 0 ? (
+              {recents.length === 0 && total === 0 ? (
                 <p className="px-4 py-6 text-center text-sm text-muted-foreground">
                   {t("app_shell.notifications_empty")}
                 </p>

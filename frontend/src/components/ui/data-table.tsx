@@ -19,7 +19,7 @@ export interface DataTableColumn<T> {
  * sans dépendance externe  juste du state React sur des données déjà en mémoire.
  */
 export function DataTable<T>({
-  data, columns, getRowKey, searchText, searchPlaceholder, pageSize = 8, emptyText,
+  data, columns, getRowKey, searchText, searchPlaceholder, pageSize = 8, emptyText, hideSearch = false,
 }: {
   data: T[];
   columns: DataTableColumn<T>[];
@@ -29,6 +29,8 @@ export function DataTable<T>({
   searchPlaceholder?: string;
   pageSize?: number;
   emptyText?: string;
+  /** La page a déjà ses propres filtres : pas de second champ de recherche */
+  hideSearch?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export function DataTable<T>({
 
   return (
     <div>
-      <div className="relative">
+      <div className={cn("relative", hideSearch && "hidden")}>
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={query}

@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database';
 import { FONCTIONS_SOIGNANT } from '../models/Soignant';
-import { BilanInclusion } from '../models';
+import { BilanInclusion, ReactionMessage, SignalementMessage } from '../models';
 import { CATEGORIES_ALERTE } from './moderation.service';
 
 /**
@@ -27,6 +27,7 @@ const COLONNES = [
   { table: 'messages_groupe', colonne: 'alerte_mots', definition: { type: DataTypes.STRING(255), allowNull: true } },
   { table: 'messages_groupe', colonne: 'alerte_statut', definition: { type: DataTypes.ENUM('a_traiter', 'traitee'), allowNull: true } },
   { table: 'messages_groupe', colonne: 'alerte_traitee_par', definition: { type: DataTypes.INTEGER, allowNull: true } },
+  { table: 'messages_groupe', colonne: 'reponse_a', definition: { type: DataTypes.INTEGER, allowNull: true } },
   { table: 'messages_groupe', colonne: 'alerte_traitee_le', definition: { type: DataTypes.DATE, allowNull: true } },
 ];
 
@@ -44,7 +45,7 @@ export async function mettreAJourSchema() {
   }
 
   // Tables récentes : CREATE TABLE IF NOT EXISTS, sans toucher à une table existante
-  for (const modele of [BilanInclusion]) {
+  for (const modele of [BilanInclusion, ReactionMessage, SignalementMessage]) {
     try {
       await modele.sync();
     } catch (err) {

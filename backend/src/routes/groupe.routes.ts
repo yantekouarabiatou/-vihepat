@@ -11,5 +11,7 @@ r.get('/', catchAsync(groupeController.getGroupes));
 r.post('/:id/rejoindre', catchAsync(groupeController.rejoindreGroupe));
 r.get('/:id/messages', catchAsync(groupeController.getMessages));
 r.post('/:id/messages', catchAsync(groupeController.postMessage));
+r.post('/messages/:messageId/reactions', catchAsync(groupeController.reagir));
+r.post('/messages/:messageId/signaler', catchAsync(groupeController.signalerMessage));
 
 export default r;

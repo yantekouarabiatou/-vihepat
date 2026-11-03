@@ -268,8 +268,8 @@
     "theme_sombre": "Switch to dark theme",
     "historique_tooltip": "Audit log",
     "notifications_tooltip": "Notifications",
-    "notifications_title": "Recent announcements",
-    "notifications_empty": "No notification yet.",
+    "notifications_title": "Notifications",
+    "notifications_empty": "No notifications for now.",
     "parametres_tooltip": "Settings",
     "langue_label": "Language",
     "patient_app_name": "My notebook",
@@ -635,7 +635,7 @@
   },
   "groupes": {
     "title": "Support groups",
-    "subtitle": "Talk with other patients under your first name. The care team can read the conversations.",
+    "subtitle": "Talk with other patients under a pseudonym. The care team can read the conversations.",
     "empty": "No group available yet.",
     "membres_count_one": "{{count}} member",
     "membres_count_other": "{{count}} members",
@@ -646,11 +646,34 @@
     "message_placeholder": "Write a message…",
     "toast_rejoindre_error": "Couldn't join this group",
     "toast_message_error": "Couldn't send the message",
-    "veille_info": "The care team can read these conversations to keep everyone safe. Messages containing certain words (distress, stopping treatment, insults, personal contact details) are flagged to them.",
+    "veille_info": "Nobody sees your first name: every member has a pseudonym. The care team can read the conversations to keep everyone safe. Messages with sensitive words and messages reported by members are passed on to them.",
     "soutien_titre": "You are not alone",
     "soutien_texte": "Talk to someone you trust right away and call emergency services or go to the nearest health centre. Your care team has been notified.",
     "soutien_fermer": "Close",
-    "masque_par_equipe": "Hidden by the care team: other members cannot see it."
+    "masque_par_equipe": "Hidden by the care team: other members cannot see it.",
+    "mon_pseudo": "You appear as “{{pseudo}}”.",
+    "repondre": "Reply",
+    "reponse_a": "Reply to {{auteur}}:",
+    "vous": "you",
+    "reaction_soutien": "I support you",
+    "reaction_merci": "Thanks",
+    "signaler": "Report",
+    "deja_signale": "Reported",
+    "signaler_titre": "Report this message",
+    "signaler_desc": "The care team will be notified. The author will not know who reported it.",
+    "signaler_motif": "Why?",
+    "signaler_commentaire": "Details (optional)",
+    "signaler_envoyer": "Report",
+    "signaler_ok": "Thank you, the care team will look at this message.",
+    "signaler_erreur": "Could not report this message",
+    "annuler": "Cancel",
+    "message_retire": "message removed by the team",
+    "motifs": {
+      "propos_blessants": "Hurtful words or insults",
+      "mauvais_conseil": "Bad health advice (stopping treatment, fake cure…)",
+      "coordonnees": "Sharing personal contact details",
+      "autre": "Other reason"
+    }
   },
   "language": {
     "fr": "Français",
@@ -659,7 +682,7 @@
     "change": "Change language (current: {{langue}})"
   },
   "sidebar": {
-    "role_admin": "Administrator",
+    "role_admin": "Super administrator",
     "role_soignant": "Care team space",
     "dashboard": "Dashboard",
     "communiques": "Announcements",
@@ -671,7 +694,8 @@
     "patients_index": "Patient directory",
     "patients_nouveau": "New patient",
     "patients_gestion": "Edit records and sheets",
-    "communautes": "Communities"
+    "communautes": "Communities",
+    "signalements": "Symptom reports"
   },
   "admin": {
     "page_title": "Administration",
@@ -976,14 +1000,14 @@
     },
     "role": {
       "admin": {
-        "name": "Administrator and coordinator",
-        "badge": "Administrator",
-        "description": "Oversees the platform and health facilities, manages enrolments and user accounts, monitors the audit log and has cross-cutting clinical access."
+        "name": "Super administrator",
+        "badge": "Super admin",
+        "description": "Can do everything: accounts, roles and permissions, database, audit log and access to every record."
       },
       "soignant": {
         "name": "Healthcare professional (caregiver)",
         "badge": "Caregiver",
-        "description": "Doctor, nurse or community health worker attached to a health facility. Can create patient records, prescribe, follow lab results and manage appointments for their caseload."
+        "description": "Follows the patients of their team. Doctors follow every patient and manage like an administrator (records, flags, communities); only the super administrator manages roles and the database."
       },
       "patient": {
         "name": "Patient in follow-up",
@@ -1362,7 +1386,7 @@
   },
   "communautes": {
     "titre": "Communities",
-    "sous_titre": "Support group conversations, under the first names members see. Messages with sensitive words are flagged here; nothing is blocked automatically.",
+    "sous_titre": "Support group conversations, under the pseudonyms members see. Messages with sensitive words and messages reported by members appear here; nothing is blocked automatically.",
     "signalements_titre": "Flags to review",
     "signalements_vide": "No pending flags.",
     "mots_detectes": "Words detected: {{mots}}",
@@ -1391,6 +1415,39 @@
       "injure": "Insult",
       "stigmatisation": "Stigma",
       "coordonnees": "Contact details"
-    }
+    },
+    "signale_par_membre": "Reported by a member",
+    "signalements_membres": "Reported by members:",
+    "message_masque_cite": "hidden message"
+  },
+  "signalements_page": {
+    "titre": "Symptom reports",
+    "sous_titre": "Every symptom reported by the patients you follow (every patient for doctors and the super administrator), with the history of handled reports.",
+    "a_traiter": "to handle",
+    "nouveaux": "new",
+    "severes": "severe to handle",
+    "liste": "Reports",
+    "recherche": "Search a patient, a code, a symptom…",
+    "vide": "No reports for these filters.",
+    "col_date": "Date",
+    "col_patient": "Patient",
+    "col_symptome": "Symptom",
+    "col_gravite": "Severity",
+    "col_statut": "Status",
+    "toutes_gravites": "All severities",
+    "filtre": {
+      "a_traiter": "To handle",
+      "nouveau": "New",
+      "vu": "Seen",
+      "traite": "Handled",
+      "tous": "All"
+    },
+    "marquer_vu": "Seen",
+    "marquer_traite": "Handled",
+    "toast_ok": "Report updated",
+    "toast_erreur": "Could not update the report",
+    "cloche_one": "{{count}} new report",
+    "cloche_other": "{{count}} new reports",
+    "voir_tous": "See all reports"
   }
 }

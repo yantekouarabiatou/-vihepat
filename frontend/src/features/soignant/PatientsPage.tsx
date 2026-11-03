@@ -63,6 +63,7 @@ import {
   type PatientCredentialsDoc,
 } from "@/lib/patient-pdf";
 import { BadgeRisquePerteSuivi } from "./RisquePerteSuivi";
+import { DataTable } from "@/components/ui/data-table";
 
 const PATHOLOGIES = ["vih", "vhb", "vhc", "vih_vhb", "vih_vhc", "vhb_vhc"] as const;
 
@@ -719,174 +720,155 @@ export function PatientsPage() {
               );
             })}
           </ul>
-          <div className="relative hidden overflow-x-auto md:block">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-border/70 bg-secondary/40 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="py-3.5 pl-6 pr-4">{t("patients.col_patient")}</th>
-                  <th className="px-4 py-3.5">{t("patients.col_pathologie")}</th>
-                  <th className="px-4 py-3.5">{t("patients.col_observance")}</th>
-                  <th className="px-4 py-3.5">{t("patients.col_examens")}</th>
-                  <th className="px-4 py-3.5">{t("patients.col_admission")}</th>
-                  <th className="py-3.5 pl-4 pr-6 text-right">{t("patients.col_actions")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {patientsFiltres.map((p) => {
-                  const initiales = `${p.user.prenom[0] || ""}${p.user.nom[0] || ""}`.toUpperCase();
-                  const badgeColor = PATHOLOGIE_COLORS[p.pathologie] || "bg-secondary text-foreground";
-                  const retard = p.examensEnRetard ?? 0;
-
-                  return (
-                    <tr
-                      key={p.id}
-                      className="group transition-colors hover:bg-secondary/40"
-                    >
-                      {/* Identité patient */}
-                      <td className="py-4 pl-6 pr-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">
-                            {initiales}
-                          </div>
-                          <div>
-                            <Link
-                              to={`/soignant/patients/${p.id}`}
-                              className="font-bold text-foreground hover:text-primary transition-colors hover:underline block"
-                            >
-                              {p.user.prenom} {p.user.nom}
-                            </Link>
-                            {p.rappelsARegarder && (
-                              <span
-                                className="mt-0.5 inline-flex items-center rounded-full bg-[hsl(var(--gold)/0.18)] px-2 py-0.5 text-[10px] font-semibold text-foreground"
-                                title={t("rappels_soignant.badge_tooltip")}
-                              >
-                                {t("rappels_soignant.badge")}
-                              </span>
-                            )}
-                            <BadgeRisquePerteSuivi risque={p.risquePerteSuivi} className="mt-0.5 ml-1 text-[10px]" />
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="font-mono text-xs font-semibold text-primary">
-                                {p.codePatient}
-                              </span>
-                              <span className="text-muted-foreground">·</span>
-                              <span className="text-xs text-muted-foreground truncate max-w-[150px]">
-                                {p.user.email}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Pathologie */}
-                      <td className="px-4 py-4">
-                        <span
-                          className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-bold ${badgeColor}`}
+          <div className="hidden px-4 pb-4 md:block">
+            <DataTable
+              data={patientsFiltres}
+              getRowKey={(p) => p.id}
+              searchText={(p) => `${p.user.prenom} ${p.user.nom} ${p.codePatient} ${p.user.email}`}
+              hideSearch
+              pageSize={15}
+              columns={[
+                {
+                  key: "patient",
+                  header: t("patients.col_patient"),
+                  sortValue: (p) => `${p.user.nom} ${p.user.prenom}`,
+                  render: (p) => (
+                    <div className="flex items-center gap-3 py-1.5">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">
+                        {`${p.user.prenom[0] || ""}${p.user.nom[0] || ""}`.toUpperCase()}
+                      </div>
+                      <div>
+                        <Link
+                          to={`/soignant/patients/${p.id}`}
+                          className="block font-bold text-foreground transition-colors hover:text-primary hover:underline"
                         >
-                          {t(`shared.pathologie.${p.pathologie}`, { defaultValue: p.pathologie.toUpperCase() })}
-                        </span>
-                      </td>
-
-                      {/* Observance */}
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
+                          {p.user.prenom} {p.user.nom}
+                        </Link>
+                        {p.rappelsARegarder && (
                           <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${tauxStyle(
-                              p.observance?.taux30
-                            )}`}
+                            className="mt-0.5 inline-flex items-center rounded-full bg-[hsl(var(--gold)/0.18)] px-2 py-0.5 text-[10px] font-semibold text-foreground"
+                            title={t("rappels_soignant.badge_tooltip")}
                           >
-                            {formatTaux(p.observance?.taux30)}
-                          </span>
-                          {typeof p.observance?.taux30 === "number" && (
-                            <span className="text-[11px] text-muted-foreground">
-                              {p.observance.taux30 >= 80 ? t("patients.obs_optimale") : p.observance.taux30 >= 50 ? t("patients.obs_moderee") : t("patients.obs_irreguliere")}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Examens */}
-                      <td className="px-4 py-4">
-                        {retard > 0 ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
-                            <AlertCircle className="h-3.5 w-3.5" />
-                            {t("patients.bilans_retard", { count: retard })}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                            {t("patients.a_jour")}
+                            {t("rappels_soignant.badge")}
                           </span>
                         )}
-                      </td>
-
-                      {/* Date de création */}
-                      <td className="px-4 py-4 text-xs text-muted-foreground">
-                        {new Date(p.createdAt).toLocaleDateString(locale, {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </td>
-
-                      {/* Boutons d'action */}
-                      <td className="py-4 pl-4 pr-6 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Voir le dossier */}
-                          <Link
-                            to={`/soignant/patients/${p.id}`}
-                            className="inline-flex items-center gap-1 rounded-lg border border-border/80 bg-card px-2.5 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-secondary"
-                            title={t("patients.voir_dossier_tooltip")}
-                            aria-label={t("patients.voir_dossier_tooltip")}
-                          >
-                            <Eye className="h-3.5 w-3.5 text-primary" />
-                            <span className="hidden lg:inline">{t("patients.voir_dossier")}</span>
-                          </Link>
-
-                          {/* Modifier */}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => ouvrirModification(p)}
-                            className="h-8 gap-1 px-2.5 text-xs font-semibold rounded-lg"
-                            title={t("patients.modifier_tooltip")}
-                            aria-label={t("patients.modifier_tooltip")}
-                          >
-                            <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="hidden lg:inline">{t("patients.modifier")}</span>
-                          </Button>
-
-                          {/* Réinitialiser le mot de passe & fiche PDF */}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setPatientEnReinitialisation(p)}
-                            className="h-8 gap-1 px-2.5 text-xs font-semibold rounded-lg text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-900/50 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                            title={t("fiche.reinit_tooltip")}
-                            aria-label={t("fiche.reinit_tooltip")}
-                          >
-                            <KeyRound className="h-3.5 w-3.5" />
-                            <span className="hidden xl:inline">{t("patients.reinitialiser")}</span>
-                          </Button>
-
-                          {/* Télécharger la fiche PDF d'accès */}
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => telechargerFiche(p)}
-                            className="h-8 gap-1 px-2.5 text-xs font-semibold rounded-lg"
-                            title={t("patients.pdf_tooltip")}
-                            aria-label={t("patients.pdf_tooltip")}
-                          >
-                            <FileDown className="h-3.5 w-3.5 text-primary" />
-                            <span className="hidden sm:inline">PDF</span>
-                          </Button>
+                        <BadgeRisquePerteSuivi risque={p.risquePerteSuivi} className="mt-0.5 ml-1 text-[10px]" />
+                        <div className="mt-0.5 flex items-center gap-2">
+                          <span className="font-mono text-xs font-semibold text-primary">{p.codePatient}</span>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="max-w-[150px] truncate text-xs text-muted-foreground">{p.user.email}</span>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  key: "pathologie",
+                  header: t("patients.col_pathologie"),
+                  sortValue: (p) => p.pathologie,
+                  render: (p) => (
+                    <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-bold ${PATHOLOGIE_COLORS[p.pathologie] || "bg-secondary text-foreground"}`}>
+                      {t(`shared.pathologie.${p.pathologie}`, { defaultValue: p.pathologie.toUpperCase() })}
+                    </span>
+                  ),
+                },
+                {
+                  key: "observance",
+                  header: t("patients.col_observance"),
+                  sortValue: (p) => p.observance?.taux30 ?? -1,
+                  render: (p) => (
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${tauxStyle(p.observance?.taux30)}`}>
+                        {formatTaux(p.observance?.taux30)}
+                      </span>
+                      {typeof p.observance?.taux30 === "number" && (
+                        <span className="text-[11px] text-muted-foreground">
+                          {p.observance.taux30 >= 80 ? t("patients.obs_optimale") : p.observance.taux30 >= 50 ? t("patients.obs_moderee") : t("patients.obs_irreguliere")}
+                        </span>
+                      )}
+                    </div>
+                  ),
+                },
+                {
+                  key: "examens",
+                  header: t("patients.col_examens"),
+                  sortValue: (p) => p.examensEnRetard ?? 0,
+                  render: (p) =>
+                    (p.examensEnRetard ?? 0) > 0 ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        {t("patients.bilans_retard", { count: p.examensEnRetard ?? 0 })}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                        {t("patients.a_jour")}
+                      </span>
+                    ),
+                },
+                {
+                  key: "admission",
+                  header: t("patients.col_admission"),
+                  sortValue: (p) => new Date(p.createdAt).getTime(),
+                  render: (p) => (
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(p.createdAt).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  ),
+                },
+                {
+                  key: "actions",
+                  header: t("patients.col_actions"),
+                  align: "right",
+                  render: (p) => (
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Link
+                        to={`/soignant/patients/${p.id}`}
+                        className="inline-flex items-center gap-1 rounded-lg border border-border/80 bg-card px-2.5 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-secondary"
+                        title={t("patients.voir_dossier_tooltip")}
+                        aria-label={t("patients.voir_dossier_tooltip")}
+                      >
+                        <Eye className="h-3.5 w-3.5 text-primary" />
+                        <span className="hidden lg:inline">{t("patients.voir_dossier")}</span>
+                      </Link>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => ouvrirModification(p)}
+                        className="h-8 gap-1 rounded-lg px-2.5 text-xs font-semibold"
+                        title={t("patients.modifier_tooltip")}
+                        aria-label={t("patients.modifier_tooltip")}
+                      >
+                        <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="hidden lg:inline">{t("patients.modifier")}</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setPatientEnReinitialisation(p)}
+                        className="h-8 gap-1 rounded-lg border-amber-300 px-2.5 text-xs font-semibold text-amber-700 hover:bg-amber-50 dark:border-amber-900/50 dark:text-amber-400 dark:hover:bg-amber-950/30"
+                        title={t("fiche.reinit_tooltip")}
+                        aria-label={t("fiche.reinit_tooltip")}
+                      >
+                        <KeyRound className="h-3.5 w-3.5" />
+                        <span className="hidden xl:inline">{t("patients.reinitialiser")}</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => telechargerFiche(p)}
+                        className="h-8 gap-1 rounded-lg px-2.5 text-xs font-semibold"
+                        title={t("patients.pdf_tooltip")}
+                        aria-label={t("patients.pdf_tooltip")}
+                      >
+                        <FileDown className="h-3.5 w-3.5 text-primary" />
+                        <span className="hidden sm:inline">PDF</span>
+                      </Button>
+                    </div>
+                  ),
+                },
+              ]}
+            />
           </div>
           </>
         )}

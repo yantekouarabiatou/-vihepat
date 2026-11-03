@@ -9,6 +9,8 @@ export interface MessageGroupeAttributes {
   groupeId: number;
   patientId: number;
   contenu: string;
+  /** Message auquel celui-ci répond (fil de discussion) */
+  reponseA?: number | null;
   /** Masqué par l'équipe soignante : invisible pour les autres membres du groupe */
   masque: boolean;
   /** Veille des mots sensibles (services/moderation.service.ts) : null = rien à signaler */
@@ -21,7 +23,7 @@ export interface MessageGroupeAttributes {
 }
 
 type MessageGroupeCreation = Optional<MessageGroupeAttributes,
-  'id' | 'masque' | 'alerteCategorie' | 'alerteMots' | 'alerteStatut' | 'alerteTraiteePar' | 'alerteTraiteeLe'>;
+  'id' | 'reponseA' | 'masque' | 'alerteCategorie' | 'alerteMots' | 'alerteStatut' | 'alerteTraiteePar' | 'alerteTraiteeLe'>;
 
 export class MessageGroupe
   extends Model<MessageGroupeAttributes, MessageGroupeCreation>
@@ -30,6 +32,7 @@ export class MessageGroupe
   declare groupeId: number;
   declare patientId: number;
   declare contenu: string;
+  declare reponseA?: number | null;
   declare masque: boolean;
   declare alerteCategorie?: CategorieAlerte | null;
   declare alerteMots?: string | null;
@@ -45,6 +48,7 @@ MessageGroupe.init(
     groupeId: { type: DataTypes.INTEGER, allowNull: false },
     patientId: { type: DataTypes.INTEGER, allowNull: false },
     contenu: { type: DataTypes.TEXT, allowNull: false },
+    reponseA: { type: DataTypes.INTEGER, allowNull: true },
     masque: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     alerteCategorie: { type: DataTypes.ENUM(...CATEGORIES_ALERTE), allowNull: true },
     alerteMots: { type: DataTypes.STRING(255), allowNull: true },

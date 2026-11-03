@@ -41,12 +41,18 @@ export interface MessageGroupeEquipe {
   groupe?: string;
   contenu: string;
   createdAt: string;
-  /** Prénom, comme les membres le voient */
+  /** Pseudonyme, comme les membres le voient */
   auteur: string;
   /** Seulement pour un patient que ce soignant suit (tous pour un admin) */
   patient: { id: number; codePatient: string } | null;
   masque: boolean;
-  alerte: { categorie: CategorieAlerteGroupe; mots: string; statut: 'a_traiter' | 'traitee' | null; traiteeLe: string | null } | null;
+  reponseA: { id: number; auteur: string; extrait: string | null } | null;
+  reactions: { soutien: number; merci: number };
+  /** Signalements faits par des membres, regroupés par motif */
+  signalementsMembres: { motif: 'propos_blessants' | 'mauvais_conseil' | 'coordonnees' | 'autre'; nombre: number }[];
+  commentairesMembres: string[];
+  /** categorie null = message signalé par un membre, sans mot sensible détecté */
+  alerte: { categorie: CategorieAlerteGroupe | null; mots: string; statut: 'a_traiter' | 'traitee' | null; traiteeLe: string | null } | null;
 }
 
 export interface AlertesGroupes {
@@ -323,7 +329,8 @@ export const soignantApi = {
   createCommunique: (input: { titre: string; contenu: string; cible: CibleCommunique; patientId?: number }) =>
     api.post<Communique>('/soignant/communiques', input).then((r) => r.data),
 
-  getSignalements: (statut?: StatutSignalement) =>
+  /** Sans filtre : les signalements à traiter ; `tous` : l'historique complet */
+  getSignalements: (statut?: StatutSignalement | 'tous') =>
     api
       .get<SoignantSignalement[]>('/soignant/signalements', { params: statut ? { statut } : undefined })
       .then((r) => r.data),

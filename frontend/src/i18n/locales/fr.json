@@ -268,7 +268,7 @@
     "theme_sombre": "Passer au thème sombre",
     "historique_tooltip": "Journal d'audit",
     "notifications_tooltip": "Notifications",
-    "notifications_title": "Communiqués récents",
+    "notifications_title": "Notifications",
     "notifications_empty": "Aucune notification pour le moment.",
     "parametres_tooltip": "Paramètres",
     "langue_label": "Langue",
@@ -635,7 +635,7 @@
   },
   "groupes": {
     "title": "Groupes de soutien",
-    "subtitle": "Échangez avec d'autres patients sous votre prénom. L'équipe soignante peut lire les échanges.",
+    "subtitle": "Échangez avec d'autres patients sous un pseudonyme. L'équipe soignante peut lire les échanges.",
     "empty": "Aucun groupe disponible pour le moment.",
     "membres_count_one": "{{count}} membre",
     "membres_count_other": "{{count}} membres",
@@ -646,11 +646,34 @@
     "message_placeholder": "Écrire un message…",
     "toast_rejoindre_error": "Impossible de rejoindre ce groupe",
     "toast_message_error": "Impossible d'envoyer le message",
-    "veille_info": "L'équipe soignante peut lire ces échanges pour veiller à la sécurité de tous. Les messages qui contiennent certains mots (détresse, arrêt du traitement, insultes, coordonnées personnelles) lui sont signalés.",
+    "veille_info": "Personne ne voit votre prénom : chaque membre a un pseudonyme. L'équipe soignante peut lire les échanges pour veiller à la sécurité de tous. Les messages avec des mots sensibles et ceux que les membres signalent lui sont transmis.",
     "soutien_titre": "Vous n'êtes pas seul(e)",
     "soutien_texte": "Parlez-en tout de suite à une personne de confiance et contactez les secours ou rendez-vous au centre de santé le plus proche. Votre équipe soignante est prévenue.",
     "soutien_fermer": "Fermer",
-    "masque_par_equipe": "Masqué par l'équipe soignante : les autres membres ne le voient pas."
+    "masque_par_equipe": "Masqué par l'équipe soignante : les autres membres ne le voient pas.",
+    "mon_pseudo": "Vous apparaissez sous le nom « {{pseudo}} ».",
+    "repondre": "Répondre",
+    "reponse_a": "Réponse à {{auteur}} :",
+    "vous": "vous",
+    "reaction_soutien": "Je vous soutiens",
+    "reaction_merci": "Merci",
+    "signaler": "Signaler",
+    "deja_signale": "Signalé",
+    "signaler_titre": "Signaler ce message",
+    "signaler_desc": "L'équipe soignante sera prévenue. L'auteur ne saura pas qui l'a signalé.",
+    "signaler_motif": "Pourquoi ?",
+    "signaler_commentaire": "Précision (facultatif)",
+    "signaler_envoyer": "Signaler",
+    "signaler_ok": "Merci, l'équipe soignante va regarder ce message.",
+    "signaler_erreur": "Impossible de signaler ce message",
+    "annuler": "Annuler",
+    "message_retire": "message retiré par l’équipe",
+    "motifs": {
+      "propos_blessants": "Propos blessants ou insultes",
+      "mauvais_conseil": "Mauvais conseil de santé (arrêt du traitement, faux remède…)",
+      "coordonnees": "Partage de coordonnées personnelles",
+      "autre": "Autre raison"
+    }
   },
   "language": {
     "fr": "Français",
@@ -659,7 +682,7 @@
     "change": "Changer de langue (actuelle : {{langue}})"
   },
   "sidebar": {
-    "role_admin": "Administrateur",
+    "role_admin": "Super administrateur",
     "role_soignant": "Espace soignant",
     "dashboard": "Tableau de bord",
     "communiques": "Communiqués",
@@ -671,7 +694,8 @@
     "patients_index": "Répertoire des patients",
     "patients_nouveau": "Nouveau patient",
     "patients_gestion": "Modification et fiches",
-    "communautes": "Communautés"
+    "communautes": "Communautés",
+    "signalements": "Signalements"
   },
   "admin": {
     "page_title": "Administration",
@@ -976,14 +1000,14 @@
     },
     "role": {
       "admin": {
-        "name": "Administrateur & Coordinateur",
-        "badge": "Administrateur",
-        "description": "Supervise la plateforme, les structures médicales, gère les habilitations et les comptes utilisateurs, contrôle le journal d'audit et possède un accès médical transverse."
+        "name": "Super administrateur",
+        "badge": "Super admin",
+        "description": "Peut tout faire : comptes, rôles et permissions, base de données, journal d'audit et accès à tous les dossiers."
       },
       "soignant": {
         "name": "Professionnel de Santé (Soignant)",
         "badge": "Soignant",
-        "description": "Médecin, infirmier ou médiateur rattaché à un centre de santé. Habilité à créer les dossiers patients, prescrire, suivre la biologie et gérer les rendez-vous de sa file active."
+        "description": "Suit les patients de son équipe. Le médecin suit tous les patients et gère comme un administrateur (dossiers, signalements, communautés) ; seul le super administrateur gère les rôles et la base de données."
       },
       "patient": {
         "name": "Patient·e suivi·e",
@@ -1362,7 +1386,7 @@
   },
   "communautes": {
     "titre": "Communautés",
-    "sous_titre": "Les discussions des groupes de soutien, sous les prénoms que voient les membres. Les messages contenant des mots sensibles sont signalés ici ; rien n'est bloqué automatiquement.",
+    "sous_titre": "Les discussions des groupes de soutien, sous les pseudonymes que voient les membres. Les messages avec des mots sensibles et ceux que les membres signalent apparaissent ici ; rien n'est bloqué automatiquement.",
     "signalements_titre": "Signalements à traiter",
     "signalements_vide": "Aucun signalement en attente.",
     "mots_detectes": "Mots détectés : {{mots}}",
@@ -1391,6 +1415,39 @@
       "injure": "Insulte",
       "stigmatisation": "Stigmatisation",
       "coordonnees": "Coordonnées"
-    }
+    },
+    "signale_par_membre": "Signalé par un membre",
+    "signalements_membres": "Signalé par des membres :",
+    "message_masque_cite": "message masqué"
+  },
+  "signalements_page": {
+    "titre": "Signalements de symptômes",
+    "sous_titre": "Tous les symptômes signalés par les patients que vous suivez (tous les patients pour le médecin et le super administrateur), avec l'historique des signalements traités.",
+    "a_traiter": "à traiter",
+    "nouveaux": "nouveaux",
+    "severes": "sévères à traiter",
+    "liste": "Liste des signalements",
+    "recherche": "Rechercher un patient, un code, un symptôme…",
+    "vide": "Aucun signalement pour ces filtres.",
+    "col_date": "Date",
+    "col_patient": "Patient",
+    "col_symptome": "Symptôme",
+    "col_gravite": "Gravité",
+    "col_statut": "Statut",
+    "toutes_gravites": "Toutes les gravités",
+    "filtre": {
+      "a_traiter": "À traiter",
+      "nouveau": "Nouveaux",
+      "vu": "Vus",
+      "traite": "Traités",
+      "tous": "Tous"
+    },
+    "marquer_vu": "Vu",
+    "marquer_traite": "Traité",
+    "toast_ok": "Signalement mis à jour",
+    "toast_erreur": "Impossible de mettre à jour le signalement",
+    "cloche_one": "{{count}} nouveau signalement",
+    "cloche_other": "{{count}} nouveaux signalements",
+    "voir_tous": "Voir tous les signalements"
   }
 }

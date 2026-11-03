@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, Eye, EyeOff, Loader2, MessagesSquare, ShieldAlert, Users } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, Flag, Heart, Loader2, MessagesSquare, Reply, ShieldAlert, ThumbsUp, Users } from "lucide-react";
 import { toast } from "sonner";
 import {
   soignantApi, type CategorieAlerteGroupe, type MessageGroupeEquipe,
@@ -35,13 +35,51 @@ function dateHeure(iso: string) {
   });
 }
 
-function BadgeAlerte({ categorie }: { categorie: CategorieAlerteGroupe }) {
+function BadgeAlerte({ categorie }: { categorie: CategorieAlerteGroupe | null }) {
   const { t } = useTranslation();
+  if (categorie === null) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--gold)/0.2)] px-2 py-0.5 text-[11px] font-bold text-[hsl(var(--gold))]">
+        <Flag className="h-3 w-3" aria-hidden="true" />
+        {t("communautes.signale_par_membre")}
+      </span>
+    );
+  }
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${ALERTE_STYLES[categorie]}`}>
       <ShieldAlert className="h-3 w-3" aria-hidden="true" />
       {t(`communautes.categories.${categorie}`)}
     </span>
+  );
+}
+
+/** Citation, réactions et signalements des membres d'un message */
+function DetailsMessage({ m }: { m: MessageGroupeEquipe }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {m.reponseA && (
+        <p className="mt-1 flex items-start gap-1 border-l-2 border-primary/40 pl-2 text-xs text-muted-foreground">
+          <Reply className="mt-0.5 h-3 w-3 shrink-0" />
+          <span><span className="font-semibold">{m.reponseA.auteur}</span> : {m.reponseA.extrait ?? t("communautes.message_masque_cite")}</span>
+        </p>
+      )}
+      {(m.reactions.soutien > 0 || m.reactions.merci > 0) && (
+        <p className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+          {m.reactions.soutien > 0 && <span className="inline-flex items-center gap-1"><Heart className="h-3 w-3" /> {m.reactions.soutien}</span>}
+          {m.reactions.merci > 0 && <span className="inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" /> {m.reactions.merci}</span>}
+        </p>
+      )}
+      {m.signalementsMembres.length > 0 && (
+        <div className="mt-1.5 rounded-xl bg-[hsl(var(--gold)/0.12)] px-3 py-2 text-xs text-foreground">
+          <p className="font-semibold">
+            {t("communautes.signalements_membres")}{" "}
+            {m.signalementsMembres.map((s) => `${t(`groupes.motifs.${s.motif}`)} (${s.nombre})`).join(", ")}
+          </p>
+          {m.commentairesMembres.map((c, i) => <p key={i} className="mt-0.5 italic text-muted-foreground">« {c} »</p>)}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -141,9 +179,10 @@ export function CommunautesPage() {
                   <span>{dateHeure(m.createdAt)}</span>
                 </div>
                 <p className="mt-1.5 text-sm text-foreground">{m.contenu}</p>
-                {m.alerte && (
+                {m.alerte?.mots && (
                   <p className="mt-1 text-xs text-muted-foreground">{t("communautes.mots_detectes", { mots: m.alerte.mots })}</p>
                 )}
+                <DetailsMessage m={m} />
                 {m.alerte?.categorie === "detresse" && (
                   <p className="mt-1.5 rounded-xl bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">{t("communautes.consigne_detresse")}</p>
                 )}
@@ -221,6 +260,7 @@ export function CommunautesPage() {
                     {m.masque && <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold">{t("communautes.masque")}</span>}
                   </div>
                   <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{m.contenu}</p>
+                  <DetailsMessage m={m} />
                   <div className="mt-2"><ActionsMessage m={m} /></div>
                 </li>
               ))}

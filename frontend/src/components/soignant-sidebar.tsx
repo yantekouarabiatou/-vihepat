@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Database, Globe, HeartPulse, LayoutDashboard, LogOut, Megaphone, MessagesSquare, Users, UserPlus, UserCog } from "lucide-react";
+import { Database, Globe, HeartPulse, LayoutDashboard, LogOut, Megaphone, MessagesSquare, Stethoscope, Users, UserPlus, UserCog } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
@@ -48,6 +48,7 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
         { to: "/soignant/patients", icon: Users, label: t("sidebar.patients_index") },
         ...(medecin ? [{ to: "/soignant/patients?action=nouveau", icon: UserPlus, label: t("sidebar.patients_nouveau") }] : []),
         { to: "/soignant/patients?view=gestion", icon: UserCog, label: t("sidebar.patients_gestion") },
+        { to: "/soignant/signalements", icon: Stethoscope, label: t("sidebar.signalements") },
       ],
     },
     {
