@@ -1449,5 +1449,30 @@
     "cloche_one": "{{count}} new report",
     "cloche_other": "{{count}} new reports",
     "voir_tous": "See all reports"
+  },
+  "traitement_signalement": {
+    "titre": "Handle the report",
+    "sous_titre": "The reported symptom, the key points of the patient's record and the possible actions. Opening this panel is recorded in the audit log.",
+    "traiter": "Handle",
+    "voir": "View",
+    "marquer_traite": "Mark as handled",
+    "programmer_rdv": "Schedule an appointment",
+    "dossier_complet": "Full record",
+    "date_rdv": "Date and time",
+    "motif": "Reason",
+    "motif_defaut": "Follow-up of the report: {{symptome}}",
+    "confirmer_rdv": "Schedule",
+    "dossier": "Related record",
+    "traitements": "Current treatments",
+    "aucun_traitement": "No active treatment.",
+    "examens": "Latest tests",
+    "aucun_examen": "No test recorded.",
+    "autres_signalements": "Other recent reports",
+    "aucun_autre": "No other report.",
+    "prochains_rdv": "Upcoming appointments",
+    "aucun_rdv": "No upcoming appointment.",
+    "toast_statut": "Report updated",
+    "toast_rdv": "Appointment scheduled",
+    "toast_rdv_erreur": "Could not schedule the appointment"
   }
 }

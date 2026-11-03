@@ -1449,5 +1449,30 @@
     "cloche_one": "{{count}} nouveau signalement",
     "cloche_other": "{{count}} nouveaux signalements",
     "voir_tous": "Voir tous les signalements"
+  },
+  "traitement_signalement": {
+    "titre": "Traiter le signalement",
+    "sous_titre": "Le symptôme signalé, l'essentiel du dossier du patient et les actions possibles. Ouvrir ce panneau est tracé dans le journal d'audit.",
+    "traiter": "Traiter",
+    "voir": "Voir",
+    "marquer_traite": "Marquer traité",
+    "programmer_rdv": "Programmer un rendez-vous",
+    "dossier_complet": "Dossier complet",
+    "date_rdv": "Date et heure",
+    "motif": "Motif",
+    "motif_defaut": "Suite au signalement : {{symptome}}",
+    "confirmer_rdv": "Programmer",
+    "dossier": "Dossier associé",
+    "traitements": "Traitements en cours",
+    "aucun_traitement": "Aucun traitement actif.",
+    "examens": "Derniers examens",
+    "aucun_examen": "Aucun examen enregistré.",
+    "autres_signalements": "Autres signalements récents",
+    "aucun_autre": "Aucun autre signalement.",
+    "prochains_rdv": "Prochains rendez-vous",
+    "aucun_rdv": "Aucun rendez-vous à venir.",
+    "toast_statut": "Signalement mis à jour",
+    "toast_rdv": "Rendez-vous programmé",
+    "toast_rdv_erreur": "Impossible de programmer le rendez-vous"
   }
 }

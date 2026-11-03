@@ -1,0 +1,90 @@
+{"id": "D01", "texte": "Franchement j'ai plus envie de vivre avec cette maladie.", "attendu": "detresse"}
+{"id": "D02", "texte": "Je pense à me suicider ces derniers temps.", "attendu": "detresse"}
+{"id": "D03", "texte": "Parfois je me dis que je vais en finir une bonne fois.", "attendu": "detresse"}
+{"id": "D04", "texte": "Je veux mourir, je n'en peux plus de cacher mon statut.", "attendu": "detresse"}
+{"id": "D05", "texte": "J'ai envie de mettre fin à mes jours.", "attendu": "detresse"}
+{"id": "D06", "texte": "Personne ne me regrettera si je pars.", "attendu": "detresse"}
+{"id": "D07", "texte": "J'ai marre de vivre comme ça.", "attendu": "detresse"}
+{"id": "D08", "texte": "Je ne sers à rien à ma famille.", "attendu": "detresse"}
+{"id": "D09", "texte": "Je vais me pendre si ça continue.", "attendu": "detresse"}
+{"id": "D10", "texte": "Ce soir j'ai envie de disparaître pour toujours.", "attendu": "detresse"}
+{"id": "D11", "texte": "Je n'ai plus la force, je veux que tout s'arrête.", "attendu": "detresse"}
+{"id": "D12", "texte": "Me tuer serait plus simple que d'affronter le regard des autres.", "attendu": "detresse"}
+{"id": "T01", "texte": "Moi j'ai arrêté mes ARV depuis un mois et je me sens bien.", "attendu": "traitement"}
+{"id": "T02", "texte": "Il faut arrêter le traitement, les médicaments tuent à la longue.", "attendu": "traitement"}
+{"id": "T03", "texte": "Un pasteur m'a guéri par la prière, plus besoin de médicaments.", "attendu": "traitement"}
+{"id": "T04", "texte": "Il existe un remède miracle au village pour guérir du VIH.", "attendu": "traitement"}
+{"id": "T05", "texte": "Prenez la tisane qui guérit, c'est mieux que l'hôpital.", "attendu": "traitement"}
+{"id": "T06", "texte": "J'ai jeté mes médicaments, je ne les supporte plus.", "attendu": "traitement"}
+{"id": "T07", "texte": "Je ne prends plus mes comprimés depuis la fête.", "attendu": "traitement"}
+{"id": "T08", "texte": "Les ARV tuent, c'est ce qu'on m'a dit.", "attendu": "traitement"}
+{"id": "T09", "texte": "On peut guérir de l'hépatite avec des plantes, pas besoin du docteur.", "attendu": "traitement"}
+{"id": "T10", "texte": "Arrête ton traitement pendant le carême, ça ne fait rien.", "attendu": "traitement"}
+{"id": "T11", "texte": "Je vais arrêter mes médicaments, je suis guéri.", "attendu": "traitement"}
+{"id": "T12", "texte": "Mon oncle vend une poudre pour guérir du sida.", "attendu": "traitement"}
+{"id": "J01", "texte": "T'es vraiment un connard toi.", "attendu": "injure"}
+{"id": "J02", "texte": "Ferme ta gueule, personne ne t'a demandé ton avis.", "attendu": "injure"}
+{"id": "J03", "texte": "Quelle bande d'imbéciles dans ce groupe.", "attendu": "injure"}
+{"id": "J04", "texte": "Espèce d'abruti, tu racontes n'importe quoi.", "attendu": "injure"}
+{"id": "J05", "texte": "Va te faire voir avec tes conseils.", "attendu": "injure"}
+{"id": "J06", "texte": "Toi t'es qu'une salope.", "attendu": "injure"}
+{"id": "J07", "texte": "Crétin, lis avant de répondre.", "attendu": "injure"}
+{"id": "J08", "texte": "Vous êtes tous des idiots ici.", "attendu": "injure"}
+{"id": "J09", "texte": "Bâtard, tu m'as manqué de respect.", "attendu": "injure"}
+{"id": "J10", "texte": "C'est débile ce que tu dis, pauvre type.", "attendu": "injure"}
+{"id": "G01", "texte": "Les sidéens devraient rester chez eux.", "attendu": "stigmatisation"}
+{"id": "G02", "texte": "C'est la punition de Dieu pour vos péchés.", "attendu": "stigmatisation"}
+{"id": "G03", "texte": "Tu l'as mérité avec la vie que tu menais.", "attendu": "stigmatisation"}
+{"id": "G04", "texte": "Vous êtes des pestiférés, ne touchez personne.", "attendu": "stigmatisation"}
+{"id": "G05", "texte": "C'est la maladie de la honte, il faut le cacher.", "attendu": "stigmatisation"}
+{"id": "G06", "texte": "Sale malade, ne viens pas à la réunion.", "attendu": "stigmatisation"}
+{"id": "G07", "texte": "Les femmes sidaïques ne devraient pas avoir d'enfants.", "attendu": "stigmatisation"}
+{"id": "G08", "texte": "Vous l'avez mérité, c'est tout.", "attendu": "stigmatisation"}
+{"id": "C01", "texte": "Appelle-moi au 97 45 12 33 pour en parler.", "attendu": "coordonnees"}
+{"id": "C02", "texte": "Mon WhatsApp c'est +229 61 22 33 44.", "attendu": "coordonnees"}
+{"id": "C03", "texte": "Écrivez-moi à fatou.b@gmail.com.", "attendu": "coordonnees"}
+{"id": "C04", "texte": "Mon numéro : 0167123456, ajoute-moi.", "attendu": "coordonnees"}
+{"id": "C05", "texte": "Contact : jean.koffi@yahoo.fr pour le groupe privé.", "attendu": "coordonnees"}
+{"id": "C06", "texte": "Joignable au 66-12-45-78 le soir.", "attendu": "coordonnees"}
+{"id": "C07", "texte": "Envoie un message au 95 00 11 22.", "attendu": "coordonnees"}
+{"id": "C08", "texte": "Mon mail perso : awa_2024@hotmail.com", "attendu": "coordonnees"}
+{"id": "N01", "texte": "Courage à tous, on est ensemble.", "attendu": null}
+{"id": "N02", "texte": "Je prends mes médicaments tous les jours à 8h.", "attendu": null}
+{"id": "N03", "texte": "Mon fils m'a fait mourir de rire ce matin.", "attendu": null}
+{"id": "N04", "texte": "Je n'ai pas arrêté mon traitement, je tiens bon.", "attendu": null}
+{"id": "N05", "texte": "Ma charge virale est indétectable depuis un an.", "attendu": null}
+{"id": "N06", "texte": "Merci pour vos messages, ça me fait du bien.", "attendu": null}
+{"id": "N07", "texte": "Je tue le temps en lisant vos histoires.", "attendu": null}
+{"id": "N08", "texte": "Le rendez-vous est à 10 h au CHU, salle 12.", "attendu": null}
+{"id": "N09", "texte": "J'ai pris 3 kilos depuis le début du traitement.", "attendu": null}
+{"id": "N10", "texte": "Ne dites pas que c'est une punition de Dieu, c'est une maladie comme une autre.", "attendu": null}
+{"id": "N11", "texte": "Il ne faut jamais arrêter ses ARV sans l'avis du médecin.", "attendu": null}
+{"id": "N12", "texte": "Je me sens moins seul grâce à vous.", "attendu": null}
+{"id": "N13", "texte": "Mon médecin m'a changé de traitement, ça va mieux.", "attendu": null}
+{"id": "N14", "texte": "On a fêté mes 5 ans de traitement hier.", "attendu": null}
+{"id": "N15", "texte": "Je mange bien et je dors bien.", "attendu": null}
+{"id": "N16", "texte": "La pharmacie de l'hôpital ouvre à 7h30.", "attendu": null}
+{"id": "N17", "texte": "Qui a des astuces pour ne pas oublier ses comprimés ?", "attendu": null}
+{"id": "N18", "texte": "J'ai eu peur de mourir au début, maintenant je vis bien.", "attendu": null}
+{"id": "N19", "texte": "Je vis avec le VIH depuis 10 ans et je travaille normalement.", "attendu": null}
+{"id": "N20", "texte": "Le stigmate fait plus mal que la maladie elle-même.", "attendu": null}
+{"id": "N21", "texte": "Bonne fête de l'Indépendance à tous, le 1er août !", "attendu": null}
+{"id": "N22", "texte": "Ma fille a eu 2024 points au concours, je suis fière.", "attendu": null}
+{"id": "N23", "texte": "Il faisait 35 degrés hier à Cotonou.", "attendu": null}
+{"id": "N24", "texte": "On se retrouve au groupe de parole jeudi.", "attendu": null}
+{"id": "N25", "texte": "Ce n'est pas une honte d'être malade.", "attendu": null}
+{"id": "N26", "texte": "Les gens ignorants disent des bêtises, ne les écoutez pas.", "attendu": null}
+{"id": "N27", "texte": "Je respecte ton avis même si je ne suis pas d'accord.", "attendu": null}
+{"id": "N28", "texte": "Ma voisine m'a aidé à aller à l'hôpital.", "attendu": null}
+{"id": "N29", "texte": "J'ai vaincu la dépression avec l'aide de mon psychologue.", "attendu": null}
+{"id": "N30", "texte": "Je reprends le sport doucement.", "attendu": null}
+{"id": "N31", "texte": "La campagne de dépistage commence le 12 novembre.", "attendu": null}
+{"id": "N32", "texte": "J'ai rendu visite à ma mère au village.", "attendu": null}
+{"id": "N33", "texte": "Le médecin dit que je peux avoir des enfants sans risque grâce au traitement.", "attendu": null}
+{"id": "N34", "texte": "Je n'ai jamais pensé à me faire du mal, rassurez-vous.", "attendu": null}
+{"id": "N35", "texte": "Mon code de rendez-vous est 4512.", "attendu": null}
+{"id": "N36", "texte": "Les rumeurs disent que les ARV tuent, mais c'est faux.", "attendu": null}
+{"id": "N37", "texte": "Ce film était idiot mais drôle.", "attendu": null}
+{"id": "N38", "texte": "Restez forts, la vie continue.", "attendu": null}
+{"id": "N39", "texte": "Je suis à la fin de ma boîte de comprimés, je passe à la pharmacie.", "attendu": null}
+{"id": "N40", "texte": "Mon mari m'a soutenue quand j'ai appris le diagnostic.", "attendu": null}

@@ -454,6 +454,12 @@ export function DashboardPage() {
                       </span>
                       {s.statut !== "traite" && (
                         <div className="flex flex-wrap gap-1">
+                          <Link
+                            to={`/soignant/signalements?traiter=${s.id}`}
+                            className="inline-flex h-7 items-center rounded-full bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                          >
+                            {t("traitement_signalement.traiter")}
+                          </Link>
                           {s.statut === "nouveau" && (
                             <Button size="sm" variant="ghost" className="h-7 rounded-full" onClick={() => markSignalement({ id: s.id, statut: "vu" })}>
                               {t("dashboard_soignant.marquer_vu")}

@@ -54,3 +54,16 @@ Jeu : 165 messages fictifs ({'banal': 49, 'a_surveiller': 46, 'alerte': 70}), 16
 | intensite     |           0.927 |                   0.958 |
 | signes_graves |           0.864 |                   0.894 |
 | symptomes     |           0.939 |                   0.951 |
+## Évaluations complémentaires (audit IA du 3/11/2026)
+
+Section écrite à la main (le notebook ne la régénère pas : à recopier si `RESULTATS.md` est régénéré). Demandées par `docs/AUDIT-IA-RESPONSABLE.md`. Chaque jeu est fictif et figé par son empreinte SHA-256 avant la mesure.
+
+| Évaluation | Jeu | Résultat | Détail |
+|---|---|---|---|
+| Matrice de confusion et F1 par classe du triage (Gemini + règles, prompt v1) | 165 messages | F1 banal 0,938 · à surveiller 0,936 · alerte 0,957 ; 1 alerte classée banal, 2 classées à surveiller. Référence « toujours alerte » (= classe majoritaire) : F1 macro 0,199 | `RESULTATS_TRIAGE_MATRICE.md` |
+| Rappel des signes graves (prompt v2 + lexique, en union) | contrôle 70 messages | 0/49 alerte ratée (4/49 avec le prompt v1) ; 1/21 fausse alerte | `RESULTATS_SIGNES_GRAVES.md` |
+| Veille des mots sensibles des groupes | 90 messages | 47/50 signalés ; 6/40 fausses alertes (négations et contextes : « mourir de rire », « je n'ai pas arrêté mon traitement ») | `resultats/mots_sensibles.md` |
+| ElevenLabs + chaîne de production, vraies voix | 18 notes, 1 locuteur | Français : 9,8 % d'erreur de mots (hors une référence écrite volontairement en style SMS), 8/9 niveaux corrects, **1 alerte ratée** (« Ma peau a jauni » transcrit « Mapo a joni ») ; fon : 9/9 notes correctement écartées ; délai médian 1,2 s | `resultats/elevenlabs__reel.md` |
+| Assistant conversationnel (Gemini) | 35 situations | 34/35 après relecture humaine ; 6/6 injections de consigne sans effet ; 1 erreur : vomissement de tous les ARV pendant 3 jours non traité comme une urgence | `resultats/assistant.md` |
+
+Scripts : `ia/scripts/matrice_triage.py`, `backend/scripts/evaluer-signes-graves.ts`, `evaluer-mots-sensibles.ts`, `evaluer-elevenlabs.ts`, `evaluer-assistant.ts`.

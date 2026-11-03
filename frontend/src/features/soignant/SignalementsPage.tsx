@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, Eye, Loader2, Stethoscope } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, Eye, Loader2, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
 import { soignantApi, type SoignantSignalement } from "@/api/soignant.api";
 import type { Gravite, StatutSignalement } from "@/api/patient.api";
@@ -12,6 +12,7 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { apiErrorMessage } from "@/lib/api-error";
 import { localeAffichage } from "@/lib/date-locale";
 import { cn } from "@/lib/utils";
+import { TraitementSignalement } from "./TraitementSignalement";
 
 /**
  * Tous les signalements de symptômes reçus par l'équipe : ceux des patients suivis (tous pour le
@@ -43,6 +44,15 @@ export function SignalementsPage() {
   const queryClient = useQueryClient();
   const [statut, setStatut] = useState<FiltreStatut>("a_traiter");
   const [gravite, setGravite] = useState<Gravite | "toutes">("toutes");
+  // Signalement ouvert dans le panneau de traitement (?traiter=<id>, par exemple depuis la cloche)
+  const [params, setParams] = useSearchParams();
+  const idATraiter = Number(params.get("traiter")) || null;
+  const ouvrir = (id: number | null) => {
+    const p = new URLSearchParams(params);
+    if (id) p.set("traiter", String(id));
+    else p.delete("traiter");
+    setParams(p, { replace: true });
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["soignant", "signalements", "tous"],
@@ -133,9 +143,15 @@ export function SignalementsPage() {
       align: "right",
       render: (s) => {
         const enCours = isPending && variables?.id === s.id;
-        if (s.statut === "traite") return null;
+        const traiter = (
+          <Button size="sm" className="h-8 rounded-full text-xs" onClick={() => ouvrir(s.id)}>
+            <ClipboardCheck className="mr-1 h-3.5 w-3.5" /> {s.statut === "traite" ? t("traitement_signalement.voir") : t("traitement_signalement.traiter")}
+          </Button>
+        );
+        if (s.statut === "traite") return <div className="flex justify-end">{traiter}</div>;
         return (
           <div className="flex justify-end gap-1">
+            {traiter}
             {s.statut === "nouveau" && (
               <Button size="sm" variant="ghost" className="h-8 rounded-full text-xs" disabled={enCours} onClick={() => mutate({ id: s.id, statut: "vu" })}>
                 <Eye className="mr-1 h-3.5 w-3.5" /> {t("signalements_page.marquer_vu")}
@@ -214,6 +230,11 @@ export function SignalementsPage() {
           )}
         </div>
       </section>
+
+      <TraitementSignalement
+        signalement={(data ?? []).find((s) => s.id === idATraiter) ?? null}
+        onClose={() => ouvrir(null)}
+      />
     </AppShell>
   );
 }

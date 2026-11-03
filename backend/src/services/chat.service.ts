@@ -218,14 +218,14 @@ function versTours(history: ChatTurn[]): GeminiTour[] {
   return tours;
 }
 
-/** Chat avec Gemini quand aucune clé Anthropic n'est configurée. */
-async function sendChatGemini(userId: number | null | undefined, role: string | null | undefined, history: ChatTurn[]): Promise<ChatResult> {
-  const isPatient = role === 'patient' && !!userId;
+/**
+ * Requête envoyée à Gemini pour le chat, isolée pour pouvoir l'évaluer telle quelle sans rien écrire
+ * en base (backend/scripts/evaluer-assistant.ts). Null si le dernier tour n'est pas de l'utilisateur.
+ */
+export function requeteChatGemini(isPatient: boolean, history: ChatTurn[]) {
   const contents = versTours(history);
-  if (!contents.length || contents[contents.length - 1]!.role !== 'user') {
-    return { reply: 'Message bien reçu.', signalementCreated: false };
-  }
-  const g = await genererContenu({
+  if (!contents.length || contents[contents.length - 1]!.role !== 'user') return null;
+  return {
     system: (isPatient ? SYSTEM_PROMPT_PATIENT : SYSTEM_PROMPT_PUBLIC)
       .replace(/utilise l'outil "file_signalement" pour l'enregistrer/g, "remplis le champ « signalement » pour l'enregistrer")
       .replace(/enregistre le signalement/g, 'remplis le champ « signalement »') + CONSIGNE_JSON_GEMINI,
@@ -233,7 +233,15 @@ async function sendChatGemini(userId: number | null | undefined, role: string | 
     schema: isPatient ? SCHEMA_GEMINI_PATIENT : SCHEMA_GEMINI_PUBLIC,
     temperature: 0.3,
     responseMimeType: 'application/json',
-  });
+  };
+}
+
+/** Chat avec Gemini quand aucune clé Anthropic n'est configurée. */
+async function sendChatGemini(userId: number | null | undefined, role: string | null | undefined, history: ChatTurn[]): Promise<ChatResult> {
+  const isPatient = role === 'patient' && !!userId;
+  const requete = requeteChatGemini(isPatient, history);
+  if (!requete) return { reply: 'Message bien reçu.', signalementCreated: false };
+  const g = await genererContenu(requete);
   const r = JSON.parse(g.text) as { reponse?: string; signalement?: { symptome: string; gravite: Gravite; notes?: string } | null };
   let reply = (r.reponse ?? '').trim() || 'Message bien reçu.';
   let signalementCreated = false;

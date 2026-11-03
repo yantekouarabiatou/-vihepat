@@ -148,7 +148,7 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
                   <ul className="max-h-56 overflow-y-auto py-1">
                     {nouveauxSignalements.slice(0, 5).map((s) => (
                       <li key={s.id}>
-                        <Link to={`/soignant/patients/${s.patient.id}`} className="flex items-start gap-2 px-4 py-2 hover:bg-secondary/50">
+                        <Link to={`/soignant/signalements?traiter=${s.id}`} className="flex items-start gap-2 px-4 py-2 hover:bg-secondary/50">
                           <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${s.gravite === "severe" ? "bg-destructive" : s.gravite === "modere" ? "bg-[hsl(var(--gold))]" : "bg-primary"}`} />
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-semibold text-foreground">{s.symptome}</span>
