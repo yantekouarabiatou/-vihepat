@@ -6,14 +6,17 @@ https://vihepat.secourseducatif.com, sauf mention contraire.
 
 ## 3 novembre 2026
 
-### Traiter un signalement avec le dossier du patient (ce commit)
+### Programme de déploiement par le cPanel
+- `backend/scripts/deployer.mjs` : déploie l'API (`api`) et/ou le site (`site`) par l'interface du cPanel, sans FTP ; compare le contenu de chaque fichier avec le serveur, sauvegarde ce qu'il remplace, remet l'ancienne version si l'antivirus refuse un fichier (sans redémarrer l'API), envoie `index.html` en dernier, redémarre et vérifie l'API. `--simulation` liste ce qui serait envoyé.
+
+### `ced3968` Traiter un signalement avec le dossier du patient
 - **Panneau « Traiter le signalement »** (`frontend/src/features/soignant/TraitementSignalement.tsx`) : ouvert depuis la page Signalements (bouton « Traiter » sur chaque ligne), le tableau de bord et la cloche (`/soignant/signalements?traiter=<id>`).
   - le signalement : symptôme, gravité, statut, date, notes du patient ;
   - le dossier associé : identité, téléphone cliquable, observance sur 30 jours, risque de perte de suivi, traitements en cours, derniers examens, autres signalements récents, prochains rendez-vous ;
   - les actions : marquer vu, marquer traité, programmer un rendez-vous (motif prérempli « Suite au signalement : … »), ouvrir le dossier complet.
 - Ouvrir le panneau charge le dossier : la consultation est tracée dans le journal d'audit, comme l'ouverture d'un dossier.
 
-### Évaluations demandées par l'audit (ce commit)
+### `ced3968` Évaluations demandées par l'audit
 - Matrice de confusion 3×3 et F1 par classe du triage : `ia/RESULTATS_TRIAGE_MATRICE.md` (script `ia/scripts/matrice_triage.py`).
 - Veille des mots sensibles : 47/50 signalés, 6/40 fausses alertes (`ia/resultats/mots_sensibles.md`).
 - ElevenLabs sur les 18 vraies notes : 9,8 % d'erreur de mots en français, fon 9/9 écarté, 1 alerte ratée (`ia/resultats/elevenlabs__reel.md`).
