@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as patientController from '../controllers/patient.controller';
 import * as triageController from '../controllers/triage.controller';
 import * as rappelsServeurController from '../controllers/rappels-serveur.controller';
+import * as reponsesController from '../controllers/signalement-reponses.controller';
 import { authRequired, requireRole, requirePermission as perm } from '../middlewares/auth';
 import { catchAsync } from '../utils/catchAsync';
 
@@ -15,7 +16,10 @@ r.post('/me/rendez-vous', perm('rendez_vous:request'), catchAsync(patientControl
 r.get('/me/synthese', perm('patient:read_own'), catchAsync(patientController.getSynthese));
 r.get('/me/traitements', perm('traitement:read'), catchAsync(patientController.getTraitements));
 r.get('/me/observations', perm('observation:read'), catchAsync(patientController.getObservations));
-r.get('/me/signalements', perm('patient:read_own'), catchAsync(patientController.getSignalements));
+r.get('/me/signalements', perm('patient:read_own'), catchAsync(reponsesController.signalementsPatient));
+r.get('/me/signalements/reponses/:reponseId/audio', perm('patient:read_own'), catchAsync(reponsesController.audio));
+r.get('/me/signalements/:id/reponses', perm('patient:read_own'), catchAsync(reponsesController.listerPatient));
+r.post('/me/signalements/:id/reponses', perm('signalement:create'), catchAsync(reponsesController.repondrePatient));
 r.post('/me/signalements', perm('signalement:create'), catchAsync(patientController.createSignalement));
 r.post('/me/chat', catchAsync(patientController.chat));
 r.post('/me/triage-vocal', perm('signalement:create'), catchAsync(triageController.triageVocal));

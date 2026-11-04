@@ -3,6 +3,7 @@ import {
   Patient, RendezVous, Traitement, Observation, Signalement, AuditLog, User, Soignant, Affectation, Communique,
 } from '../models';
 import { sendAlerteMedicaleEmail } from './mail.service';
+import { ReponseSignalement } from '../models/ReponseSignalement';
 import { getAlertesExamens, getResumeObservance } from './observance.service';
 
 /** Actions tracées qui concernent le dossier d'un patient. */
@@ -121,7 +122,7 @@ export async function getSynthese(userId: number) {
       order: [['dateDebut', 'DESC']],
     }),
     RendezVous.findAll({ where: { patientId: patient.id }, order: [['dateHeure', 'ASC']] }),
-    Signalement.findAll({ where: { patientId: patient.id }, attributes: ['statut'] }),
+    Signalement.findAll({ where: { patientId: patient.id }, attributes: ['id', 'statut'] }),
     getCommuniques(userId),
     getResumeObservance(patient.id),
     getAlertesExamens(patient.id, patient.pathologie),
@@ -148,6 +149,10 @@ export async function getSynthese(userId: number) {
     },
     signalements: {
       enAttente: signalements.filter((s) => s.statut !== 'traite').length,
+      // Réponses de l'équipe pas encore lues par le patient
+      reponsesNonLues: signalements.length
+        ? await ReponseSignalement.count({ where: { signalementId: { [Op.in]: signalements.map((s) => s.id) }, auteurRole: 'soignant', luLe: null } })
+        : 0,
       traites: signalements.filter((s) => s.statut === 'traite').length,
     },
     communiques: {

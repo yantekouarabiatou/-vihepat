@@ -61,7 +61,7 @@ export interface SynthesePatient {
     liste: Array<Traitement & { statut: StatutTraitement }>;
   };
   rendezVous: { aVenir: number; effectues: number; prochain: RendezVous | null };
-  signalements: { enAttente: number; traites: number };
+  signalements: { enAttente: number; traites: number; reponsesNonLues?: number };
   communiques: { total: number; recents: number; liste: Communique[] };
   observance: { taux7: number | null; taux30: number | null; serie: number };
   examensEnRetard: number;
@@ -86,6 +86,24 @@ export interface Signalement {
   notes: string | null;
   statut: StatutSignalement;
   createdAt: string;
+}
+
+/** Message écrit et/ou vocal échangé à propos d'un signalement */
+export interface ReponseSignalement {
+  id: number;
+  signalementId: number;
+  auteurRole: 'soignant' | 'patient';
+  texte: string | null;
+  audioType: string | null;
+  audioDuree: number | null;
+  luLe: string | null;
+  createdAt: string;
+  auteur?: { nom: string; prenom: string; soignant?: { fonction: string } | null } | null;
+}
+
+export interface NouvelleReponse {
+  texte?: string;
+  audio?: { base64: string; type: string; duree: number };
 }
 
 export type StatutPrise = 'prise' | 'manquee';
@@ -186,7 +204,17 @@ export const patientApi = {
 
   getObservations: () => api.get<Observation[]>('/patients/me/observations').then((r) => r.data),
 
-  getSignalements: () => api.get<Signalement[]>('/patients/me/signalements').then((r) => r.data),
+  getSignalements: () =>
+    api.get<(Signalement & { messages?: number; nonLus?: number })[]>('/patients/me/signalements').then((r) => r.data),
+
+  getReponsesSignalement: (id: number) =>
+    api.get<ReponseSignalement[]>(`/patients/me/signalements/${id}/reponses`).then((r) => r.data),
+
+  repondreSignalement: (id: number, input: NouvelleReponse) =>
+    api.post<ReponseSignalement>(`/patients/me/signalements/${id}/reponses`, input).then((r) => r.data),
+
+  audioReponse: (reponseId: number) =>
+    api.get<Blob>(`/patients/me/signalements/reponses/${reponseId}/audio`, { responseType: 'blob' }).then((r) => r.data),
 
   createSignalement: (input: { symptome: string; gravite: Gravite; notes?: string | undefined }) =>
 

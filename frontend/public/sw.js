@@ -5,7 +5,7 @@
  * - Les écritures (POST/PATCH) ne sont jamais mises en cache : elles passent par la
  *   file d'attente de l'application, envoyée au retour du réseau.
  */
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE_APP = `vihepat-app-${VERSION}`;
 const CACHE_API = 'vihepat-api';
 const COQUILLE = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
@@ -83,7 +83,7 @@ self.addEventListener('push', (event) => {
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
         vibrate: [200, 100, 200],
-        data: { cle: d.cle, id: d.id, jeton: d.jeton, api: d.api },
+        data: { cle: d.cle, id: d.id, jeton: d.jeton, api: d.api, url: d.url },
         // Rappel de rendez-vous (sans jeton) : simple information, sans boutons
         actions: d.jeton
           ? [
@@ -111,6 +111,17 @@ self.addEventListener('notificationclick', (event) => {
   const data = event.notification.data || {};
   const cle = data.cle;
   const action = event.action || '';
+  // Message ou rendez-vous (sans boutons) : ouvre la page indiquée par le serveur
+  if (data.url && !data.jeton) {
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((fenetres) => {
+        const f = fenetres[0];
+        if (f) return f.navigate(data.url).then((g) => (g || f).focus()).catch(() => f.focus());
+        return self.clients.openWindow(data.url);
+      })
+    );
+    return;
+  }
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((fenetres) => {
       const f = fenetres[0];

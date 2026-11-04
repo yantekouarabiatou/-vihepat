@@ -17,6 +17,7 @@ import { ConfirmationRappel } from './ConfirmationRappel';
 import { RolePermission } from './RolePermission';
 import { BilanInclusion } from './BilanInclusion';
 import { ReactionMessage, SignalementMessage } from './InteractionGroupe';
+import { ReponseSignalement } from './ReponseSignalement';
 
 // User ↔ Patient (1-1)
 User.hasOne(Patient, { foreignKey: 'userId', as: 'patient' });
@@ -54,6 +55,9 @@ Observation.belongsTo(Soignant, { foreignKey: 'soignantId', as: 'soignant' });
 // Patient ↔ Signalement (1-N)
 Patient.hasMany(Signalement, { foreignKey: 'patientId', as: 'signalements' });
 Signalement.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
+// Réponses écrites ou vocales à un signalement
+ReponseSignalement.belongsTo(User, { foreignKey: 'auteurId', as: 'auteur' });
+Signalement.hasMany(ReponseSignalement, { foreignKey: 'signalementId', as: 'reponses' });
 
 // Patient / Traitement ↔ PriseMedicament (1-N)
 Patient.hasMany(PriseMedicament, { foreignKey: 'patientId', as: 'prises' });

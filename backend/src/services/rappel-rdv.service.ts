@@ -49,7 +49,7 @@ export async function notifierPatientRdv(rdv: RendezVous) {
   const t = TEXTES[langue];
   const texte = t.corps(quand(rdv.dateHeure, langue));
 
-  const notification = await envoyerAUtilisateur(user.id, (textes) => ({ titre: textes.titre, corps: texte, cle: `rdv-${rdv.id}` })).catch(() => 0);
+  const notification = await envoyerAUtilisateur(user.id, (textes) => ({ titre: textes.titre, corps: texte, cle: `rdv-${rdv.id}`, url: '/dashboard' })).catch(() => 0);
 
   let email = false;
   if (user.email) {

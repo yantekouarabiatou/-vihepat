@@ -8,6 +8,7 @@ import {
 import { toast } from "sonner";
 import { soignantApi, type SoignantSignalement } from "@/api/soignant.api";
 import { Button } from "@/components/ui/button";
+import { FilReponses } from "@/components/fil-reponses";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -127,6 +128,24 @@ export function TraitementSignalement({ signalement, onClose }: { signalement: S
           </div>
           <p className="mt-2 text-base font-bold text-foreground">{s.symptome}</p>
           {s.notes && <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{s.notes}</p>}
+        </section>
+
+        {/* Répondre au patient, par écrit ou par note vocale */}
+        <section className="mt-4 rounded-2xl border border-border/70 p-4">
+          <h3 className="text-sm font-bold text-foreground">{t("reponses.titre_soignant")}</h3>
+          <p className="mb-3 text-xs text-muted-foreground">{t("reponses.aide_soignant")}</p>
+          <FilReponses
+            key={s.id}
+            cle={["soignant", "signalement-reponses", s.id]}
+            moi="soignant"
+            charger={() => soignantApi.getReponsesSignalement(s.id)}
+            envoyer={async (r) => {
+              const res = await soignantApi.repondreSignalement(s.id, r);
+              queryClient.invalidateQueries({ queryKey: ["soignant", "signalements"] });
+              return res;
+            }}
+            chargerAudio={soignantApi.audioReponse}
+          />
         </section>
 
         {/* Actions */}

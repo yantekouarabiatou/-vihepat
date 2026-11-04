@@ -1,7 +1,7 @@
 import { api } from './client';
 import type {
   AlerteExamen, FonctionSoignant, Observation, Pathologie, RendezVous, ResumeObservance, Signalement, StatutRDV,
-  StatutSignalement, Traitement,
+  StatutSignalement, Traitement, ReponseSignalement, NouvelleReponse,
 } from './patient.api';
 import type { TypeObservation } from '@/lib/observations';
 
@@ -161,6 +161,8 @@ export interface Communique {
 
 export interface SoignantSignalement extends Signalement {
   patient: { id: number; codePatient: string; user: { nom: string; prenom: string } };
+  /** Messages du patient pas encore lus par l'équipe */
+  messagesNonLus?: number;
 }
 
 export interface ObservationDetail extends Observation {
@@ -381,6 +383,15 @@ export const soignantApi = {
     api.post<Communique>('/soignant/communiques', input).then((r) => r.data),
 
   /** Sans filtre : les signalements à traiter ; `tous` : l'historique complet */
+  getReponsesSignalement: (id: number) =>
+    api.get<ReponseSignalement[]>(`/soignant/signalements/${id}/reponses`).then((r) => r.data),
+
+  repondreSignalement: (id: number, input: NouvelleReponse) =>
+    api.post<ReponseSignalement>(`/soignant/signalements/${id}/reponses`, input).then((r) => r.data),
+
+  audioReponse: (reponseId: number) =>
+    api.get<Blob>(`/soignant/signalements/reponses/${reponseId}/audio`, { responseType: 'blob' }).then((r) => r.data),
+
   getSignalements: (statut?: StatutSignalement | 'tous') =>
     api
       .get<SoignantSignalement[]>('/soignant/signalements', { params: statut ? { statut } : undefined })

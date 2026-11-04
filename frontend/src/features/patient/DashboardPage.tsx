@@ -212,12 +212,20 @@ export function DashboardPage() {
           }
           accent="bg-[hsl(var(--violet)/0.12)] text-[hsl(var(--violet))]"
         />
-        <Tuile
-          icon={MessageSquareWarning}
-          label={t("dashboard_patient.kpi_signalements")}
-          valeur={syntheseLoading ? "…" : synthese?.signalements.enAttente ?? 0}
-          accent="bg-[hsl(var(--accent)/0.12)] text-[hsl(var(--accent))]"
-        />
+        {/* Mes signalements et réponses de l'équipe */}
+        <Link to="/signalements" className="rounded-3xl transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <Tuile
+            icon={MessageSquareWarning}
+            label={t("dashboard_patient.kpi_signalements")}
+            valeur={syntheseLoading ? "…" : synthese?.signalements.enAttente ?? 0}
+            detail={
+              synthese?.signalements.reponsesNonLues
+                ? t("mes_signalements.nouvelles_reponses", { count: synthese.signalements.reponsesNonLues })
+                : t("mes_signalements.voir")
+            }
+            accent="bg-[hsl(var(--accent)/0.12)] text-[hsl(var(--accent))]"
+          />
+        </Link>
       </div>
 
       {/* ===== Prochain rendez-vous ===== */}
