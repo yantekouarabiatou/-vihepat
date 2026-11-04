@@ -16,10 +16,10 @@ export interface DataTableColumn<T> {
 
 /**
  * Tableau « façon DataTables » : recherche + tri par colonne + pagination,
- * sans dépendance externe — juste du state React sur des données déjà en mémoire.
+ * sans dépendance externe  juste du state React sur des données déjà en mémoire.
  */
 export function DataTable<T>({
-  data, columns, getRowKey, searchText, searchPlaceholder, pageSize = 8, emptyText,
+  data, columns, getRowKey, searchText, searchPlaceholder, pageSize = 8, emptyText, hideSearch = false,
 }: {
   data: T[];
   columns: DataTableColumn<T>[];
@@ -29,6 +29,8 @@ export function DataTable<T>({
   searchPlaceholder?: string;
   pageSize?: number;
   emptyText?: string;
+  /** La page a déjà ses propres filtres : pas de second champ de recherche */
+  hideSearch?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export function DataTable<T>({
 
   return (
     <div>
-      <div className="relative">
+      <div className={cn("relative", hideSearch && "hidden")}>
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={query}
@@ -84,7 +86,7 @@ export function DataTable<T>({
         />
       </div>
 
-      <div className="mt-2 overflow-x-auto">
+      <div className="relative mt-2 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
@@ -116,7 +118,7 @@ export function DataTable<T>({
             {pageRows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="py-8 text-center text-sm text-muted-foreground">
-                  {emptyText ?? "—"}
+                  {emptyText ?? "-"}
                 </td>
               </tr>
             ) : (

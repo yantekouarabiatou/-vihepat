@@ -3,6 +3,7 @@ import { env } from '../config/env';
 import * as patientService from './patient.service';
 import type { Gravite } from '../models/Signalement';
 import { genererContenu, geminiConfigure, type GeminiTour } from '../ia/gemini.client';
+import { detecterSignesGraves, type SigneGrave } from '../ia/signes-graves';
 
 const client = env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }) : null;
 
@@ -15,7 +16,7 @@ Ton rôle :
 - Aider le patient avec empathie, bienveillance et dans un français simple et clair.
 - Si le patient décrit un symptôme ou un malaise, pose UNE seule question à la fois pour clarifier (intensité, durée, gêne).
 - Dès que le symptôme est clair, utilise l'outil "file_signalement" pour l'enregistrer dans son dossier médical. N'attends pas trop d'échanges.
-- Si le patient présente des signes d'urgence vitale (douleur thoracique intense, détresse respiratoire, perte de connaissance, saignements graves), classe en gravité "severe", enregistre le signalement et oriente vers les urgences (166 / 112 ou centre le plus proche).
+- Signes de gravité (les mêmes que le triage de l'application) : difficulté à respirer, douleur ou serrement dans la poitrine, confusion ou somnolence anormale ou nuque raide avec fièvre, vomissement du traitement (le patient ne garde pas ses comprimés ou ses ARV), saignement (sang dans les selles, les urines, les crachats ou les vomissements, selles noires, saignement qui ne s'arrête pas), malaise ou perte de connaissance, idées de mort ou de se faire du mal. Dès qu'un de ces signes est décrit, classe en gravité "severe", enregistre le signalement SANS poser d'abord de question, et oriente sans attendre : centre de santé le plus proche ou urgences (166 / 112). Un traitement vomi n'est pas absorbé : c'est un signe de gravité, même sans autre symptôme.
 - Tu n'es PAS médecin, tu ne poses aucun diagnostic et ne modifies aucun traitement. Reste concis (1 à 3 phrases).`;
 
 const SYSTEM_PROMPT_PUBLIC = `Tu es l'assistant d'information et d'orientation de VIHEPAT, la plateforme nationale béninoise dédiée à la prise en charge et au suivi du VIH et des hépatites virales (B et C).
@@ -218,14 +219,14 @@ function versTours(history: ChatTurn[]): GeminiTour[] {
   return tours;
 }
 
-/** Chat avec Gemini quand aucune clé Anthropic n'est configurée. */
-async function sendChatGemini(userId: number | null | undefined, role: string | null | undefined, history: ChatTurn[]): Promise<ChatResult> {
-  const isPatient = role === 'patient' && !!userId;
+/**
+ * Requête envoyée à Gemini pour le chat, isolée pour pouvoir l'évaluer telle quelle sans rien écrire
+ * en base (backend/scripts/evaluer-assistant.ts). Null si le dernier tour n'est pas de l'utilisateur.
+ */
+export function requeteChatGemini(isPatient: boolean, history: ChatTurn[]) {
   const contents = versTours(history);
-  if (!contents.length || contents[contents.length - 1]!.role !== 'user') {
-    return { reply: 'Message bien reçu.', signalementCreated: false };
-  }
-  const g = await genererContenu({
+  if (!contents.length || contents[contents.length - 1]!.role !== 'user') return null;
+  return {
     system: (isPatient ? SYSTEM_PROMPT_PATIENT : SYSTEM_PROMPT_PUBLIC)
       .replace(/utilise l'outil "file_signalement" pour l'enregistrer/g, "remplis le champ « signalement » pour l'enregistrer")
       .replace(/enregistre le signalement/g, 'remplis le champ « signalement »') + CONSIGNE_JSON_GEMINI,
@@ -233,23 +234,104 @@ async function sendChatGemini(userId: number | null | undefined, role: string | 
     schema: isPatient ? SCHEMA_GEMINI_PATIENT : SCHEMA_GEMINI_PUBLIC,
     temperature: 0.3,
     responseMimeType: 'application/json',
-  });
-  const r = JSON.parse(g.text) as { reponse?: string; signalement?: { symptome: string; gravite: Gravite; notes?: string } | null };
+  };
+}
+
+/** Chat avec Gemini quand aucune clé Anthropic n'est configurée. */
+async function sendChatGemini(userId: number | null | undefined, role: string | null | undefined, history: ChatTurn[]): Promise<ChatResult> {
+  const isPatient = role === 'patient' && !!userId;
+  const requete = requeteChatGemini(isPatient, history);
+  if (!requete) return { reply: 'Message bien reçu.', signalementCreated: false };
+  const g = await genererContenu(requete);
+  const decision = deciderReponseGemini(isPatient, history, g.text);
+  if (decision.signalement) await patientService.createSignalement(userId!, decision.signalement);
+  return { reply: decision.reply, signalementCreated: !!decision.signalement };
+}
+
+type SignalementPropose = { symptome: string; gravite: Gravite; notes: string };
+
+/**
+ * Ce que l'assistant répond et le signalement à créer, à partir de la réponse JSON de Gemini.
+ * Sans accès à la base : évalué tel quel par backend/scripts/evaluer-assistant*.ts.
+ */
+export function deciderReponseGemini(isPatient: boolean, history: ChatTurn[], texteGemini: string): { reply: string; signalement: SignalementPropose | null } {
+  const r = JSON.parse(texteGemini) as { reponse?: string; signalement?: { symptome: string; gravite: Gravite; notes?: string } | null };
   let reply = (r.reponse ?? '').trim() || 'Message bien reçu.';
-  let signalementCreated = false;
+  let signalement: SignalementPropose | null = null;
 
   const dejaSignale = history.some((h) => h.role === 'assistant' && h.content.includes(CONFIRMATION_SIGNALEMENT));
   const s = r.signalement;
   if (isPatient && s && !dejaSignale && s.symptome?.trim() && ['leger', 'modere', 'severe'].includes(s.gravite)) {
-    await patientService.createSignalement(userId!, {
+    signalement = {
       symptome: s.symptome.trim().slice(0, 150),
       gravite: s.gravite,
       notes: `${s.notes?.trim() ? `${s.notes.trim()}\n` : ''}Signalement proposé par l'assistant conversationnel (Gemini).`,
+    };
+  }
+
+  // Filet de sécurité déterministe : un signe grave reconnu par le lexique du triage impose un signalement
+  // « severe » et une consigne d'orientation, même si Gemini l'a sous-estimé (rater une urgence coûte plus
+  // cher qu'une alerte en trop ; lexique mesuré dans ia/RESULTATS_SIGNES_GRAVES.md).
+  const dernier = [...history].reverse().find((h) => h.role === 'user')?.content ?? '';
+  const graves = detecterSignesGraves(dernier);
+  if (graves.length > 0) {
+    if (isPatient && !dejaSignale) {
+      signalement = {
+        symptome: (signalement?.symptome ?? graves.map((g) => LIBELLE_SIGNE[g]).join(', ')).slice(0, 150),
+        gravite: 'severe',
+        notes: `${signalement?.notes ? `${signalement.notes}\n` : ''}Signe(s) de gravité détecté(s) : ${graves.map((g) => LIBELLE_SIGNE[g]).join(', ')}.`,
+      };
+    }
+    if (!URGENCE_DANS_REPONSE.test(normaliser(reply))) reply = `${reply}\n\n${consigneUrgence(graves, isPatient)}`;
+  }
+
+  if (signalement) reply = `${reply}\n\n${CONFIRMATION_SIGNALEMENT}`;
+  return { reply, signalement };
+}
+
+/** Sans IA : si le message décrit un signe grave, consigne d'orientation (et signalement « severe » pour un patient) */
+async function reponseUrgenceSansIA(userId: number | null | undefined, role: string | null | undefined, history: ChatTurn[]): Promise<ChatResult | null> {
+  const dernier = [...history].reverse().find((h) => h.role === 'user')?.content ?? '';
+  const graves = detecterSignesGraves(dernier);
+  if (graves.length === 0) return null;
+  const isPatient = role === 'patient' && !!userId;
+  const dejaSignale = history.some((h) => h.role === 'assistant' && h.content.includes(CONFIRMATION_SIGNALEMENT));
+  let reply = consigneUrgence(graves, isPatient);
+  let signalementCreated = false;
+  if (isPatient && !dejaSignale) {
+    await patientService.createSignalement(userId!, {
+      symptome: graves.map((g) => LIBELLE_SIGNE[g]).join(', ').slice(0, 150),
+      gravite: 'severe',
+      notes: `Message du patient : « ${dernier.slice(0, 400)} »\nSigne(s) de gravité détecté(s) par l'assistant (sans IA, Gemini indisponible).`,
     });
     signalementCreated = true;
     reply = `${reply}\n\n${CONFIRMATION_SIGNALEMENT}`;
   }
   return { reply, signalementCreated };
+}
+
+const LIBELLE_SIGNE: Record<SigneGrave, string> = {
+  respiration: 'difficulté à respirer',
+  poitrine: 'douleur dans la poitrine',
+  confusion: 'confusion, somnolence ou nuque raide',
+  vomit_traitement: 'vomit son traitement',
+  saignement: 'saignement',
+  malaise: 'malaise ou perte de connaissance',
+  idees_noires: 'idées de mort',
+};
+const URGENCE_DANS_REPONSE = /urgence|166|112|sans attendre|immediatement|tout de suite|au plus vite/;
+const normaliser = (t: string) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+/** Consigne proportionnée au signe : urgences pour un danger vital, contact le jour même pour un traitement vomi */
+function consigneUrgence(graves: SigneGrave[], isPatient: boolean) {
+  const equipe = isPatient ? ' Votre équipe soignante est prévenue.' : '';
+  if (graves.includes('idees_noires')) {
+    return `Vous n'êtes pas seul(e). Parlez-en tout de suite à une personne de confiance et appelez le 166 ou rendez-vous au centre de santé le plus proche.${equipe}`;
+  }
+  if (graves.every((g) => g === 'vomit_traitement')) {
+    return `Si vous ne gardez pas votre traitement, il ne vous protège plus : contactez votre centre de santé aujourd'hui, sans attendre votre prochain rendez-vous.${equipe}`;
+  }
+  return `Ces signes peuvent être graves : rendez-vous sans attendre au centre de santé le plus proche ou appelez le 166 (SAMU).${equipe}`;
 }
 
 export async function sendChatMessage(
@@ -266,6 +348,10 @@ export async function sendChatMessage(
         console.warn('Échec du chat Gemini, utilisation du fallback médical :', (error as Error).message);
       }
     }
+    // Gemini indisponible (surcharge, quota) : le filet de sécurité passe AVANT l'assistant de secours,
+    // dont les réponses toutes faites ne conviennent pas à un signe grave (ex. traitement vomi)
+    const urgence = await reponseUrgenceSansIA(userId, role, history);
+    if (urgence) return urgence;
     return generateSmartFallback(userId, role, history);
   }
 

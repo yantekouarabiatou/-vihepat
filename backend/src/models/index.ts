@@ -15,6 +15,8 @@ import { MessageGroupe } from './MessageGroupe';
 import { Communique } from './Communique';
 import { ConfirmationRappel } from './ConfirmationRappel';
 import { RolePermission } from './RolePermission';
+import { BilanInclusion } from './BilanInclusion';
+import { ReactionMessage, SignalementMessage } from './InteractionGroupe';
 
 // User ↔ Patient (1-1)
 User.hasOne(Patient, { foreignKey: 'userId', as: 'patient' });
@@ -71,6 +73,17 @@ MessageGroupe.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
 Patient.hasMany(ConfirmationRappel, { foreignKey: 'patientId', as: 'confirmationsRappels' });
 ConfirmationRappel.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
 
+// Patient ↔ BilanInclusion (1-1) : entrées du modèle de risque de perte de suivi
+Patient.hasOne(BilanInclusion, { foreignKey: 'patientId', as: 'bilanInclusion' });
+BilanInclusion.belongsTo(Patient, { foreignKey: 'patientId', as: 'patient' });
+
+// MessageGroupe ↔ réponses, réactions et signalements des membres
+MessageGroupe.belongsTo(MessageGroupe, { foreignKey: 'reponseA', as: 'reponseAMessage' });
+MessageGroupe.hasMany(ReactionMessage, { foreignKey: 'messageId', as: 'reactions' });
+MessageGroupe.hasMany(SignalementMessage, { foreignKey: 'messageId', as: 'signalementsMembres' });
+ReactionMessage.belongsTo(MessageGroupe, { foreignKey: 'messageId', as: 'message' });
+SignalementMessage.belongsTo(MessageGroupe, { foreignKey: 'messageId', as: 'message' });
+
 // AuditLog
 AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -83,5 +96,5 @@ export {
   User, Patient, Soignant, Affectation,
   Traitement, RendezVous, Observation, Signalement, AuditLog, PriseMedicament,
   Structure, GroupeSoutien, MembreGroupe, MessageGroupe, Communique, ConfirmationRappel,
-  RolePermission,
+  RolePermission, BilanInclusion, ReactionMessage, SignalementMessage,
 };

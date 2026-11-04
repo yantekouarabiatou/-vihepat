@@ -204,8 +204,8 @@ export interface RoleInfo {
 export const ROLES_CONFIG: Record<Role, RoleInfo> = {
   admin: {
     role: 'admin',
-    name: 'Administrateur & Coordinateur',
-    badge: 'Administrateur',
+    name: 'Super administrateur',
+    badge: 'Super admin',
     description:
       'Supervise l\'ensemble de la plateforme, gère les structures de santé, les comptes utilisateurs, les habilitations, l\'audit et dispose d\'un accès médical global.',
     permissions: [

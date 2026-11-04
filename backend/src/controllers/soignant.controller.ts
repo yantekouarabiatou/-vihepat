@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import * as soignantService from '../services/soignant.service';
 import { logAudit } from '../middlewares/audit';
+import { NIVEAUX_ETUDES, SITUATIONS_MATRIMONIALES } from '../models/BilanInclusion';
 
 const updateRendezVousSchema = z.object({
   statut: z.enum(['prevu', 'confirme', 'effectue', 'manque', 'annule']).optional(),
@@ -151,6 +152,34 @@ export async function reinitialiserAccesPatient(req: Request, res: Response) {
   const patientId = idParam.parse(req.params.id);
   const result = await soignantService.reinitialiserAccesPatient(req.user!.userId, patientId);
   await logAudit(req, 'RESET_PATIENT_CREDENTIALS', `patient:${patientId}`);
+  res.json(result);
+}
+
+// Champ vide = examen non réalisé : le modèle compte les examens manquants
+const mesure = z.coerce.number().min(0).max(1e8).nullable().optional();
+
+const bilanInclusionSchema = z.object({
+  dateBilan: dateNonFuture.nullable().optional(),
+  situationMatrimoniale: z.enum(SITUATIONS_MATRIMONIALES).nullable().optional(),
+  niveauEtudes: z.enum(NIVEAUX_ETUDES).nullable().optional(),
+  stadeOms: z.coerce.number().int().min(1).max(4).nullable().optional(),
+  cd4: mesure,
+  chargeVirale: mesure,
+  alat: mesure,
+  creatinine: mesure,
+  hemoglobine: mesure,
+  plaquettes: mesure,
+  proteinesTotales: mesure,
+  uree: mesure,
+  leucocytes: mesure,
+});
+
+export async function enregistrerBilanInclusion(req: Request, res: Response) {
+  const patientId = idParam.parse(req.params.id);
+  const data = bilanInclusionSchema.parse(req.body);
+  const result = await soignantService.enregistrerBilanInclusion(req.user!.userId, patientId, data);
+  // Journal : l'événement seul, sans valeur biologique
+  await logAudit(req, 'UPDATE_BILAN_INCLUSION', `patient:${patientId}`);
   res.json(result);
 }
 

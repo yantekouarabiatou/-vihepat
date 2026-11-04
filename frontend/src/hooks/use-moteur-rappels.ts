@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { afficherAlerte, REPORTS_MINUTES, useRappelsStore } from "@/lib/rappels";
+import { recupererReponsesServeur } from "@/lib/rappels-serveur";
 
 /** Fréquence de vérification des échéances (l'horloge tourne même sans réseau). */
 const PERIODE_MS = 20_000;
@@ -55,10 +56,14 @@ export function useMoteurRappels(userId: number | null) {
     }
 
     const surVisibilite = () => {
-      if (document.visibilityState === "visible") verifier();
+      if (document.visibilityState !== "visible") return;
+      verifier();
+      void recupererReponsesServeur();
     };
     document.addEventListener("visibilitychange", surVisibilite);
     verifier();
+    // Réponses données depuis les notifications du serveur pendant que l'application était fermée
+    void recupererReponsesServeur();
     const id = window.setInterval(verifier, PERIODE_MS);
     return () => {
       window.clearInterval(id);

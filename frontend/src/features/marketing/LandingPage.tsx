@@ -57,29 +57,29 @@ export function LandingPage() {
         <div className="pointer-events-none absolute -left-20 top-1/4 h-72 w-72 rounded-full bg-[hsl(var(--brand-light)/0.3)] blur-3xl" />
         <div className="pointer-events-none absolute -right-20 top-2/3 h-80 w-80 rounded-full bg-[hsl(var(--accent)/0.25)] blur-3xl" />
 
-        <div className="relative mx-auto flex min-h-[92vh] w-full max-w-6xl flex-col px-6 py-8">
+        <div className="relative mx-auto flex min-h-[92vh] w-full max-w-6xl flex-col px-4 py-6 sm:px-6 sm:py-8">
           {/* Nav glass */}
-          <nav className="glass-dark flex items-center justify-between rounded-full px-4 py-2.5 shadow-lg">
-            <Link to="/" className="px-3 text-xl font-extrabold tracking-tight text-primary-foreground">
+          <nav className="glass-dark flex items-center justify-between gap-2 rounded-full px-2 py-2 shadow-lg sm:px-4 sm:py-2.5">
+            <Link to="/" className="shrink-0 px-2 text-lg font-extrabold tracking-tight text-primary-foreground sm:px-3 sm:text-xl">
               VIHEPAT
             </Link>
-            <div className="flex items-center gap-1.5">
+            <div className="flex min-w-0 items-center gap-1 sm:gap-1.5">
               <InstallButton variant="glass" />
               <LanguageSwitcher variant="glass" />
-              <Link to="/login">
+              <Link to="/login" className="shrink-0">
                 <Button
                   size="sm"
                   className="rounded-full bg-white/95 text-[hsl(var(--brand))] hover:bg-white"
                 >
                   {t("nav.login")}
-                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                  <ArrowRight className="ml-1.5 hidden h-3.5 w-3.5 sm:inline" />
                 </Button>
               </Link>
             </div>
           </nav>
 
-          <div className="flex flex-1 flex-col justify-center py-16">
-            <h1 className="animate-fade-up max-w-3xl text-5xl font-extrabold leading-[1.05] tracking-tight text-primary-foreground sm:text-6xl md:text-7xl">
+          <div className="flex flex-1 flex-col justify-center py-12 sm:py-16">
+            <h1 className="animate-fade-up max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight text-primary-foreground sm:text-6xl md:text-7xl">
               {t("hero.title_part1")}
               <br />
               <span className="bg-gradient-to-r from-white via-white to-[hsl(var(--brand-light))] bg-clip-text text-transparent">

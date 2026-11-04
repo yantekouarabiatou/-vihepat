@@ -19,14 +19,17 @@ export function InstallButton({ variant = "default" }: { variant?: "default" | "
     <Button
       size="sm"
       onClick={onClick}
+      aria-label={t("install.cta")}
+      title={t("install.cta")}
       className={
         variant === "glass"
           ? "rounded-full glass-dark text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground"
           : "rounded-full"
       }
     >
-      <Download className="mr-1.5 h-4 w-4" />
-      {t("install.cta")}
+      <Download className="h-4 w-4 sm:mr-1.5" />
+      {/* Libellé masqué sur petit écran : l'icône seule suffit et évite le débordement */}
+      <span className="hidden sm:inline">{t("install.cta")}</span>
     </Button>
   );
 }

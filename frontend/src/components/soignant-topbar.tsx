@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Bell, ExternalLink, Globe, History, Menu, Moon, Search, Sun } from "lucide-react";
+import { Bell, ExternalLink, Globe, History, KeyRound, Menu, Moon, Search, Sun } from "lucide-react";
 import { soignantApi } from "@/api/soignant.api";
 import { useAuthStore } from "@/store/auth.store";
 import { useTheme } from "@/hooks/use-theme";
@@ -17,7 +17,7 @@ function initiales(nom: string, prenom: string) {
   return `${prenom[0] ?? ""}${nom[0] ?? ""}`.toUpperCase();
 }
 
-export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpenSidebar: () => void }) {
+export function SoignantTopbar({ admin, onOpenSidebar, onChangerMotDePasse }: { admin: boolean; onOpenSidebar: () => void; onChangerMotDePasse: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -30,12 +30,32 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
     staleTime: 60_000,
   });
 
+  // Signalements de mots sensibles dans les groupes de soutien (sans la permission, la requête échoue sans bruit)
+  const { data: alertesGroupes } = useQuery({
+    queryKey: ["soignant", "communautes", "alertes"],
+    queryFn: soignantApi.getAlertesCommunautes,
+    refetchInterval: 60_000,
+    retry: false,
+  });
+  const nbAlertes = alertesGroupes?.aTraiter.length ?? 0;
+
+  // Signalements de symptômes pas encore ouverts : la même requête que le tableau de bord
+  const { data: signalements } = useQuery({
+    queryKey: ["soignant", "signalements"],
+    queryFn: () => soignantApi.getSignalements(),
+    refetchInterval: 60_000,
+    retry: false,
+  });
+  const nouveauxSignalements = useMemo(() => (signalements ?? []).filter((s) => s.statut === "nouveau"), [signalements]);
+  const total = nouveauxSignalements.length + nbAlertes;
+
   const recents = useMemo(() => (communiques ?? []).slice(0, 5), [communiques]);
   const nouveau = useMemo(() => {
+    if (total > 0) return true;
     if (!communiques || communiques.length === 0) return false;
     const dernier = new Date(communiques[0]!.createdAt).getTime();
     return Date.now() - dernier < 24 * 60 * 60 * 1000;
-  }, [communiques]);
+  }, [communiques, total]);
 
   return (
     <header className="sticky top-0 z-20 border-b border-border/60 bg-card/95 backdrop-blur">
@@ -50,7 +70,7 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
           <Menu className="h-5 w-5" />
         </Button>
 
-        <div className="relative min-w-0 flex-1 max-w-md">
+        <div className="relative hidden min-w-0 max-w-md flex-1 md:block">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
@@ -60,10 +80,10 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
           />
         </div>
 
-        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
           <Link
             to="/"
-            className="flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3 py-1.5 text-xs font-semibold text-foreground/85 hover:bg-secondary hover:text-primary transition-all shadow-xs"
+            className="hidden items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3 py-1.5 sm:flex text-xs font-semibold text-foreground/85 hover:bg-secondary hover:text-primary transition-all shadow-xs"
             title={t("app_shell.site_public_tooltip")}
           >
             <Globe className="h-3.5 w-3.5 text-primary" />
@@ -88,7 +108,7 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
             <Button
               size="icon"
               variant="ghost"
-              className="h-10 w-10 rounded-input text-muted-foreground hover:text-foreground"
+              className="hidden h-10 w-10 rounded-input text-muted-foreground hover:text-foreground sm:inline-flex"
               onClick={() => navigate("/soignant/administration?table=audit_logs")}
               aria-label={t("app_shell.historique_tooltip")}
               title={t("app_shell.historique_tooltip")}
@@ -107,16 +127,54 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
                 title={t("app_shell.notifications_tooltip")}
               >
                 <Bell className="h-4 w-4" />
-                {nouveau && (
+                {total > 0 ? (
+                  <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white">
+                    {total > 99 ? "99+" : total}
+                  </span>
+                ) : nouveau && (
                   <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" />
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 rounded-card p-0 shadow-dash">
+            <PopoverContent align="end" className="w-[min(20rem,calc(100vw-2rem))] rounded-card p-0 shadow-dash">
               <div className="border-b border-border px-4 py-3">
                 <p className="text-sm font-bold text-foreground">{t("app_shell.notifications_title")}</p>
               </div>
-              {recents.length === 0 ? (
+              {nouveauxSignalements.length > 0 && (
+                <div className="border-b border-border">
+                  <p className="px-4 pt-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    {t("signalements_page.cloche", { count: nouveauxSignalements.length })}
+                  </p>
+                  <ul className="max-h-56 overflow-y-auto py-1">
+                    {nouveauxSignalements.slice(0, 5).map((s) => (
+                      <li key={s.id}>
+                        <Link to={`/soignant/signalements?traiter=${s.id}`} className="flex items-start gap-2 px-4 py-2 hover:bg-secondary/50">
+                          <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${s.gravite === "severe" ? "bg-destructive" : s.gravite === "modere" ? "bg-[hsl(var(--gold))]" : "bg-primary"}`} />
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-semibold text-foreground">{s.symptome}</span>
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {s.patient.user.prenom} {s.patient.user.nom} · {t(`shared.gravite.${s.gravite}`)}
+                            </span>
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to="/soignant/signalements" className="block px-4 pb-3 text-xs font-semibold text-primary hover:underline">
+                    {t("signalements_page.voir_tous")}
+                  </Link>
+                </div>
+              )}
+              {nbAlertes > 0 && (
+                <Link
+                  to="/soignant/communautes"
+                  className="flex items-center gap-2 border-b border-border bg-destructive/5 px-4 py-3 text-sm font-semibold text-destructive hover:bg-destructive/10"
+                >
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-destructive" />
+                  {t("communautes.cloche", { count: nbAlertes })}
+                </Link>
+              )}
+              {recents.length === 0 && total === 0 ? (
                 <p className="px-4 py-6 text-center text-sm text-muted-foreground">
                   {t("app_shell.notifications_empty")}
                 </p>
@@ -135,21 +193,39 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
 
           <LanguageSwitcher />
 
-          <div className="ml-1 hidden items-center gap-2 rounded-full border border-border bg-secondary/40 px-2 py-1 sm:flex">
-            <Avatar className="h-7 w-7">
-              <AvatarFallback className="bg-primary text-xs font-bold text-primary-foreground">
-                {user ? initiales(user.nom, user.prenom) : "?"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 pr-1">
-              <p className="truncate text-xs font-semibold leading-tight text-foreground">
-                {user ? `${user.prenom} ${user.nom}` : ""}
-              </p>
-              <p className="truncate text-[11px] leading-tight text-muted-foreground">
-                {admin ? t("sidebar.role_admin") : fonction ? t(`fonction.${fonction}`) : t("sidebar.role_soignant")}
-              </p>
-            </div>
-          </div>
+          {/* Compte : remplace l'ancien bouton flottant « paramètres », qui masquait le contenu */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label={t("app_shell.parametres_tooltip")}
+                className="ml-1 flex items-center gap-2 rounded-full border border-border bg-secondary/40 p-1 transition-colors hover:bg-secondary sm:px-2"
+              >
+                <Avatar className="h-7 w-7">
+                  <AvatarFallback className="bg-primary text-xs font-bold text-primary-foreground">
+                    {user ? initiales(user.nom, user.prenom) : "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden min-w-0 pr-1 text-left sm:block">
+                  <p className="truncate text-xs font-semibold leading-tight text-foreground">
+                    {user ? `${user.prenom} ${user.nom}` : ""}
+                  </p>
+                  <p className="truncate text-[11px] leading-tight text-muted-foreground">
+                    {admin ? t("sidebar.role_admin") : fonction ? t(`fonction.${fonction}`) : t("sidebar.role_soignant")}
+                  </p>
+                </div>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-60 rounded-2xl p-1.5">
+              <button
+                type="button"
+                onClick={onChangerMotDePasse}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+              >
+                <KeyRound className="h-4 w-4 text-primary" aria-hidden="true" /> {t("password.change_menu")}
+              </button>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
     </header>

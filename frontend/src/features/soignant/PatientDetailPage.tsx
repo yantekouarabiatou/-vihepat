@@ -28,6 +28,7 @@ import { apiErrorMessage } from "@/lib/api-error";
 import { localeAffichage } from "@/lib/date-locale";
 import { ObservanceBars, formatTaux, libelleEcheance, tauxStyle } from "@/lib/observance";
 import { telechargerFichePatientPdf, imprimerFichePatient, type PatientCredentialsDoc } from "@/lib/patient-pdf";
+import { RisquePerteSuiviCard } from "./RisquePerteSuivi";
 
 const useT = useTranslation;
 
@@ -228,7 +229,7 @@ export function PatientDetailPage() {
           <BilanSection patient={patient} onSaved={invalidate} />
         </div>
         <div className="min-w-0 space-y-6 lg:col-span-2">
-
+          <RisquePerteSuiviCard patient={patient} onSaved={invalidate} />
           <ObservanceCard patient={patient} />
           <RappelsCard patient={patient} />
           <EquipeCard patientId={patient.id} />

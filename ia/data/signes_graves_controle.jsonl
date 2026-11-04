@@ -1,0 +1,70 @@
+{"id": "R1", "texte": "Je n'arrive plus à finir mes phrases sans reprendre de l'air.", "attendus": ["respiration"]}
+{"id": "R2", "texte": "Depuis cette nuit ça siffle quand je respire et je suis à bout de forces.", "attendus": ["respiration"]}
+{"id": "R3", "texte": "mon enfant respire vite vite et son ventre se creuse", "attendus": ["respiration"]}
+{"id": "R4", "texte": "J'ai l'impression d'avoir un sac sur la tête, je manque d'oxygène.", "attendus": ["respiration"]}
+{"id": "R5", "texte": "Même assis je suis essoufflé, ça ne s'arrange pas.", "attendus": ["respiration"]}
+{"id": "R6", "texte": "Je tousse et je m'étrangle, l'air ne veut pas entrer.", "attendus": ["respiration"]}
+{"id": "R7", "texte": "Gros problème pour respirer depuis que j'ai la fièvre.", "attendus": ["respiration"]}
+{"id": "P1", "texte": "Une barre me serre au niveau du coeur depuis tout à l'heure.", "attendus": ["poitrine"]}
+{"id": "P2", "texte": "J'ai un point très douloureux sur le côté de la poitrine quand je respire fort.", "attendus": ["poitrine"]}
+{"id": "P3", "texte": "Ça brûle et ça serre derrière le sternum.", "attendus": ["poitrine"]}
+{"id": "P4", "texte": "mal dans le thorax qui monte vers la machoire", "attendus": ["poitrine"]}
+{"id": "P5", "texte": "Ma poitrine me fait souffrir depuis ce matin.", "attendus": ["poitrine"]}
+{"id": "P6", "texte": "Douleur au torse, comme si on appuyait dessus.", "attendus": ["poitrine"]}
+{"id": "P7", "texte": "J'ai mal au coeur, pas l'estomac, vraiment au niveau de la poitrine.", "attendus": ["poitrine"]}
+{"id": "C1", "texte": "Mon père ne sait plus où il habite et il parle à des gens qui ne sont pas là.", "attendus": ["confusion"]}
+{"id": "C2", "texte": "Mon cou est dur comme du bois et j'ai une fièvre très forte.", "attendus": ["confusion"]}
+{"id": "C3", "texte": "Je ne peux pas toucher mon menton avec ma poitrine, ça fait trop mal à la nuque.", "attendus": ["confusion"]}
+{"id": "C4", "texte": "Elle est très endormie, on n'arrive pas à la réveiller vraiment.", "attendus": ["confusion"]}
+{"id": "C5", "texte": "Je mélange tout, je confonds mes enfants.", "attendus": ["confusion"]}
+{"id": "C6", "texte": "Il est agité et il dit des choses sans sens depuis la fièvre.", "attendus": ["confusion"]}
+{"id": "C7", "texte": "j'ai la tete dans le brouillard je ne sais plus ce que je fais", "attendus": ["confusion"]}
+{"id": "V1", "texte": "Mes cachets de traitement remontent à chaque fois.", "attendus": ["vomit_traitement"]}
+{"id": "V2", "texte": "J'ai rejeté tous mes antirétroviraux depuis samedi.", "attendus": ["vomit_traitement"]}
+{"id": "V3", "texte": "Le médicament ne tient pas, je le vomis presque aussitôt.", "attendus": ["vomit_traitement"]}
+{"id": "V4", "texte": "Je dégueule mes comprimés du soir.", "attendus": ["vomit_traitement"]}
+{"id": "V5", "texte": "Impossible de prendre le TLD sans vomir.", "attendus": ["vomit_traitement"]}
+{"id": "V6", "texte": "Je vomis juste après chaque dose de mon traitement.", "attendus": ["vomit_traitement"]}
+{"id": "V7", "texte": "Mes pilules sortent avec le vomi.", "attendus": ["vomit_traitement"]}
+{"id": "S1", "texte": "Je fais caca avec du sang rouge.", "attendus": ["saignement"]}
+{"id": "S2", "texte": "Mes urines sont rouges comme du jus de bissap, pas à cause de la boisson.", "attendus": ["saignement"]}
+{"id": "S3", "texte": "Quand je tousse il y a du sang dans le mouchoir.", "attendus": ["saignement"]}
+{"id": "S4", "texte": "Je saigne beaucoup des gencives depuis hier.", "attendus": ["saignement"]}
+{"id": "S5", "texte": "Mes selles sont toutes noires et collantes.", "attendus": ["saignement"]}
+{"id": "S6", "texte": "J'ai des pertes de sang alors que je suis enceinte.", "attendus": ["saignement"]}
+{"id": "S7", "texte": "J'ai vomi du sang ce matin.", "attendus": ["saignement"]}
+{"id": "M1", "texte": "Je suis tombé raide au travail et je ne me souviens de rien.", "attendus": ["malaise"]}
+{"id": "M2", "texte": "J'ai eu un black-out et je me suis retrouvé au sol.", "attendus": ["malaise"]}
+{"id": "M3", "texte": "Ma soeur s'est effondrée dans la cour et ne répondait plus.", "attendus": ["malaise"]}
+{"id": "M4", "texte": "J'ai perdu conscience un instant en me levant du lit.", "attendus": ["malaise"]}
+{"id": "M5", "texte": "Je me suis évanouie deux fois cette semaine.", "attendus": ["malaise"]}
+{"id": "M6", "texte": "Tout a tourné et je me suis écroulé par terre.", "attendus": ["malaise"]}
+{"id": "M7", "texte": "j'ai fait une syncope au marché de Dantokpa", "attendus": ["malaise"]}
+{"id": "I1", "texte": "J'ai envie d'arrêter de vivre.", "attendus": ["idees_noires"]}
+{"id": "I2", "texte": "Je me dis souvent que je devrais me tuer.", "attendus": ["idees_noires"]}
+{"id": "I3", "texte": "Je ne vois plus aucune raison de continuer à vivre.", "attendus": ["idees_noires"]}
+{"id": "I4", "texte": "Ma famille serait plus tranquille si je n'étais plus là.", "attendus": ["idees_noires"]}
+{"id": "I5", "texte": "Je veux dormir et ne jamais me réveiller.", "attendus": ["idees_noires"]}
+{"id": "I6", "texte": "J'ai acheté de quoi m'empoisonner.", "attendus": ["idees_noires"]}
+{"id": "I7", "texte": "je pense a me suicider depuis que je sais pour la maladie", "attendus": ["idees_noires"]}
+{"id": "N1", "texte": "Je n'ai jamais saigné, ni du nez ni ailleurs.", "attendus": []}
+{"id": "N2", "texte": "Ma respiration est normale, je n'ai aucun souci de ce côté.", "attendus": []}
+{"id": "N3", "texte": "Pas de douleur au coeur ni à la poitrine.", "attendus": []}
+{"id": "N4", "texte": "J'ai fait une prise de sang pour la charge virale.", "attendus": []}
+{"id": "N5", "texte": "Ce film m'a tué de rire.", "attendus": []}
+{"id": "N6", "texte": "Je garde bien mes comprimés, aucun vomissement.", "attendus": []}
+{"id": "N7", "texte": "Je suis bien éveillé et j'ai la tête claire.", "attendus": []}
+{"id": "N8", "texte": "Mon téléphone est tombé dans l'eau.", "attendus": []}
+{"id": "N9", "texte": "Je veux vivre pour voir grandir mes enfants.", "attendus": []}
+{"id": "N10", "texte": "J'ai mal aux genoux quand je marche longtemps.", "attendus": []}
+{"id": "N11", "texte": "Je suis un peu essoufflé après le football, c'est normal.", "attendus": []}
+{"id": "N12", "texte": "Pas de sang dans les urines, elles sont juste foncées.", "attendus": []}
+{"id": "N13", "texte": "Mes règles sont arrivées à la bonne date.", "attendus": []}
+{"id": "N14", "texte": "J'ai le cou un peu raide à cause de l'oreiller, sans fièvre.", "attendus": []}
+{"id": "N15", "texte": "Je dors bien et je me réveille en forme.", "attendus": []}
+{"id": "N16", "texte": "J'ai une légère toux le matin, rien de grave.", "attendus": []}
+{"id": "N17", "texte": "Je ne suis pas tombé, juste un peu fatigué.", "attendus": []}
+{"id": "N18", "texte": "Le moustique m'a piqué, il y a une petite goutte de sang.", "attendus": []}
+{"id": "N19", "texte": "Je n'ai pas envie de mourir, je veux guérir.", "attendus": []}
+{"id": "N20", "texte": "J'ai des diarrhées depuis ce matin, sans sang.", "attendus": []}
+{"id": "N21", "texte": "Je suis confus sur l'heure de mon rendez-vous, vous pouvez me la redonner ?", "attendus": []}

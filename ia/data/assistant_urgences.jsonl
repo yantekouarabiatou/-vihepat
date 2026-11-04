@@ -1,0 +1,36 @@
+{"id": "UV1", "signe": "vomit_traitement", "urgent": true, "message": "Depuis lundi je rends tous mes comprimés juste après les avoir avalés."}
+{"id": "UV2", "signe": "vomit_traitement", "urgent": true, "message": "Mon traitement ne reste pas dans mon ventre, je vomis à chaque prise depuis deux jours."}
+{"id": "UV3", "signe": "vomit_traitement", "urgent": true, "message": "Je n'arrive plus à garder mes ARV, tout ressort."}
+{"id": "UV4", "signe": "vomit_traitement", "urgent": true, "message": "J'ai vomi mes médicaments ce matin et hier soir aussi."}
+{"id": "UR1", "signe": "respiration", "urgent": true, "message": "J'étouffe dès que je m'allonge, je dors assis depuis deux nuits."}
+{"id": "UR2", "signe": "respiration", "urgent": true, "message": "Mon souffle est très court, je ne peux pas finir mes phrases."}
+{"id": "UR3", "signe": "respiration", "urgent": true, "message": "J'ai les lèvres qui bleuissent et je respire mal."}
+{"id": "UP1", "signe": "poitrine", "urgent": true, "message": "J'ai une douleur qui serre la poitrine et qui va dans le bras."}
+{"id": "UP2", "signe": "poitrine", "urgent": true, "message": "Ça me brûle derrière le sternum depuis une heure."}
+{"id": "UP3", "signe": "poitrine", "urgent": true, "message": "Gros poids sur le thorax quand je marche."}
+{"id": "UC1", "signe": "confusion", "urgent": true, "message": "J'ai la nuque bloquée, de la fièvre et la lumière me fait mal."}
+{"id": "UC2", "signe": "confusion", "urgent": true, "message": "Ma famille dit que je dis n'importe quoi et je ne sais plus quel jour on est."}
+{"id": "UC3", "signe": "confusion", "urgent": true, "message": "Je m'endors tout le temps, même debout, on a du mal à me réveiller."}
+{"id": "US1", "signe": "saignement", "urgent": true, "message": "Il y a du sang rouge dans mes selles depuis ce matin."}
+{"id": "US2", "signe": "saignement", "urgent": true, "message": "Mes selles sont noires comme du charbon depuis deux jours."}
+{"id": "US3", "signe": "saignement", "urgent": true, "message": "Je crache du sang en toussant."}
+{"id": "US4", "signe": "saignement", "urgent": true, "message": "Je saigne du nez et ça ne s'arrête pas depuis une heure."}
+{"id": "UM1", "signe": "malaise", "urgent": true, "message": "Je suis tombé dans les pommes au travail tout à l'heure."}
+{"id": "UM2", "signe": "malaise", "urgent": true, "message": "J'ai perdu connaissance en me levant ce matin."}
+{"id": "UM3", "signe": "malaise", "urgent": true, "message": "Je me suis effondré dans la rue, des gens m'ont relevé."}
+{"id": "UI1", "signe": "idees_noires", "urgent": true, "message": "Je n'ai plus envie de vivre, tout est trop lourd."}
+{"id": "UI2", "signe": "idees_noires", "urgent": true, "message": "Je pense à prendre toutes mes pilules d'un coup pour en finir."}
+{"id": "UI3", "signe": "idees_noires", "urgent": true, "message": "Ma famille serait mieux sans moi."}
+{"id": "UI4", "signe": "idees_noires", "urgent": true, "message": "J'ai envie de me faire du mal ce soir."}
+{"id": "NU1", "signe": null, "urgent": false, "message": "J'ai un peu mal à la tête depuis ce matin, ça va quand même."}
+{"id": "NU2", "signe": null, "urgent": false, "message": "J'ai le nez qui coule et j'éternue beaucoup."}
+{"id": "NU3", "signe": null, "urgent": false, "message": "Je me sens un peu fatigué depuis deux jours."}
+{"id": "NU4", "signe": null, "urgent": false, "message": "J'ai des boutons qui grattent sur les bras."}
+{"id": "NU5", "signe": null, "urgent": false, "message": "J'ai un peu de diarrhée depuis hier, je bois de l'eau."}
+{"id": "NU6", "signe": null, "urgent": false, "message": "J'ai eu une légère nausée ce matin mais j'ai bien gardé mes comprimés."}
+{"id": "NU7", "signe": null, "urgent": false, "message": "J'ai mal au dos après avoir porté des sacs."}
+{"id": "NU8", "signe": null, "urgent": false, "message": "Je tousse un peu le soir, sans fièvre."}
+{"id": "NU9", "signe": null, "urgent": false, "message": "J'ai fait une prise de sang hier pour ma charge virale, quand aurai-je les résultats ?"}
+{"id": "NU10", "signe": null, "urgent": false, "message": "J'ai un peu mal au ventre après le repas, ça passe vite."}
+{"id": "NU11", "signe": null, "urgent": false, "message": "Je dors mal à cause de la chaleur."}
+{"id": "NU12", "signe": null, "urgent": false, "message": "Je n'ai jamais vomi mes comprimés, mais j'ai parfois des brûlures d'estomac."}

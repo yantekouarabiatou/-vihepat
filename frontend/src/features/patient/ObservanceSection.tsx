@@ -8,6 +8,7 @@ import { ObservanceBars, formatTaux, libelleEcheance, tauxStyle } from "@/lib/ob
 import { useRappelsPrises } from "@/hooks/use-rappels-prises";
 import { estErreurReseau, mettreEnAttente } from "@/lib/offline-queue";
 import { Masque } from "@/components/masque";
+import { apresPrise } from "@/lib/felicitations";
 import { ListenButton } from "@/components/listen-button";
 
 const CLE_OBSERVANCE = ["patient", "observance"] as const;
@@ -57,13 +58,15 @@ export function ObservanceSection() {
       if (ctx?.avant) queryClient.setQueryData(CLE_OBSERVANCE, ctx.avant);
       toast.error(t("observance.toast_save_error"));
     },
-    onSuccess: (res, { statut }) => {
-      if (res.horsLigne) toast(t("observance.toast_hors_ligne"));
-      else if (statut === "prise") toast.success(t("observance.toast_bravo"));
-    },
-    onSettled: (res) => {
-      // Hors ligne, on garde l'affichage optimiste au lieu de recharger depuis le cache
-      if (!res?.horsLigne) queryClient.invalidateQueries({ queryKey: CLE_OBSERVANCE });
+    onSuccess: async (res, { statut }) => {
+      if (res.horsLigne) {
+        toast(t("observance.toast_hors_ligne"));
+        apresPrise(statut, queryClient.getQueryData<ObservanceResponse>(CLE_OBSERVANCE));
+        return;
+      }
+      // Félicitations calculées sur l'observance à jour (série de jours sans oubli)
+      await queryClient.invalidateQueries({ queryKey: CLE_OBSERVANCE });
+      apresPrise(statut, queryClient.getQueryData<ObservanceResponse>(CLE_OBSERVANCE));
     },
 
   });

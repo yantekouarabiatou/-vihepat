@@ -1,12 +1,15 @@
 import { z } from 'zod';
 import prompt from './extraction.json';
-import { genererContenu, GeminiError, type GeminiUsage } from './gemini.client';
+import { genererContenu, GeminiError, type GeminiPart, type GeminiUsage } from './gemini.client';
+import { elevenlabsConfigure, transcrireElevenLabs, versLangue, type ResultatElevenLabs } from './elevenlabs.client';
 import { evaluerTriage, type EntreeTriage, type ResultatTriage } from './triage';
+import { detecterSignesGraves } from './signes-graves';
 
 /**
  * Chaîne « note vocale -> transcription -> structuration -> priorité ».
  *
- * Gemini ne fait que transcrire et extraire des champs fermés (schéma JSON imposé).
+ * La transcription passe d'abord par ElevenLabs (Scribe) ; Gemini n'extrait alors que des champs
+ * fermés à partir du texte (schéma JSON imposé). Sans ElevenLabs, ou s'il échoue, Gemini écoute l'audio.
  * La priorité d'alerte est calculée ensuite par le moteur de règles déterministe
  * (triage.ts), le même que celui qui tourne hors ligne sur le téléphone du patient.
  */
@@ -39,6 +42,8 @@ export interface ResultatTriageVocal {
   entree: EntreeTriage;
   triage: ResultatTriage;
   mesures: {
+    fournisseurTranscription: 'elevenlabs' | 'gemini';
+    latenceTranscriptionMs?: number;
     promptVersion: string;
     modele: string;
     latenceGeminiMs: number;
@@ -79,17 +84,62 @@ export async function trierNoteVocale(params: {
   traitementRecent: boolean;
 }): Promise<ResultatTriageVocal> {
   const debut = performance.now();
+
+  let transcrit: ResultatElevenLabs | null = null;
+  if (elevenlabsConfigure()) {
+    try {
+      transcrit = await transcrireElevenLabs(params.audioBase64, params.mimeType);
+    } catch (err) {
+      console.warn('Échec de la transcription ElevenLabs, Gemini écoute la note :', (err as Error).message);
+    }
+  }
+
+  // Note non française : on n'appelle pas Gemini, qui inventerait des symptômes (formulaire non pré-rempli)
+  if (transcrit && versLangue(transcrit.codeLangue) !== 'fr') {
+    const extraction: Extraction = {
+      transcription: transcrit.texte, langue: versLangue(transcrit.codeLangue),
+      symptomes: [], duree: 'inconnue', intensite: 'inconnue', signes_graves: [],
+    };
+    const entree = versEntree(extraction, params.traitementRecent);
+    return {
+      extraction,
+      utilisable: false,
+      entree,
+      triage: evaluerTriage(entree),
+      mesures: {
+        fournisseurTranscription: 'elevenlabs',
+        latenceTranscriptionMs: transcrit.latencyMs,
+        promptVersion: prompt.version,
+        modele: transcrit.modele,
+        latenceGeminiMs: 0,
+        latenceTotaleMs: Math.round(performance.now() - debut),
+        tentatives: 0,
+        tokens: { promptTokens: 0, outputTokens: 0, thoughtsTokens: 0, audioPromptTokens: 0 },
+      },
+    };
+  }
+
+  const parts: GeminiPart[] = transcrit
+    ? [{ text: prompt.user_text + transcrit.texte }]
+    : [{ inlineData: { mimeType: params.mimeType, data: params.audioBase64 } }, { text: prompt.user_audio }];
   const g = await genererContenu({
     system: prompt.system,
-    parts: [
-      { inlineData: { mimeType: params.mimeType, data: params.audioBase64 } },
-      { text: prompt.user_audio },
-    ],
+    parts,
     schema: prompt.schema,
     temperature: prompt.generation.temperature,
     responseMimeType: prompt.generation.responseMimeType,
   });
   const extraction = analyser(g.text);
+  // La transcription et la langue d'ElevenLabs font foi : Gemini n'a fait que recopier le texte
+  if (transcrit) {
+    extraction.transcription = transcrit.texte;
+    extraction.langue = 'fr';
+  }
+  // Union avec le lexique déterministe : rater un signe grave coûte plus cher qu'une alerte en trop
+  // (mesure : ia/resultats/signes_graves_*). Seulement en français, seule langue mesurée.
+  if (extraction.langue === 'fr') {
+    extraction.signes_graves = Array.from(new Set([...extraction.signes_graves, ...detecterSignesGraves(extraction.transcription)]));
+  }
   const entree = versEntree(extraction, params.traitementRecent);
   const triage = evaluerTriage(entree);
 
@@ -100,8 +150,10 @@ export async function trierNoteVocale(params: {
     entree,
     triage,
     mesures: {
+      fournisseurTranscription: transcrit ? 'elevenlabs' : 'gemini',
+      ...(transcrit ? { latenceTranscriptionMs: transcrit.latencyMs } : {}),
       promptVersion: prompt.version,
-      modele: g.modelVersion,
+      modele: transcrit ? `${transcrit.modele} + ${g.modelVersion}` : g.modelVersion,
       latenceGeminiMs: g.latencyMs,
       latenceTotaleMs: Math.round(performance.now() - debut),
       tentatives: g.attempts,

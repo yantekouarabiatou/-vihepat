@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -24,6 +24,7 @@ import { TriageDialog } from "./TriageDialog";
 import { Masque } from "@/components/masque";
 import { ListenButton } from "@/components/listen-button";
 import { localeAffichage } from "@/lib/date-locale";
+import { verifierRendezVous } from "@/lib/felicitations";
 
 const SEPT_JOURS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -83,6 +84,9 @@ export function DashboardPage() {
     queryKey: ["patient", "rendez-vous"],
     queryFn: patientApi.getRendezVous,
   });
+  // Rendez-vous honoré ou manqué depuis la dernière visite : félicitations ou encouragement
+  const { data: rdvPasses } = useQuery({ queryKey: ["patient", "rendez-vous-passes"], queryFn: patientApi.getRendezVousPasses });
+  useEffect(() => verifierRendezVous(rdvPasses), [rdvPasses]);
   const { data: observations } = useQuery({
     queryKey: ["patient", "observations"],
     queryFn: patientApi.getObservations,

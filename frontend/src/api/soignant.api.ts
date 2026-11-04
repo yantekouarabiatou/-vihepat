@@ -15,7 +15,96 @@ export interface SoignantPatient {
   examensEnRetard?: number;
   /** Série de rappels non confirmés : aide à la priorisation, sans décision automatique */
   rappelsARegarder?: boolean;
+  /** Null tant qu'aucun bilan d'inclusion n'est saisi (ou hors VIH) */
+  risquePerteSuivi?: { niveau: NiveauRisque; probabilite: number } | null;
+  /** Vue globale du suivi */
+  prochainRdv?: { dateHeure: string; motif: string | null; statut: StatutRDV } | null;
+  dernierRdv?: { dateHeure: string; statut: StatutRDV } | null;
+  equipe?: string[];
 }
+
+/* Groupes de soutien vus par l'équipe soignante */
+
+export type CategorieAlerteGroupe = 'detresse' | 'traitement' | 'injure' | 'stigmatisation' | 'coordonnees';
+
+export interface GroupeEquipe {
+  id: number;
+  nom: string;
+  description: string;
+  pathologie: Pathologie | null;
+  actif: boolean;
+  nbMembres: number;
+  nbMessages: number;
+  alertesATraiter: number;
+}
+
+export interface MessageGroupeEquipe {
+  id: number;
+  groupeId: number;
+  /** Présent dans la liste des signalements */
+  groupe?: string;
+  contenu: string;
+  createdAt: string;
+  /** Pseudonyme, comme les membres le voient */
+  auteur: string;
+  /** Seulement pour un patient que ce soignant suit (tous pour un admin) */
+  patient: { id: number; codePatient: string } | null;
+  masque: boolean;
+  reponseA: { id: number; auteur: string; extrait: string | null } | null;
+  reactions: { soutien: number; merci: number };
+  /** Signalements faits par des membres, regroupés par motif */
+  signalementsMembres: { motif: 'propos_blessants' | 'mauvais_conseil' | 'coordonnees' | 'autre'; nombre: number }[];
+  commentairesMembres: string[];
+  /** categorie null = message signalé par un membre, sans mot sensible détecté */
+  alerte: { categorie: CategorieAlerteGroupe | null; mots: string; statut: 'a_traiter' | 'traitee' | null; traiteeLe: string | null } | null;
+}
+
+export interface AlertesGroupes {
+  aTraiter: MessageGroupeEquipe[];
+  traitees: MessageGroupeEquipe[];
+}
+
+export type SituationMatrimoniale = 'marie' | 'celibataire' | 'divorce' | 'separe' | 'veuf';
+export type NiveauEtudes = 'aucun' | 'primaire' | 'secondaire' | 'superieur';
+
+/** Bilan d'inclusion : entrées du modèle de perte de suivi. Null = examen non réalisé. */
+export interface BilanInclusion {
+  dateBilan: string | null;
+  situationMatrimoniale: SituationMatrimoniale | null;
+  niveauEtudes: NiveauEtudes | null;
+  stadeOms: number | null;
+  cd4: number | null;
+  chargeVirale: number | null;
+  alat: number | null;
+  creatinine: number | null;
+  hemoglobine: number | null;
+  plaquettes: number | null;
+  proteinesTotales: number | null;
+  uree: number | null;
+  leucocytes: number | null;
+}
+
+export type NiveauRisque = 'faible' | 'modere' | 'eleve';
+
+/** Variable du modèle expliquée au soignant (voir backend/src/ia/perte-de-suivi.ts) */
+export type VariableRisque =
+  | 'Age' | 'annees_exposition' | 'nb_examens_manquants'
+  | 'log_ALT' | 'sqrt_CD4' | 'log_Creatin' | 'Hemoglob' | 'log_Platelet' | 'log10_CV' | 'TotProt' | 'log_Urea' | 'log_WBC'
+  | 'vih_avance' | 'cv_inf_1000' | 'Sex' | 'MaritalStatus' | 'Education' | 'WHOStage';
+
+export interface FacteurRisque { variable: VariableRisque; contribution: number }
+
+export type RisquePerteSuivi =
+  | { statut: 'non_concerne' | 'bilan_absent' | 'indisponible' }
+  | {
+      statut: 'calcule';
+      probabilite: number;
+      niveau: NiveauRisque;
+      examensManquants: number;
+      hausse: FacteurRisque[];
+      baisse: FacteurRisque[];
+      modele: { version: string; date: string; source: string; seuils: { modere: number; eleve: number } };
+    };
 
 /** État agrégé des rappels du patient : jamais le libellé ni l'heure personnelle. */
 export interface EtatRappels {
@@ -28,7 +117,33 @@ export interface EtatRappels {
 }
 
 export interface SoignantRendezVous extends RendezVous {
-  patient: { id: number; codePatient: string; user: { nom: string; prenom: string } };
+  patient: { id: number; codePatient: string; pathologie?: string; user: { nom: string; prenom: string } };
+  rappelAuto?: boolean;
+}
+
+/** Rendez-vous de la vue globale : patient, soignant, motif */
+export interface RendezVousGlobal extends RendezVous {
+  rappelAuto?: boolean;
+  patient: { id: number; codePatient: string; pathologie: string; telephone: string | null; user: { nom: string; prenom: string } };
+  soignant: { id: number; fonction: FonctionSoignant; user: { nom: string; prenom: string } } | null;
+}
+
+export interface Agenda {
+  rendezVous: SoignantRendezVous[];
+  /** Patients suivis sans aucun rendez-vous à venir */
+  sansRendezVous: {
+    id: number; codePatient: string; pathologie: string; nom: string; prenom: string;
+    risquePerteSuivi: { niveau: NiveauRisque; probabilite: number } | null;
+  }[];
+  /** Risque de perte de suivi par patient (seulement ceux qui ont un bilan d'inclusion) */
+  risques: Record<number, { niveau: NiveauRisque; probabilite: number }>;
+}
+
+export interface ApercuRendezVous {
+  dateHeure: string;
+  conflitPatient: boolean;
+  creneauOccupe: boolean;
+  chargeJour: number;
 }
 
 export type CibleCommunique = 'tous' | 'patient';
@@ -74,6 +189,8 @@ export interface PatientDetail {
   observance: ResumeObservance;
   alertesExamens: AlerteExamen[];
   rappels?: EtatRappels;
+  bilanInclusion: (BilanInclusion & { updatedAt: string }) | null;
+  risquePerteSuivi: RisquePerteSuivi;
 }
 
 
@@ -198,6 +315,19 @@ export const soignantApi = {
   getPatient: (id: number) =>
     api.get<PatientDetail>(`/soignant/patients/${id}`).then((r) => r.data),
 
+  getCommunautes: () => api.get<GroupeEquipe[]>('/soignant/communautes').then((r) => r.data),
+
+  getAlertesCommunautes: () => api.get<AlertesGroupes>('/soignant/communautes/alertes').then((r) => r.data),
+
+  getMessagesCommunaute: (groupeId: number) =>
+    api.get<MessageGroupeEquipe[]>(`/soignant/communautes/${groupeId}/messages`).then((r) => r.data),
+
+  modererMessage: (messageId: number, input: { traitee?: boolean; masque?: boolean }) =>
+    api.patch<MessageGroupeEquipe>(`/soignant/communautes/messages/${messageId}`, input).then((r) => r.data),
+
+  enregistrerBilanInclusion: (patientId: number, input: BilanInclusion) =>
+    api.put<PatientDetail>(`/soignant/patients/${patientId}/bilan-inclusion`, input).then((r) => r.data),
+
   createObservation: (patientId: number, input: CreateObservationInput) =>
     api.post<ObservationDetail>(`/soignant/patients/${patientId}/observations`, input).then((r) => r.data),
 
@@ -219,7 +349,28 @@ export const soignantApi = {
     api.post<SoignantRendezVous>('/soignant/rendez-vous', input).then((r) => r.data),
 
   envoyerRappelRdv: (id: number) =>
-    api.post<SoignantRendezVous>(`/soignant/rendez-vous/${id}/rappel`).then((r) => r.data),
+    api
+      .post<{ rendezVous: SoignantRendezVous; email: boolean; notification: number }>(`/soignant/rendez-vous/${id}/rappel`)
+      .then((r) => r.data),
+
+  changerRappelAuto: (id: number, rappelAuto: boolean) =>
+    api.patch<SoignantRendezVous>(`/soignant/rendez-vous/${id}/rappel-auto`, { rappelAuto }).then((r) => r.data),
+
+  getTousRendezVous: (du?: Date, au?: Date) =>
+    api
+      .get<RendezVousGlobal[]>('/soignant/rendez-vous/tous', {
+        params: { ...(du ? { du: du.toISOString() } : {}), ...(au ? { au: au.toISOString() } : {}) },
+      })
+      .then((r) => r.data),
+
+  getAgenda: (du: Date, au: Date) =>
+    api.get<Agenda>('/soignant/agenda', { params: { du: du.toISOString(), au: au.toISOString() } }).then((r) => r.data),
+
+  apercuSerie: (patientId: number, dates: string[]) =>
+    api.post<ApercuRendezVous[]>('/soignant/rendez-vous/serie/apercu', { patientId, dates }).then((r) => r.data),
+
+  creerSerie: (input: { patientId: number; dates: string[]; motif?: string; rappelAuto: boolean }) =>
+    api.post<{ crees: number }>('/soignant/rendez-vous/serie', input).then((r) => r.data),
 
   updateRendezVous: (id: number, input: { statut?: StatutRDV; notes?: string }) =>
     api.patch<SoignantRendezVous>(`/soignant/rendez-vous/${id}`, input).then((r) => r.data),
@@ -229,7 +380,8 @@ export const soignantApi = {
   createCommunique: (input: { titre: string; contenu: string; cible: CibleCommunique; patientId?: number }) =>
     api.post<Communique>('/soignant/communiques', input).then((r) => r.data),
 
-  getSignalements: (statut?: StatutSignalement) =>
+  /** Sans filtre : les signalements à traiter ; `tous` : l'historique complet */
+  getSignalements: (statut?: StatutSignalement | 'tous') =>
     api
       .get<SoignantSignalement[]>('/soignant/signalements', { params: statut ? { statut } : undefined })
       .then((r) => r.data),

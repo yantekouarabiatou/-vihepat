@@ -3,7 +3,7 @@ import { ZodError } from 'zod';
 
 export function errorHandler(err: any, _req: Request, res: Response, _next: NextFunction) {
   if (err instanceof ZodError) {
-    return res.status(400).json({ error: 'Validation échouée', details: err.errors });
+    return res.status(400).json({ error: 'Validation échouée', details: err.issues });
   }
   if (err.name === 'SequelizeUniqueConstraintError') {
     return res.status(409).json({ error: 'Une ligne avec cette valeur existe déjà (contrainte d\'unicité).' });

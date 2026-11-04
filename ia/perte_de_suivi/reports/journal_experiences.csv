@@ -1,0 +1,16 @@
+﻿ID,Expérience,Résultat,Décision
+E01,"Reconstruction de la cible (règle conservatrice, k = −6)",3400 LTFU vs 3 397 publiés ; 98.6% des tracés retrouvés,Règle retenue
+E02,Audit des variables X2 (fin de suivi),CD4 : X2 = X chez 50 % des LTFU vs 4 % des retenus,X2 exclues
+E03,Référence naïve,PR-AUC val = 0.558,Plancher
+E04,Régression logistique (C = 0.1),"PR-AUC val = 0.792, ROC-AUC = 0.748",Référence interprétable
+E05,"Random Forest (25 combinaisons, CV 5 plis)","PR-AUC val = 0.796, ROC-AUC = 0.755",Comparé
+E06,"XGBoost (40 combinaisons, CV 5 plis)","PR-AUC val = 0.798, ROC-AUC = 0.757",Comparé
+E07,"MLP 32-16 (alpha = 1.0, arrêt epoch 26)","PR-AUC val = 0.791, ROC-AUC = 0.754",Comparé
+E08,Modèle de Cox,C-index val = 0.721,Analyse complémentaire
+E09,Sélection (règle 6.1),Régression logistique : XGBoost n'apporte pas de gain significatif : parcimonie,Modèle final
+E10,Seuil (sensibilité ≥ 80 % en validation),seuil = 0.422 ; risque élevé ≥ 0.77,Retenu
+E11,Évaluation test,"ROC-AUC = 0.765, PR-AUC = 0.817, sensibilité = 0.814",Résultat final
+E12,S1 : fuite volontaire (X2),ROC-AUC val = 0.931,"Démontre la fuite, rejeté"
+E13,S2 : modèle strict sans complétude,ROC-AUC val = 0.619,Borne basse documentée
+E14,S3 : horizon fixe 24 mois,ROC-AUC val = 0.774,Robustesse vérifiée
+E15,S4 : validation temporelle,ROC-AUC = 0.773,Robustesse vérifiée

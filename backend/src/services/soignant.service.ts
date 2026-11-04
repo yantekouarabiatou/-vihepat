@@ -1,61 +1,13 @@
-import { Op } from 'sequelize';
-import bcrypt from 'bcrypt';
-import {
-  Soignant, Patient, User, Affectation, RendezVous, Signalement, Observation, Traitement, Communique,
-} from '../models';
+import { Soignant, Patient, User, Affectation, RendezVous, Signalement, Observation, Traitement, BilanInclusion } from '../models';
+import type { BilanInclusionAttributes } from '../models/BilanInclusion';
+import { evaluerRisquePatient } from './perte-de-suivi.service';
 import type { TypeObservation } from '../models/Observation';
 import type { Pathologie } from '../models/Patient';
 import { getAlertesExamens, getResumeObservance } from './observance.service';
 import { getEtatAgrege } from './rappels.service';
-import { memoriserVersion } from '../utils/token-version';
-import { genererCodePatient } from './auth.service';
-import { roleAPermission } from './permissions.service';
-import { sendNouvelleInfoEmail, sendPasswordResetEmail, sendWelcomePatientEmail } from './mail.service';
-import type { FonctionSoignant } from '../models/Soignant';
+import { httpError, getContexte, assertMedecin, avertirPatient, getSoignantOrThrow, assertPatientAffecte } from './soignant-contexte';
 
-const SALT_ROUNDS = 12;
-
-function httpError(status: number, message: string) {
-  const e: any = new Error(message);
-  e.status = status;
-  return e;
-}
-
-/** Mot de passe temporaire lisible, remis en main propre au patient par le soignant/l'admin qui crée son dossier. */
-function genererMotDePasseTemporaire(): string {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-  let mdp = '';
-  for (let i = 0; i < 10; i++) mdp += alphabet[Math.floor(Math.random() * alphabet.length)];
-  return mdp;
-}
-
-/**
- * Contexte d'accès d'un soignant : un `admin` voit et gère l'ensemble des patients.
- * `medecin` : peut ouvrir des dossiers et rattacher des soignants à ses patients.
- */
-interface Contexte { soignant?: Soignant | null; admin: boolean; medecin: boolean; user: User; }
-
-async function getContexte(userId: number): Promise<Contexte> {
-  const [soignant, user] = await Promise.all([
-    Soignant.findOne({ where: { userId } }),
-    User.findByPk(userId),
-  ]);
-  if (!user) throw httpError(404, 'Utilisateur introuvable');
-  // Accès à toute la patientèle : permission `patient:read_all` (accordée à l'admin par défaut)
-  const admin = roleAPermission(user.role, 'patient:read_all');
-  if (!soignant && !admin) {
-    throw httpError(403, 'Profil soignant ou administrateur introuvable');
-  }
-  const medecin = admin || soignant?.fonction === 'medecin';
-  return { soignant: soignant ?? null, admin, medecin, user };
-}
-
-/** Rattacher un patient à une équipe est une décision médicale : réservée au médecin (et à l'admin). */
-function assertMedecin(ctx: Contexte) {
-  if (!ctx.medecin) {
-    throw httpError(403, 'Seul le médecin peut rattacher un patient ou un soignant');
-  }
-}
+export * from './soignant-suivi.service';
 
 /** Profil du soignant connecté : l'interface s'adapte à sa fonction. */
 export async function getMonProfil(userId: number) {
@@ -66,45 +18,6 @@ export async function getMonProfil(userId: number) {
     medecin: ctx.medecin,
     admin: ctx.admin,
   };
-}
-
-/** Avertit le patient, sans aucun détail médical (la boîte mail peut être lue par l'entourage). */
-async function avertirPatient(patientId: number) {
-  const patient = await Patient.findByPk(patientId, { include: [{ model: User, as: 'user', attributes: ['email', 'actif'] }] });
-  const user = (patient as any)?.user;
-  if (!patient || !user?.email || !user.actif) return;
-  void sendNouvelleInfoEmail({ to: user.email, langue: patient.languePreferee ?? 'fr' });
-}
-
-async function getSoignantOrThrow(userId: number): Promise<Soignant> {
-  const ctx = await getContexte(userId);
-  if (!ctx.soignant) {
-    throw httpError(400, 'Cette action nécessite un profil soignant actif');
-  }
-  return ctx.soignant;
-}
-
-async function getPatientIds(ctx: Contexte) {
-  if (ctx.admin) {
-    const tous = await Patient.findAll({ attributes: ['id'] });
-    return tous.map((p) => p.id);
-  }
-  if (!ctx.soignant) return [];
-  const affectations = await Affectation.findAll({ where: { soignantId: ctx.soignant.id } });
-  return affectations.map((a) => a.patientId);
-}
-
-/** Vérifie que le patient est bien affecté à ce soignant (séparation des rôles) — un admin passe toujours. */
-async function assertPatientAffecte(ctx: Contexte, patientId: number) {
-  if (ctx.admin) {
-    const patient = await Patient.findByPk(patientId);
-    if (!patient) throw httpError(404, 'Patient introuvable');
-    return patient;
-  }
-  if (!ctx.soignant) throw httpError(403, 'Accès refusé');
-  const affectation = await Affectation.findOne({ where: { soignantId: ctx.soignant.id, patientId } });
-  if (!affectation) throw httpError(404, 'Patient introuvable ou non affecté');
-  return affectation;
 }
 
 export async function rattacherPatient(userId: number, codePatient: string) {
@@ -123,102 +36,6 @@ export async function rattacherPatient(userId: number, codePatient: string) {
   });
   if (!created) throw httpError(409, 'Ce patient est déjà dans votre file active');
   return patient;
-}
-
-/**
- * Création d'un dossier patient directement par le soignant/l'admin (centre de santé) :
- * utile quand le patient n'a pas encore de compte (pas d'email/smartphone au moment de
- * l'accueil). Le patient est aussitôt rattaché au soignant qui l'a créé. Le mot de passe
- * temporaire généré est remis en main propre — il n'existe aucune capacité d'envoi d'email
- * dans cette version.
- */
-export async function creerPatient(
-  userId: number,
-  input: {
-    email: string;
-    nom: string;
-    prenom: string;
-    pathologie: Pathologie;
-    sexe?: 'M' | 'F';
-    telephone?: string;
-    region?: string;
-    commune?: string;
-    dateNaissance?: string;
-    dateDiagnostic?: string;
-    languePreferee?: string;
-    consentementDonne: boolean;
-    soignantId?: number;
-  }
-) {
-  const ctx = await getContexte(userId);
-  // Le créateur est aussitôt rattaché au dossier : même règle que le rattachement
-  assertMedecin(ctx);
-
-  const exists = await User.findOne({ where: { email: input.email } });
-  if (exists) throw httpError(409, 'Email déjà utilisé');
-
-  const motDePasseTemporaire = genererMotDePasseTemporaire();
-  const passwordHash = await bcrypt.hash(motDePasseTemporaire, SALT_ROUNDS);
-
-  const user = await User.create({
-    email: input.email,
-    passwordHash,
-    role: 'patient',
-    nom: input.nom,
-    prenom: input.prenom,
-    actif: true,
-  });
-
-  const patient = await Patient.create({
-    userId: user.id,
-    codePatient: genererCodePatient(),
-    pathologie: input.pathologie,
-    languePreferee: input.languePreferee ?? 'fr',
-    dateNaissance: input.dateNaissance ? new Date(input.dateNaissance) : null,
-    dateDiagnostic: input.dateDiagnostic ? new Date(input.dateDiagnostic) : null,
-    sexe: input.sexe ?? null,
-    telephone: input.telephone ?? null,
-    region: input.region ?? null,
-    commune: input.commune ?? null,
-    consentementDonne: input.consentementDonne,
-    dateConsentement: input.consentementDonne ? new Date() : null,
-  });
-
-  let targetSoignantId = ctx.soignant?.id;
-  if (ctx.admin && input.soignantId) {
-    const s = await Soignant.findByPk(input.soignantId);
-    if (s) targetSoignantId = s.id;
-  }
-  if (!targetSoignantId) {
-    const premierSoignant = await Soignant.findOne();
-    if (premierSoignant) targetSoignantId = premierSoignant.id;
-  }
-
-  if (targetSoignantId) {
-    await Affectation.create({ patientId: patient.id, soignantId: targetSoignantId, principal: true });
-  }
-
-  // Envoi de l'email de bienvenue avec identifiants sécurisés (Brevo)
-  if (user.email) {
-    void sendWelcomePatientEmail({
-      to: user.email,
-      prenom: user.prenom,
-      nom: user.nom,
-      codePatient: patient.codePatient,
-      passwordTemporaire: motDePasseTemporaire,
-      structureNom: ctx.soignant?.structure,
-    });
-  }
-
-  return {
-    patient: {
-      id: patient.id,
-      codePatient: patient.codePatient,
-      pathologie: patient.pathologie,
-      user: { nom: user.nom, prenom: user.prenom, email: user.email },
-    },
-    motDePasseTemporaire,
-  };
 }
 
 export async function getPatientDetail(userId: number, patientId: number) {
@@ -247,16 +64,44 @@ export async function getPatientDetail(userId: number, patientId: number) {
       },
       { model: Signalement, as: 'signalements', separate: true, order: [['createdAt', 'DESC']], limit: 20 },
       { model: RendezVous, as: 'rendezVous', separate: true, order: [['dateHeure', 'DESC']], limit: 20 },
+      { model: BilanInclusion, as: 'bilanInclusion', required: false },
     ],
   });
   if (!patient) throw httpError(404, 'Patient introuvable');
+  const bilan = (patient as any).bilanInclusion as BilanInclusion | null;
 
   const [observance, alertesExamens, rappels] = await Promise.all([
     getResumeObservance(patient.id),
     getAlertesExamens(patient.id, patient.pathologie),
     getEtatAgrege(patient.id),
   ]);
-  return { ...patient.toJSON(), observance, alertesExamens, rappels };
+  return {
+    ...patient.toJSON(), observance, alertesExamens, rappels,
+    // Aide à la priorisation des relances : le soignant décide
+    risquePerteSuivi: evaluerRisquePatient(patient, bilan),
+  };
+}
+
+export type SaisieBilanInclusion = Omit<BilanInclusionAttributes, 'id' | 'patientId' | 'soignantId' | 'dateBilan'> & {
+  dateBilan?: string | null;
+};
+
+/** Saisie ou correction du bilan d'inclusion (une fiche par patient) : le score est recalculé à la lecture. */
+export async function enregistrerBilanInclusion(userId: number, patientId: number, input: SaisieBilanInclusion) {
+  const ctx = await getContexte(userId);
+  await assertPatientAffecte(ctx, patientId);
+  const patient = await Patient.findByPk(patientId);
+  if (!patient) throw httpError(404, 'Patient introuvable');
+
+  const valeurs = {
+    ...input,
+    dateBilan: input.dateBilan ? new Date(input.dateBilan) : null,
+    soignantId: ctx.soignant?.id ?? null,
+  };
+  const existant = await BilanInclusion.findOne({ where: { patientId } });
+  if (existant) await existant.update(valeurs);
+  else await BilanInclusion.create({ ...valeurs, patientId });
+  return getPatientDetail(userId, patientId);
 }
 
 export async function updatePatient(
@@ -311,58 +156,6 @@ export async function updatePatient(
 
   await patient.save();
   return getPatientDetail(userId, patientId);
-}
-
-export async function reinitialiserAccesPatient(userId: number, patientId: number) {
-  const ctx = await getContexte(userId);
-  await assertPatientAffecte(ctx, patientId);
-
-  const patient = await Patient.findByPk(patientId, {
-    include: [{ model: User, as: 'user' }],
-  });
-  if (!patient) throw httpError(404, 'Patient introuvable');
-
-  const user = (patient as any).user;
-  if (!user) throw httpError(404, 'Compte utilisateur associé introuvable');
-
-  const motDePasseTemporaire = genererMotDePasseTemporaire();
-  const passwordHash = await bcrypt.hash(motDePasseTemporaire, SALT_ROUNDS);
-
-  user.passwordHash = passwordHash;
-  user.actif = true;
-  // Nouveaux accès : les sessions encore ouvertes avec l'ancien mot de passe sont fermées
-  user.tokenVersion = (user.tokenVersion ?? 0) + 1;
-  await user.save();
-  memoriserVersion(user.id, user.tokenVersion);
-
-  // Envoi de l'email de réinitialisation avec les nouveaux accès (Brevo)
-  if (user.email) {
-    void sendPasswordResetEmail({
-      to: user.email,
-      prenom: user.prenom,
-      nom: user.nom,
-      codePatient: patient.codePatient,
-      newPassword: motDePasseTemporaire,
-      structureNom: ctx.soignant?.structure,
-    });
-  }
-
-  return {
-    patient: {
-      id: patient.id,
-      codePatient: patient.codePatient,
-      pathologie: patient.pathologie,
-      telephone: patient.telephone,
-      sexe: patient.sexe,
-      user: {
-        id: user.id,
-        nom: user.nom,
-        prenom: user.prenom,
-        email: user.email,
-      },
-    },
-    motDePasseTemporaire,
-  };
 }
 
 export async function createObservation(
@@ -420,296 +213,4 @@ export async function createTraitement(
   });
   void avertirPatient(patientId);
   return traitement;
-}
-
-/** Équipe qui suit un patient, et soignants que le médecin peut y ajouter. */
-export async function getEquipePatient(userId: number, patientId: number) {
-  const ctx = await getContexte(userId);
-  await assertPatientAffecte(ctx, patientId);
-
-  const affectations = await Affectation.findAll({
-    where: { patientId },
-    include: [{
-      model: Soignant, as: 'soignant',
-      include: [{ model: User, as: 'user', attributes: ['nom', 'prenom', 'email', 'actif'] }],
-    }],
-    order: [['principal', 'DESC'], ['dateDebut', 'ASC']],
-  });
-  const membres = affectations.map((a) => {
-    const s = (a as any).soignant;
-    return {
-      soignantId: a.soignantId,
-      principal: a.principal,
-      depuis: a.dateDebut,
-      nom: s?.user?.nom ?? '',
-      prenom: s?.user?.prenom ?? '',
-      fonction: (s?.fonction ?? 'autre') as FonctionSoignant,
-      specialite: s?.specialite ?? null,
-      structure: s?.structure ?? '',
-      moi: s?.id === ctx.soignant?.id,
-    };
-  });
-
-  // Candidats : soignants actifs de la même structure (toutes structures pour l'admin)
-  let candidats: Array<{ soignantId: number; nom: string; prenom: string; fonction: FonctionSoignant; structure: string }> = [];
-  if (ctx.medecin) {
-    const dejaLa = membres.map((m) => m.soignantId);
-    const soignants = await Soignant.findAll({
-      where: {
-        id: { [Op.notIn]: dejaLa.length ? dejaLa : [0] },
-        ...(ctx.admin || !ctx.soignant ? {} : { structure: ctx.soignant.structure }),
-      },
-      include: [{ model: User, as: 'user', attributes: ['nom', 'prenom'], where: { actif: true, role: 'soignant' } }],
-      order: [['fonction', 'ASC']],
-    });
-    candidats = soignants.map((s) => ({
-      soignantId: s.id,
-      nom: (s as any).user.nom,
-      prenom: (s as any).user.prenom,
-      fonction: s.fonction,
-      structure: s.structure,
-    }));
-  }
-  return { peutGerer: ctx.medecin, membres, candidats };
-}
-
-export async function rattacherSoignant(userId: number, patientId: number, soignantId: number) {
-  const ctx = await getContexte(userId);
-  assertMedecin(ctx);
-  await assertPatientAffecte(ctx, patientId);
-
-  const cible = await Soignant.findByPk(soignantId, { include: [{ model: User, as: 'user', attributes: ['actif'] }] });
-  if (!cible || !(cible as any).user?.actif) throw httpError(404, 'Soignant introuvable');
-  if (!ctx.admin && ctx.soignant && cible.structure !== ctx.soignant.structure) {
-    throw httpError(403, "Ce soignant n'appartient pas à votre structure");
-  }
-  const [, created] = await Affectation.findOrCreate({
-    where: { patientId, soignantId },
-    defaults: { patientId, soignantId, principal: false },
-  });
-  if (!created) throw httpError(409, 'Ce soignant suit déjà ce patient');
-  return getEquipePatient(userId, patientId);
-}
-
-export async function detacherSoignant(userId: number, patientId: number, soignantId: number) {
-  const ctx = await getContexte(userId);
-  assertMedecin(ctx);
-  await assertPatientAffecte(ctx, patientId);
-  if (!ctx.admin && ctx.soignant?.id === soignantId) {
-    throw httpError(400, 'Vous ne pouvez pas vous retirer vous-même du suivi');
-  }
-  const affectation = await Affectation.findOne({ where: { patientId, soignantId } });
-  if (!affectation) throw httpError(404, 'Ce soignant ne suit pas ce patient');
-  await affectation.destroy();
-  return getEquipePatient(userId, patientId);
-}
-
-export async function updateTraitement(
-  userId: number,
-  traitementId: number,
-  input: {
-    molecule?: string;
-    dosage?: string | null;
-    frequence?: string;
-    heurePrise?: string | null;
-    dateFin?: string | null;
-    actif?: boolean;
-    notes?: string | null;
-  }
-) {
-  const ctx = await getContexte(userId);
-  const traitement = await Traitement.findByPk(traitementId);
-  if (!traitement) throw httpError(404, 'Traitement introuvable');
-  await assertPatientAffecte(ctx, traitement.patientId);
-
-  if (input.molecule !== undefined) traitement.molecule = input.molecule;
-  if (input.dosage !== undefined) traitement.dosage = input.dosage;
-  if (input.frequence !== undefined) traitement.frequence = input.frequence;
-  if (input.heurePrise !== undefined) traitement.heurePrise = input.heurePrise;
-  if (input.notes !== undefined) traitement.notes = input.notes;
-  if (input.dateFin !== undefined) traitement.dateFin = input.dateFin ? new Date(input.dateFin) : null;
-  if (input.actif !== undefined) {
-    traitement.actif = input.actif;
-    // Arrêt d'un traitement : on date la fin si elle n'est pas renseignée
-    if (!input.actif && !traitement.dateFin) traitement.dateFin = new Date();
-  }
-  await traitement.save();
-  return traitement;
-}
-
-
-export async function getPatients(userId: number, search?: string) {
-  const ctx = await getContexte(userId);
-  const patientIds = await getPatientIds(ctx);
-  if (patientIds.length === 0) return [];
-
-  const patients = await Patient.findAll({
-    where: { id: { [Op.in]: patientIds } },
-    include: [
-      {
-        model: User,
-        as: 'user',
-        attributes: ['id', 'nom', 'prenom', 'email'],
-        where: search
-          ? {
-              [Op.or]: [
-                { nom: { [Op.like]: `%${search}%` } },
-                { prenom: { [Op.like]: `%${search}%` } },
-              ],
-            }
-          : undefined,
-      },
-    ],
-    order: [['createdAt', 'DESC']],
-  });
-
-  // Indicateurs de suivi pour repérer rapidement les patients qui décrochent
-  return Promise.all(
-    patients.map(async (p) => {
-      const [resume, alertes, rappels] = await Promise.all([
-        getResumeObservance(p.id),
-        getAlertesExamens(p.id, p.pathologie),
-        getEtatAgrege(p.id),
-      ]);
-      return {
-        ...p.toJSON(),
-        observance: { taux7: resume.taux7, taux30: resume.taux30 },
-        examensEnRetard: alertes.filter((a) => a.statut === 'en_retard').length,
-        // Aide à la priorisation seulement : aucune décision automatique
-        rappelsARegarder: rappels.aRegarder,
-      };
-    })
-  );
-}
-
-export async function getRendezVous(userId: number) {
-  const ctx = await getContexte(userId);
-  const patientIds = await getPatientIds(ctx);
-  if (patientIds.length === 0) return [];
-
-  return RendezVous.findAll({
-    where: { patientId: { [Op.in]: patientIds }, dateHeure: { [Op.gte]: new Date() } },
-    include: [{ model: Patient, as: 'patient', include: [{ model: User, as: 'user', attributes: ['nom', 'prenom'] }] }],
-    order: [['dateHeure', 'ASC']],
-    limit: 20,
-  });
-}
-
-export async function createRendezVous(
-  userId: number,
-  input: { patientId: number; dateHeure: string; motif?: string }
-) {
-  const ctx = await getContexte(userId);
-  await assertPatientAffecte(ctx, input.patientId);
-  const soignantId = ctx.soignant
-    ? ctx.soignant.id
-    : (await Affectation.findOne({ where: { patientId: input.patientId } }))?.soignantId ??
-      ((await Soignant.findOne())?.id ?? 1);
-
-  return RendezVous.create({
-    patientId: input.patientId,
-    soignantId,
-    dateHeure: new Date(input.dateHeure),
-    motif: input.motif ?? null,
-    statut: 'prevu',
-  });
-}
-
-export async function envoyerRappelRdv(userId: number, rendezVousId: number) {
-  const ctx = await getContexte(userId);
-  const patientIds = await getPatientIds(ctx);
-
-  const rdv = await RendezVous.findByPk(rendezVousId);
-  if (!rdv || !patientIds.includes(rdv.patientId)) {
-    const e: any = new Error('Rendez-vous introuvable');
-    e.status = 404;
-    throw e;
-  }
-  rdv.rappelEnvoyeLe = new Date();
-  await rdv.save();
-  return rdv;
-}
-
-export async function updateRendezVous(
-  userId: number,
-  rendezVousId: number,
-  input: { statut?: string; notes?: string }
-) {
-  const ctx = await getContexte(userId);
-  const patientIds = await getPatientIds(ctx);
-
-  const rdv = await RendezVous.findByPk(rendezVousId);
-  if (!rdv || !patientIds.includes(rdv.patientId)) {
-    const e: any = new Error('Rendez-vous introuvable');
-    e.status = 404;
-    throw e;
-  }
-
-  if (input.statut) rdv.statut = input.statut as any;
-  if (input.notes !== undefined) rdv.notes = input.notes;
-  if (ctx.soignant) rdv.soignantId = ctx.soignant.id;
-  await rdv.save();
-  return rdv;
-}
-
-export async function getCommuniques(userId: number) {
-  const ctx = await getContexte(userId);
-  return Communique.findAll({
-    where: ctx.admin ? {} : (ctx.soignant ? { soignantId: ctx.soignant.id } : {}),
-    include: [{ model: Patient, as: 'patient', include: [{ model: User, as: 'user', attributes: ['nom', 'prenom'] }] }],
-    order: [['createdAt', 'DESC']],
-    limit: 50,
-  });
-}
-
-export async function createCommunique(
-  userId: number,
-  input: { titre: string; contenu: string; cible: 'tous' | 'patient'; patientId?: number }
-) {
-  const ctx = await getContexte(userId);
-  if (input.cible === 'patient') {
-    if (!input.patientId) throw httpError(400, 'Patient requis pour un communiqué ciblé');
-    await assertPatientAffecte(ctx, input.patientId);
-  }
-  const defaultSoignantId = ctx.soignant?.id ?? (await Soignant.findOne())?.id ?? 1;
-  const communique = await Communique.create({
-    soignantId: defaultSoignantId,
-    titre: input.titre,
-    contenu: input.contenu,
-    cible: input.cible,
-    patientId: input.cible === 'patient' ? input.patientId : null,
-  });
-  if (input.cible === 'patient' && input.patientId) void avertirPatient(input.patientId);
-  return communique;
-}
-
-export async function getSignalements(userId: number, statut?: string) {
-  const ctx = await getContexte(userId);
-  const patientIds = await getPatientIds(ctx);
-  if (patientIds.length === 0) return [];
-
-  return Signalement.findAll({
-    where: {
-      patientId: { [Op.in]: patientIds },
-      statut: statut ? statut : { [Op.ne]: 'traite' },
-    },
-    include: [{ model: Patient, as: 'patient', include: [{ model: User, as: 'user', attributes: ['nom', 'prenom'] }] }],
-    order: [['createdAt', 'DESC']],
-  });
-}
-
-export async function updateSignalement(userId: number, signalementId: number, statut: 'vu' | 'traite') {
-  const ctx = await getContexte(userId);
-  const patientIds = await getPatientIds(ctx);
-
-  const signalement = await Signalement.findByPk(signalementId);
-  if (!signalement || !patientIds.includes(signalement.patientId)) {
-    const e: any = new Error('Signalement introuvable');
-    e.status = 404;
-    throw e;
-  }
-
-  signalement.statut = statut;
-  await signalement.save();
-  return signalement;
 }

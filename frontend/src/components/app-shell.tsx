@@ -12,6 +12,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { InstallButton } from "@/components/install-button";
 import { ChatWidget } from "@/components/chat-widget";
 import { EcranVerrou } from "@/components/ecran-verrou";
+import { Celebrations } from "@/components/celebration";
 import { ConfidentialiteDialog } from "@/features/patient/ConfidentialiteDialog";
 import { SoignantSidebar } from "@/components/soignant-sidebar";
 import { SoignantTopbar } from "@/components/soignant-topbar";
@@ -19,6 +20,8 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { useMoteurRappels } from "@/hooks/use-moteur-rappels";
+import { useDeconnexionInactivite } from "@/hooks/use-deconnexion-inactivite";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 /** Délai en arrière-plan au-delà duquel l'application se reverrouille. */
 const DELAI_VERROU_MS = 60_000;
@@ -58,6 +61,8 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
   const [confidentialiteOpen, setConfidentialiteOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [motDePasseOpen, setMotDePasseOpen] = useState(false);
+  // Soignants et administrateurs : déconnexion après 5 minutes d'inactivité (les patients ont le code PIN)
+  const inactivite = useDeconnexionInactivite({ actif: estSoignantOuAdmin });
   const cacheDepuis = useRef<number | null>(null);
 
   useEffect(() => {
@@ -118,51 +123,32 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
         </Sheet>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <SoignantTopbar admin={estAdmin} onOpenSidebar={() => setSidebarOpen(true)} />
+          <SoignantTopbar admin={estAdmin} onOpenSidebar={() => setSidebarOpen(true)} onChangerMotDePasse={() => setMotDePasseOpen(true)} />
           <OfflineBanner enLigne={enLigne} enAttente={enAttente} />
-          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+          <main className="min-w-0 flex-1 px-4 pt-6 pb-32 sm:px-6 lg:px-8 lg:py-8">{children}</main>
         </div>
 
-        {/* Bouton flottant « paramètres » */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              aria-label={t("app_shell.parametres_tooltip")}
-              title={t("app_shell.parametres_tooltip")}
-              className="fixed bottom-24 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-dash transition-transform duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <Settings className="h-6 w-6" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-64 rounded-card p-3 shadow-dash">
-            <p className="px-1 pb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              {t("app_shell.parametres_tooltip")}
-            </p>
-            <button
-              type="button"
-              onClick={basculer}
-              className="flex w-full items-center gap-3 rounded-input px-3 py-2.5 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-secondary"
-            >
-              {sombre ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              {sombre ? t("app_shell.theme_clair") : t("app_shell.theme_sombre")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMotDePasseOpen(true)}
-              className="flex w-full items-center gap-3 rounded-input px-3 py-2.5 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-secondary"
-            >
-              <KeyRound className="h-4 w-4" />
-              {t("password.change_menu")}
-            </button>
-            <div className="mt-1 flex items-center justify-between rounded-input px-3 py-2">
-              <span className="text-sm font-medium text-foreground">{t("app_shell.langue_label")}</span>
-              <LanguageSwitcher />
-            </div>
-          </PopoverContent>
-        </Popover>
-
         <ChangePasswordDialog open={motDePasseOpen} onOpenChange={setMotDePasseOpen} />
+
+        {/* Avertissement avant la déconnexion pour inactivité */}
+        <Dialog open={inactivite.secondesRestantes !== null} onOpenChange={(o) => !o && inactivite.resterConnecte()}>
+          <DialogContent className="rounded-3xl sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{t("inactivite.titre")}</DialogTitle>
+              <DialogDescription>
+                {t("inactivite.message", { count: inactivite.secondesRestantes ?? 0 })}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" className="rounded-full" onClick={inactivite.deconnecter}>
+                {t("inactivite.se_deconnecter")}
+              </Button>
+              <Button className="rounded-full" onClick={inactivite.resterConnecte}>
+                {t("inactivite.rester")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <ChatWidget />
       </div>
@@ -186,10 +172,10 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               <span className="block truncate text-xs text-muted-foreground">{t("app_shell.patient_space")}</span>
             </div>
           </Link>
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
             <Link
               to="/"
-              className="flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-secondary hover:text-primary transition-all shadow-xs"
+              className="hidden items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3 py-1.5 sm:flex text-xs font-semibold text-foreground/80 hover:bg-secondary hover:text-primary transition-all shadow-xs"
               title={t("app_shell.site_public_tooltip")}
             >
               <Globe className="h-3.5 w-3.5 text-primary" />
@@ -201,7 +187,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               variant="ghost"
               size="icon"
               onClick={() => navigate("/rappels")}
-              className="rounded-full text-muted-foreground"
+              className="h-9 w-9 rounded-full text-muted-foreground sm:h-10 sm:w-10"
               aria-label={t("app_shell.rappels_tooltip")}
               title={t("app_shell.rappels_tooltip")}
             >
@@ -211,7 +197,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               variant="ghost"
               size="icon"
               onClick={() => navigate("/groupes")}
-              className="rounded-full text-muted-foreground"
+              className="h-9 w-9 rounded-full text-muted-foreground sm:h-10 sm:w-10"
               aria-label={t("app_shell.groupes_tooltip")}
               title={t("app_shell.groupes_tooltip")}
             >
@@ -221,7 +207,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               variant="ghost"
               size="icon"
               onClick={() => setConfidentialiteOpen(true)}
-              className="rounded-full text-muted-foreground"
+              className="h-9 w-9 rounded-full text-muted-foreground sm:h-10 sm:w-10"
               aria-label={t("app_shell.confidentialite_tooltip")}
               title={t("app_shell.confidentialite_tooltip")}
             >
@@ -231,7 +217,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               variant="ghost"
               size="icon"
               onClick={surVerrouiller}
-              className="rounded-full text-muted-foreground"
+              className="h-9 w-9 rounded-full text-muted-foreground sm:h-10 sm:w-10"
               aria-label={t("app_shell.verrouiller_tooltip")}
               title={t("app_shell.verrouiller_tooltip")}
             >
@@ -241,7 +227,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="rounded-full text-muted-foreground"
+              className="h-9 rounded-full px-2 text-muted-foreground sm:h-9 sm:px-3"
               aria-label={t("app_shell.deconnexion")}
             >
               <LogOut className="h-4 w-4 sm:mr-2" />
@@ -251,9 +237,10 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
         </div>
       </header>
       <OfflineBanner enLigne={enLigne} enAttente={enAttente} />
-      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">{children}</main>
+      <main className="mx-auto w-full max-w-5xl px-4 pt-8 pb-28 sm:px-6 sm:pb-8">{children}</main>
 
       <ConfidentialiteDialog open={confidentialiteOpen} onOpenChange={setConfidentialiteOpen} />
+      {estPatient && <Celebrations />}
       <ChatWidget />
     </div>
   );

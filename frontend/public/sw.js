@@ -5,7 +5,7 @@
  * - Les écritures (POST/PATCH) ne sont jamais mises en cache : elles passent par la
  *   file d'attente de l'application, envoyée au retour du réseau.
  */
-const VERSION = 'v2';
+const VERSION = 'v4';
 const CACHE_APP = `vihepat-app-${VERSION}`;
 const CACHE_API = 'vihepat-api';
 const COQUILLE = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
@@ -62,10 +62,54 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(reseauDabord(requete, CACHE_APP));
 });
 
+// Rappel envoyé par le serveur (application fermée, patient connecté ou non)
+self.addEventListener('push', (event) => {
+  let d = null;
+  try {
+    d = event.data ? event.data.json() : null;
+  } catch (e) {
+    d = null;
+  }
+  if (!d || !d.cle) return;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((fenetres) => {
+      // Application au premier plan : elle affiche déjà l'alerte elle-même
+      if (fenetres.some((f) => f.visibilityState === 'visible')) return undefined;
+      return self.registration.showNotification(d.titre || 'Rappel', {
+        body: d.corps || '',
+        // Même étiquette que l'alerte de l'application : jamais deux notifications pour une échéance
+        tag: 'rappel-' + d.cle,
+        renotify: true,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        vibrate: [200, 100, 200],
+        data: { cle: d.cle, id: d.id, jeton: d.jeton, api: d.api },
+        // Rappel de rendez-vous (sans jeton) : simple information, sans boutons
+        actions: d.jeton
+          ? [
+              { action: 'fait', title: d.fait || 'OK' },
+              { action: 'plus_tard', title: d.plusTard || '…' },
+            ]
+          : [],
+      });
+    })
+  );
+});
+
+// Réponse depuis la notification, sans ouvrir l'application ni demander de session
+function repondreAuServeur(data, action) {
+  return fetch(data.api + '/push/reponse', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: data.id, cle: data.cle, jeton: data.jeton, action }),
+  }).catch(() => undefined);
+}
+
 // Clic sur un rappel (ou sur ses actions « C'est fait » / « Plus tard »)
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const cle = event.notification.data && event.notification.data.cle;
+  const data = event.notification.data || {};
+  const cle = data.cle;
   const action = event.action || '';
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((fenetres) => {
@@ -75,8 +119,12 @@ self.addEventListener('notificationclick', (event) => {
       if (f) {
         // Application ouverte : elle applique l'action elle-même (stockage local, file hors ligne)
         f.postMessage({ type: 'rappel-action', cle, action: action || 'ouvrir' });
+        // L'application peut ne pas connaître l'échéance (autre compte connecté) : le serveur la note aussi
+        if (action && data.jeton) return repondreAuServeur(data, action);
         return action ? undefined : f.focus();
       }
+      // Rappel du serveur, application fermée : la réponse part directement, sans ouvrir l'application
+      if (action && data.jeton) return repondreAuServeur(data, action);
       // Application fermée : on l'ouvre avec l'action à appliquer
       const params = action ? '?occ=' + encodeURIComponent(cle) + '&action=' + encodeURIComponent(action) : '';
       return self.clients.openWindow('/rappels' + params);

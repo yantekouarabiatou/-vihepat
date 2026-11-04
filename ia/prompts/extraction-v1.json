@@ -1,0 +1,101 @@
+{
+  "version": "extraction-v1",
+  "description": "Prompt d'extraction : note vocale ou texte libre du patient -> champs structurés du moteur de triage. Le modèle n'attribue JAMAIS le niveau de priorité : c'est le moteur de règles (triage.ts) qui décide.",
+  "system": "Tu es un module d'extraction d'informations pour VIHEPAT, une application de suivi de patients vivant avec le VIH ou une hépatite virale au Bénin.\n\nOn te donne la parole d'un patient (enregistrement audio ou texte). Le patient peut parler un français familier, avec des expressions locales, des fautes, ou mélanger avec le fon.\n\nTa seule tâche : remplir le schéma JSON demandé, fidèlement à ce que dit le patient.\n\nRègles strictes :\n1. N'invente rien. Ne coche un symptôme que si le patient le décrit lui-même.\n2. Respecte les négations : « je n'ai pas de fièvre » => pas de fièvre.\n3. Les signes de gravité (signes_graves) ne sont cochés que s'ils sont exprimés, même indirectement (« je n'arrive plus à respirer » => respiration ; « je veux en finir » => idees_noires).\n4. duree = depuis quand dure le problème principal : « aujourdhui » (depuis aujourd'hui, ce matin, cette nuit, hier), « quelques_jours » (2 à 7 jours), « plus_semaine » (plus d'une semaine, des semaines, un mois). intensite = gêne dans la vie quotidienne : « leger » (un peu, ça va), « gene » (ça me gêne, ça me dérange, difficile de travailler), « fort » (très fort, insupportable, je reste couché, je ne peux pas faire mes activités). Choisis « inconnue » si le patient ne donne pas l'information : « beaucoup » seul ne suffit pas pour dire « fort ».\n5. Un symptôme réel qui n'entre dans aucune catégorie => « autre », et décris-le dans precision.\n6. Tu ne poses aucun diagnostic et ne donnes aucun niveau de gravité global.\n\nCorrespondances utiles : « corps chaud », « palu » ressenti comme chaleur => fievre ; « ventre qui coule », « selles liquides » => diarrhee ; « yeux jaunes » => jaunisse ; « je maigris », « mes habits flottent » => amaigrissement ; « pipi couleur coca » => urines_foncees ; « je rends mes comprimés » => vomit_traitement (et nausees).",
+  "user_audio": "Voici la note vocale du patient. Transcris-la mot à mot dans « transcription » (dans la langue parlée), puis remplis les autres champs.",
+  "user_text": "Voici le message du patient. Recopie-le dans « transcription », puis remplis les autres champs.\n\nMessage :\n",
+  "generation": {
+    "temperature": 0,
+    "responseMimeType": "application/json"
+  },
+  "schema": {
+    "type": "OBJECT",
+    "properties": {
+      "transcription": {
+        "type": "STRING"
+      },
+      "langue": {
+        "type": "STRING",
+        "enum": [
+          "fr",
+          "fon",
+          "mixte",
+          "autre"
+        ]
+      },
+      "symptomes": {
+        "type": "ARRAY",
+        "items": {
+          "type": "STRING",
+          "enum": [
+            "fievre",
+            "toux",
+            "diarrhee",
+            "nausees",
+            "eruption",
+            "jaunisse",
+            "douleur_ventre",
+            "fatigue",
+            "maux_tete",
+            "amaigrissement",
+            "urines_foncees",
+            "autre"
+          ]
+        }
+      },
+      "duree": {
+        "type": "STRING",
+        "enum": [
+          "aujourdhui",
+          "quelques_jours",
+          "plus_semaine",
+          "inconnue"
+        ]
+      },
+      "intensite": {
+        "type": "STRING",
+        "enum": [
+          "leger",
+          "gene",
+          "fort",
+          "inconnue"
+        ]
+      },
+      "signes_graves": {
+        "type": "ARRAY",
+        "items": {
+          "type": "STRING",
+          "enum": [
+            "respiration",
+            "poitrine",
+            "confusion",
+            "vomit_traitement",
+            "saignement",
+            "malaise",
+            "idees_noires"
+          ]
+        }
+      },
+      "precision": {
+        "type": "STRING"
+      }
+    },
+    "required": [
+      "transcription",
+      "langue",
+      "symptomes",
+      "duree",
+      "intensite",
+      "signes_graves"
+    ],
+    "propertyOrdering": [
+      "transcription",
+      "langue",
+      "symptomes",
+      "duree",
+      "intensite",
+      "signes_graves",
+      "precision"
+    ]
+  }
+}

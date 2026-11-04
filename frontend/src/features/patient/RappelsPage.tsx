@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlarmClock, BellRing, CalendarPlus, Check, Clock, Info, Pencil, Plus, Share2, Trash2, Vibrate, Volume2, VolumeX,
+  AlarmClock, BellRing, CalendarPlus, Check, Clock, Info, Pencil, Plus, Share2, Smartphone, Trash2, Vibrate, Volume2, VolumeX,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { patientApi } from "@/api/patient.api";
 import { estErreurReseau, retirerConfirmationsEnAttente } from "@/lib/offline-queue";
 import { localeAffichage } from "@/lib/date-locale";
+import { apresRappel } from "@/lib/felicitations";
+import { activerRappelsServeur, desactiverRappelsServeur, iosNonInstalle, pushSupporte } from "@/lib/rappels-serveur";
 import {
   DELAIS_RELANCE, REPORTS_MINUTES, afficherAlerte, exporterIcs, notificationsSupportees, titreNotification,
   useRappelsStore, type ModeSonore, type Occurrence, type Rappel, type TypeRappel,
@@ -220,7 +222,7 @@ function EcheancesDuJour() {
                       {t("rappels.etat_non_confirmee")}
                     </span>
                   )}
-                  <Button size="sm" className="h-10 rounded-full px-4" onClick={() => { confirmer(o.cle); toast.success(t("rappels.toast_fait")); }}>
+                  <Button size="sm" className="h-10 rounded-full px-4" onClick={() => { confirmer(o.cle); apresRappel(); }}>
                     <Check className="mr-1 h-4 w-4" aria-hidden="true" /> {t("rappels.action_fait")}
                   </Button>
                   {o.etat === "en_attente" && (
@@ -289,6 +291,22 @@ function Reglages() {
     const p = await Notification.requestPermission();
     setPermission(p);
     if (p !== "granted") toast.error(t("rappels.permission_refusee"));
+  }
+
+  const [serveurEnCours, setServeurEnCours] = useState(false);
+  async function changerServeur(actif: boolean) {
+    setServeurEnCours(true);
+    try {
+      if (actif) await activerRappelsServeur();
+      else await desactiverRappelsServeur();
+      if (actif) setPermission("granted");
+      toast.success(t(actif ? "rappels.serveur_toast_on" : "rappels.serveur_toast_off"));
+    } catch (err) {
+      if ((err as Error).message === "permission") toast.error(t("rappels.permission_refusee"));
+      else toast.error(t(estErreurReseau(err) ? "rappels.partage_hors_ligne" : "rappels.serveur_erreur"));
+    } finally {
+      setServeurEnCours(false);
+    }
   }
 
   async function changerPartage(partage: boolean) {
@@ -425,6 +443,31 @@ function Reglages() {
           ))}
         </select>
         <p className="text-xs text-muted-foreground">{t("rappels.relance_aide")}</p>
+      </div>
+
+      {/* Rappels envoyés par le serveur (application fermée) */}
+      <div className="rounded-2xl border border-border p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Smartphone className="h-4 w-4 text-primary" aria-hidden="true" /> {t("rappels.serveur_label")}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("rappels.serveur_aide")}</p>
+          </div>
+          <Switch
+            checked={reglages.serveur}
+            disabled={serveurEnCours || (!reglages.serveur && (!pushSupporte() || iosNonInstalle()))}
+            onCheckedChange={(v) => void changerServeur(v)}
+            aria-label={t("rappels.serveur_label")}
+            className="mt-1"
+          />
+        </div>
+        {!reglages.serveur && iosNonInstalle() && (
+          <p className="mt-2 text-xs font-medium text-foreground">{t("rappels.serveur_ios")}</p>
+        )}
+        {!reglages.serveur && !iosNonInstalle() && !pushSupporte() && (
+          <p className="mt-2 text-xs font-medium text-foreground">{t("rappels.serveur_indisponible")}</p>
+        )}
       </div>
 
       {/* Partage */}

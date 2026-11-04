@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import * as soignantController from '../controllers/soignant.controller';
+import * as planificationController from '../controllers/planification.controller';
+import * as groupeController from '../controllers/groupe.controller';
 import { authRequired, requireRole, requirePermission as perm } from '../middlewares/auth';
 import { catchAsync } from '../utils/catchAsync';
 
@@ -17,6 +19,7 @@ r.post('/patients/:id/equipe', perm('patient:attach'), catchAsync(soignantContro
 r.delete('/patients/:id/equipe/:soignantId', perm('patient:attach'), catchAsync(soignantController.detacherSoignant));
 r.patch('/patients/:id', perm('patient:update'), catchAsync(soignantController.updatePatient));
 r.post('/patients/:id/reinitialiser-acces', perm('patient:update'), catchAsync(soignantController.reinitialiserAccesPatient));
+r.put('/patients/:id/bilan-inclusion', perm('observation:create'), catchAsync(soignantController.enregistrerBilanInclusion));
 r.post('/patients/:id/observations', perm('observation:create'), catchAsync(soignantController.createObservation));
 r.post('/patients/:id/traitements', perm('traitement:manage'), catchAsync(soignantController.createTraitement));
 r.patch('/traitements/:id', perm('traitement:manage'), catchAsync(soignantController.updateTraitement));
@@ -24,9 +27,22 @@ r.patch('/traitements/:id', perm('traitement:manage'), catchAsync(soignantContro
 r.get('/rendez-vous', perm('rendez_vous:manage'), catchAsync(soignantController.getRendezVous));
 r.post('/rendez-vous', perm('rendez_vous:manage'), catchAsync(soignantController.createRendezVous));
 r.patch('/rendez-vous/:id', perm('rendez_vous:manage'), catchAsync(soignantController.updateRendezVous));
-r.post('/rendez-vous/:id/rappel', perm('rendez_vous:manage'), catchAsync(soignantController.envoyerRappelRdv));
+// Rappel envoyé tout de suite au patient (e-mail neutre + notification s'il l'a activée)
+r.post('/rendez-vous/:id/rappel', perm('rendez_vous:manage'), catchAsync(planificationController.rappelerMaintenant));
+r.patch('/rendez-vous/:id/rappel-auto', perm('rendez_vous:manage'), catchAsync(planificationController.changerRappelAuto));
+// Agenda sur une période et planification en série
+r.get('/agenda', perm('rendez_vous:manage'), catchAsync(planificationController.getAgenda));
+// Tous les rendez-vous en cours et à venir (ou d'une période), pour la vue globale et les exports
+r.get('/rendez-vous/tous', perm('rendez_vous:manage'), catchAsync(planificationController.listeRendezVous));
+r.post('/rendez-vous/serie/apercu', perm('rendez_vous:manage'), catchAsync(planificationController.apercuSerie));
+r.post('/rendez-vous/serie', perm('rendez_vous:manage'), catchAsync(planificationController.creerSerie));
 r.get('/signalements', perm('signalement:manage'), catchAsync(soignantController.getSignalements));
 r.patch('/signalements/:id', perm('signalement:manage'), catchAsync(soignantController.updateSignalement));
+// Groupes de soutien : l'équipe lit les discussions et traite les signalements de mots sensibles
+r.get('/communautes', perm('signalement:manage'), catchAsync(groupeController.getGroupesEquipe));
+r.get('/communautes/alertes', perm('signalement:manage'), catchAsync(groupeController.getAlertesEquipe));
+r.get('/communautes/:id/messages', perm('signalement:manage'), catchAsync(groupeController.getMessagesEquipe));
+r.patch('/communautes/messages/:id', perm('signalement:manage'), catchAsync(groupeController.modererMessage));
 r.get('/communiques', perm('communique:read'), catchAsync(soignantController.getCommuniques));
 r.post('/communiques', perm('communique:publish'), catchAsync(soignantController.createCommunique));
 
