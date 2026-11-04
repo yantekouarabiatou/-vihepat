@@ -194,7 +194,7 @@ export function RendezVousPage() {
                     </Link>
                     <p className="text-xs text-muted-foreground">
                       <span className="font-mono text-primary">{r.patient.codePatient}</span> · {t(`shared.pathologie.${r.patient.pathologie}`, { defaultValue: r.patient.pathologie })}
-                      {r.patient.telephone ? ` · ${r.patient.telephone}` : ""}
+                      {r.patient.telephone ? <span className="whitespace-nowrap"> · {r.patient.telephone}</span> : null}
                     </p>
                   </div>
                 ),
@@ -212,7 +212,7 @@ export function RendezVousPage() {
                 render: (r) =>
                   r.soignant ? (
                     <div className="text-sm">
-                      <p className="text-foreground">{nomSoignant(r)}</p>
+                      <p className="whitespace-nowrap text-foreground">{nomSoignant(r)}</p>
                       <p className="text-xs text-muted-foreground">{t(`fonction.${r.soignant.fonction}`, { defaultValue: r.soignant.fonction })}</p>
                     </div>
                   ) : (

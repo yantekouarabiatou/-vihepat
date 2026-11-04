@@ -411,13 +411,13 @@ export function PatientsPage() {
   return (
     <AppShell title={t("sidebar.section_patients")}>
       {/* ===================== EN-TÊTE DE LA PAGE ===================== */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
               {t("patients.titre")}
             </h1>
-            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+            <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
               {t("patients.nb_dossiers", { count: patients.length })}
             </span>
           </div>
@@ -427,7 +427,7 @@ export function PatientsPage() {
         </div>
 
         {/* Boutons d'action rapides */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Link
             to="/"
             className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-3.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
@@ -734,7 +734,7 @@ export function PatientsPage() {
                   header: t("patients.col_pathologie"),
                   sortValue: (p) => p.pathologie,
                   render: (p) => (
-                    <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-bold ${PATHOLOGIE_COLORS[p.pathologie] || "bg-secondary text-foreground"}`}>
+                    <span className={`inline-flex items-center whitespace-nowrap rounded-lg border px-2.5 py-1 text-xs font-bold ${PATHOLOGIE_COLORS[p.pathologie] || "bg-secondary text-foreground"}`}>
                       {t(`shared.pathologie.${p.pathologie}`, { defaultValue: p.pathologie.toUpperCase() })}
                     </span>
                   ),
@@ -762,12 +762,12 @@ export function PatientsPage() {
                   sortValue: (p) => p.examensEnRetard ?? 0,
                   render: (p) =>
                     (p.examensEnRetard ?? 0) > 0 ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-semibold text-amber-600 dark:text-amber-400">
                         <AlertCircle className="h-3.5 w-3.5" />
                         {t("patients.bilans_retard", { count: p.examensEnRetard ?? 0 })}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap text-xs text-muted-foreground">
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                         {t("patients.a_jour")}
                       </span>
@@ -809,45 +809,45 @@ export function PatientsPage() {
                     <div className="flex items-center justify-end gap-1.5">
                       <Link
                         to={`/soignant/patients/${p.id}`}
-                        className="inline-flex items-center gap-1 rounded-lg border border-border/80 bg-card px-2.5 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-secondary"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/80 bg-card text-foreground transition-colors hover:bg-secondary"
                         title={t("patients.voir_dossier_tooltip")}
                         aria-label={t("patients.voir_dossier_tooltip")}
                       >
                         <Eye className="h-3.5 w-3.5 text-primary" />
-                        <span className="hidden lg:inline">{t("patients.voir_dossier")}</span>
+                        <span className="sr-only">{t("patients.voir_dossier")}</span>
                       </Link>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => ouvrirModification(p)}
-                        className="h-8 gap-1 rounded-lg px-2.5 text-xs font-semibold"
+                        className="h-8 w-8 rounded-lg p-0"
                         title={t("patients.modifier_tooltip")}
                         aria-label={t("patients.modifier_tooltip")}
                       >
                         <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="hidden lg:inline">{t("patients.modifier")}</span>
+                        <span className="sr-only">{t("patients.modifier")}</span>
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => setPatientEnReinitialisation(p)}
-                        className="h-8 gap-1 rounded-lg border-amber-300 px-2.5 text-xs font-semibold text-amber-700 hover:bg-amber-50 dark:border-amber-900/50 dark:text-amber-400 dark:hover:bg-amber-950/30"
+                        className="h-8 w-8 rounded-lg border-amber-300 p-0 text-amber-700 hover:bg-amber-50 dark:border-amber-900/50 dark:text-amber-400 dark:hover:bg-amber-950/30"
                         title={t("fiche.reinit_tooltip")}
                         aria-label={t("fiche.reinit_tooltip")}
                       >
                         <KeyRound className="h-3.5 w-3.5" />
-                        <span className="hidden xl:inline">{t("patients.reinitialiser")}</span>
+                        <span className="sr-only">{t("patients.reinitialiser")}</span>
                       </Button>
                       <Button
                         size="sm"
                         variant="secondary"
                         onClick={() => telechargerFiche(p)}
-                        className="h-8 gap-1 rounded-lg px-2.5 text-xs font-semibold"
+                        className="h-8 w-8 rounded-lg p-0"
                         title={t("patients.pdf_tooltip")}
                         aria-label={t("patients.pdf_tooltip")}
                       >
                         <FileDown className="h-3.5 w-3.5 text-primary" />
-                        <span className="hidden sm:inline">PDF</span>
+                        <span className="sr-only">PDF</span>
                       </Button>
                     </div>
                   ),

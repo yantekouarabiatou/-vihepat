@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
-import { Affectation, Patient, RendezVous, Soignant, User } from '../models';
+import { Affectation, BilanInclusion, Patient, RendezVous, Soignant, User } from '../models';
+import { evaluerRisquePatient } from './perte-de-suivi.service';
 import { assertPatientAffecte, getContexte, getPatientIds, httpError } from './soignant-contexte';
 import { notifierPatientRdv } from './rappel-rdv.service';
 
@@ -18,7 +19,7 @@ export async function getAgenda(userId: number, du: Date, au: Date) {
   if (au.getTime() <= du.getTime() || au.getTime() - du.getTime() > PERIODE_MAX_MS) throw httpError(400, 'Période invalide');
   const ctx = await getContexte(userId);
   const patientIds = await getPatientIds(ctx);
-  if (patientIds.length === 0) return { rendezVous: [], sansRendezVous: [] };
+  if (patientIds.length === 0) return { rendezVous: [], sansRendezVous: [], risques: {} };
 
   const [rendezVous, aVenir, patients] = await Promise.all([
     RendezVous.findAll({
@@ -35,16 +36,34 @@ export async function getAgenda(userId: number, du: Date, au: Date) {
     }),
     Patient.findAll({
       where: { id: { [Op.in]: patientIds } },
-      attributes: ['id', 'codePatient', 'pathologie'],
-      include: [{ model: User, as: 'user', attributes: ['nom', 'prenom', 'actif'] }],
+      include: [
+        { model: User, as: 'user', attributes: ['nom', 'prenom', 'actif'] },
+        { model: BilanInclusion, as: 'bilanInclusion', required: false },
+      ],
     }),
   ]);
-  // Aide au suivi : patients actifs sans aucun rendez-vous à venir
+
+  // Risque de perte de suivi (modèle du bilan d'inclusion) : aide à prioriser, aucune décision automatique
+  const risques: Record<number, { niveau: 'faible' | 'modere' | 'eleve'; probabilite: number }> = {};
+  for (const p of patients) {
+    const r = evaluerRisquePatient(p, (p as any).bilanInclusion);
+    if (r.statut === 'calcule') risques[p.id] = { niveau: r.niveau, probabilite: r.probabilite };
+  }
+
+  // Aide au suivi : patients actifs sans aucun rendez-vous à venir, les plus à risque en premier
   const avecRdv = new Set(aVenir.map((r) => r.patientId));
   const sansRendezVous = patients
     .filter((p) => !avecRdv.has(p.id) && (p as any).user?.actif !== false)
-    .map((p) => ({ id: p.id, codePatient: p.codePatient, pathologie: p.pathologie, nom: (p as any).user?.nom, prenom: (p as any).user?.prenom }));
-  return { rendezVous, sansRendezVous };
+    .map((p) => ({
+      id: p.id,
+      codePatient: p.codePatient,
+      pathologie: p.pathologie,
+      nom: (p as any).user?.nom,
+      prenom: (p as any).user?.prenom,
+      risquePerteSuivi: risques[p.id] ?? null,
+    }))
+    .sort((a, b) => (b.risquePerteSuivi?.probabilite ?? -1) - (a.risquePerteSuivi?.probabilite ?? -1));
+  return { rendezVous, sansRendezVous, risques };
 }
 
 function verifierDates(dates: string[]) {

@@ -12,6 +12,7 @@
     "db:migrate": "sequelize-cli db:migrate",
     "db:rollback": "sequelize-cli db:migrate:undo",
     "db:seed": "ts-node --transpile-only src/seed.ts",
+    "db:seed-agenda": "ts-node --transpile-only scripts/seed-agenda.ts",
     "db:reset": "sequelize-cli db:migrate:undo:all && sequelize-cli db:migrate && npm run db:seed",
     "ia:audio": "ts-node --transpile-only scripts/triage-audio.ts",
     "ia:parite": "ts-node --transpile-only scripts/export-parite.ts",

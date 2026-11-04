@@ -1591,7 +1591,12 @@
     "creer_one": "Create {{count}} appointment",
     "creer_other": "Create {{count}} appointments",
     "toast_crees_one": "{{count}} appointment created.",
-    "toast_crees_other": "{{count}} appointments created."
+    "toast_crees_other": "{{count}} appointments created.",
+    "sans_rdv_risque_one": "{{count}} patient at high risk of loss to follow-up has no appointment: plan first.",
+    "sans_rdv_risque_other": "{{count}} patients at high risk of loss to follow-up have no appointment: plan first.",
+    "risque_eleve_titre": "High risk of loss to follow-up ({{pourcentage}}%)",
+    "risque_eleve_conseil": "Closer follow-up is advised: a first appointment within the week, then monthly, with a reminder the day before. A decision-support estimate, to be confirmed by your clinical judgement.",
+    "risque_eleve_appliquer": "Apply closer follow-up"
   },
   "export": {
     "bouton": "Export",

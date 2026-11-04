@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { apiErrorMessage } from "@/lib/api-error";
 import { localeAffichage } from "@/lib/date-locale";
 import { PlanifierRdvDialog } from "./PlanifierRdvDialog";
+import { BadgeRisquePerteSuivi } from "./RisquePerteSuivi";
 
 /**
  * Agenda des rendez-vous sur une semaine ou un mois : suivi des statuts et des rappels envoyés
@@ -207,6 +208,7 @@ export function AgendaPage() {
                           {r.patient.user.prenom} {r.patient.user.nom}
                         </Link>
                         <span className="text-xs text-muted-foreground">{r.patient.codePatient}</span>
+                        <BadgeRisquePerteSuivi risque={data?.risques[r.patient.id]} />
                         {r.motif && <span className="text-xs text-muted-foreground">· {r.motif}</span>}
                       </div>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -268,6 +270,11 @@ export function AgendaPage() {
               <UserX className="h-4 w-4 text-[hsl(var(--gold))]" aria-hidden="true" /> {t("agenda.sans_rdv_titre")}
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">{t("agenda.sans_rdv_aide")}</p>
+            {(data?.sansRendezVous.filter((p) => p.risquePerteSuivi?.niveau === "eleve").length ?? 0) > 0 && (
+              <p className="mt-2 rounded-xl bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+                {t("agenda.sans_rdv_risque", { count: data!.sansRendezVous.filter((p) => p.risquePerteSuivi?.niveau === "eleve").length })}
+              </p>
+            )}
             {(data?.sansRendezVous.length ?? 0) === 0 ? (
               <p className="mt-4 text-sm text-muted-foreground">{t("agenda.sans_rdv_aucun")}</p>
             ) : (
@@ -279,6 +286,7 @@ export function AgendaPage() {
                       <span className="text-xs text-muted-foreground">
                         {p.codePatient} · {t(`shared.pathologie.${p.pathologie}`, { defaultValue: p.pathologie })}
                       </span>
+                      <BadgeRisquePerteSuivi risque={p.risquePerteSuivi} className="mt-0.5" />
                     </Link>
                     <Button size="sm" variant="outline" className="h-8 shrink-0 rounded-full" onClick={() => ouvrirPlanification(p.id)}>
                       {t("agenda.planifier_court")}

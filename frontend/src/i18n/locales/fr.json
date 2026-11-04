@@ -1591,7 +1591,12 @@
     "creer_one": "Créer {{count}} rendez-vous",
     "creer_other": "Créer {{count}} rendez-vous",
     "toast_crees_one": "{{count}} rendez-vous créé.",
-    "toast_crees_other": "{{count}} rendez-vous créés."
+    "toast_crees_other": "{{count}} rendez-vous créés.",
+    "sans_rdv_risque_one": "{{count}} patient à risque élevé de perte de suivi n'a aucun rendez-vous : à planifier en priorité.",
+    "sans_rdv_risque_other": "{{count}} patients à risque élevé de perte de suivi n'ont aucun rendez-vous : à planifier en priorité.",
+    "risque_eleve_titre": "Risque élevé de perte de suivi ({{pourcentage}} %)",
+    "risque_eleve_conseil": "Un suivi rapproché est conseillé : un premier rendez-vous dans la semaine, puis chaque mois, avec rappel la veille. Estimation d'aide à la décision, à confirmer par votre jugement clinique.",
+    "risque_eleve_appliquer": "Appliquer un suivi rapproché"
   },
   "export": {
     "bouton": "Exporter",

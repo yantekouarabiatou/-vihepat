@@ -131,7 +131,12 @@ export interface RendezVousGlobal extends RendezVous {
 export interface Agenda {
   rendezVous: SoignantRendezVous[];
   /** Patients suivis sans aucun rendez-vous à venir */
-  sansRendezVous: { id: number; codePatient: string; pathologie: string; nom: string; prenom: string }[];
+  sansRendezVous: {
+    id: number; codePatient: string; pathologie: string; nom: string; prenom: string;
+    risquePerteSuivi: { niveau: NiveauRisque; probabilite: number } | null;
+  }[];
+  /** Risque de perte de suivi par patient (seulement ceux qui ont un bilan d'inclusion) */
+  risques: Record<number, { niveau: NiveauRisque; probabilite: number }>;
 }
 
 export interface ApercuRendezVous {

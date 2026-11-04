@@ -186,6 +186,28 @@ export function PlanifierRdvDialog({
             {patient && modele === modeleSuggere(patient.pathologie) && (
               <p className="text-xs text-muted-foreground">{t("agenda.modele_suggere")}</p>
             )}
+            {/* Risque élevé de perte de suivi : suivi rapproché conseillé (le soignant décide) */}
+            {patient?.risquePerteSuivi?.niveau === "eleve" && (
+              <div className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                <p className="font-semibold">{t("agenda.risque_eleve_titre", { pourcentage: Math.round(patient.risquePerteSuivi.probabilite * 100) })}</p>
+                <p>{t("agenda.risque_eleve_conseil")}</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="mt-2 h-8 rounded-full border-destructive/40 text-destructive"
+                  onClick={() => {
+                    setModele("libre");
+                    setRythme("mois");
+                    setNombre(6);
+                    setRappelAuto(true);
+                    setDebut(new Date(Date.now() + 7 * 86400_000).toISOString().slice(0, 10));
+                  }}
+                >
+                  {t("agenda.risque_eleve_appliquer")}
+                </Button>
+              </div>
+            )}
           </fieldset>
 
           <div className="grid gap-3 sm:grid-cols-2">
