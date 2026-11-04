@@ -23,6 +23,8 @@ export function createApp() {
 
   // Parsing (la note vocale arrive en base64 : limite plus large sur cette seule route)
   app.use(['/api/patients/me/triage-vocal', '/api/chat/transcrire'], express.json({ limit: '8mb' }));
+  // Réponses vocales aux signalements (note en base64, 3 Mo au plus)
+  app.use(/^\/api\/(soignant|patients\/me)\/signalements\/\d+\/reponses$/, express.json({ limit: '5mb' }));
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true }));
 

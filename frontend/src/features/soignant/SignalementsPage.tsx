@@ -113,6 +113,11 @@ export function SignalementsPage() {
       render: (s) => (
         <div className="min-w-[12rem] max-w-md">
           <p className="font-medium text-foreground">{s.symptome}</p>
+          {(s.messagesNonLus ?? 0) > 0 && (
+            <span className="mt-1 inline-flex rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
+              {t("reponses.nouveaux_messages_patient", { count: s.messagesNonLus })}
+            </span>
+          )}
           {s.notes && <p className="mt-0.5 line-clamp-3 whitespace-pre-wrap text-xs text-muted-foreground">{s.notes}</p>}
         </div>
       ),

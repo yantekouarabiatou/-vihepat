@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as soignantController from '../controllers/soignant.controller';
 import * as planificationController from '../controllers/planification.controller';
+import * as reponsesController from '../controllers/signalement-reponses.controller';
 import * as groupeController from '../controllers/groupe.controller';
 import { authRequired, requireRole, requirePermission as perm } from '../middlewares/auth';
 import { catchAsync } from '../utils/catchAsync';
@@ -38,6 +39,10 @@ r.post('/rendez-vous/serie/apercu', perm('rendez_vous:manage'), catchAsync(plani
 r.post('/rendez-vous/serie', perm('rendez_vous:manage'), catchAsync(planificationController.creerSerie));
 r.get('/signalements', perm('signalement:manage'), catchAsync(soignantController.getSignalements));
 r.patch('/signalements/:id', perm('signalement:manage'), catchAsync(soignantController.updateSignalement));
+// Réponses écrites ou vocales au patient
+r.get('/signalements/reponses/:reponseId/audio', perm('signalement:manage'), catchAsync(reponsesController.audio));
+r.get('/signalements/:id/reponses', perm('signalement:manage'), catchAsync(reponsesController.listerSoignant));
+r.post('/signalements/:id/reponses', perm('signalement:manage'), catchAsync(reponsesController.repondreSoignant));
 // Groupes de soutien : l'équipe lit les discussions et traite les signalements de mots sensibles
 r.get('/communautes', perm('signalement:manage'), catchAsync(groupeController.getGroupesEquipe));
 r.get('/communautes/alertes', perm('signalement:manage'), catchAsync(groupeController.getAlertesEquipe));

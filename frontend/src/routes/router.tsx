@@ -4,6 +4,7 @@ import { AuthPage } from '../features/auth/AuthPage';
 import { DashboardPage as PatientDashboardPage } from '../features/patient/DashboardPage';
 import { PeerGroupsPage } from '../features/patient/PeerGroupsPage';
 import { RappelsPage } from '../features/patient/RappelsPage';
+import { MesSignalementsPage } from '../features/patient/MesSignalementsPage';
 import { ResetPasswordPage } from '../features/auth/ResetPasswordPage';
 import { DashboardPage as SoignantDashboardPage } from '../features/soignant/DashboardPage';
 import { PatientsPage } from '../features/soignant/PatientsPage';
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
       { path: '/dashboard', element: <PatientDashboardPage /> },
       { path: '/groupes', element: <PeerGroupsPage /> },
       { path: '/rappels', element: <RappelsPage /> },
+      { path: '/signalements', element: <MesSignalementsPage /> },
     ],
   },
   {

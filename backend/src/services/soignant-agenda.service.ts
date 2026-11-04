@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { Soignant, Patient, User, Affectation, RendezVous, Signalement, Communique } from '../models';
 import { httpError, getContexte, avertirPatient, getPatientIds, assertPatientAffecte } from './soignant-contexte';
+import { nonLusParSignalement } from './signalement-reponses.service';
 
 /** Rendez-vous, communiqués et signalements. */
 
@@ -111,7 +112,7 @@ export async function getSignalements(userId: number, statut?: string) {
   if (patientIds.length === 0) return [];
 
   // `tous` = historique complet (page Signalements) ; sans filtre = ceux qui restent à traiter
-  return Signalement.findAll({
+  const signalements = await Signalement.findAll({
     where: {
       patientId: { [Op.in]: patientIds },
       ...(statut === 'tous' ? {} : { statut: statut ? statut : { [Op.ne]: 'traite' } }),
@@ -120,6 +121,9 @@ export async function getSignalements(userId: number, statut?: string) {
     order: [['createdAt', 'DESC']],
     ...(statut === 'tous' ? { limit: 1000 } : {}),
   });
+  // Messages du patient pas encore lus par l'équipe
+  const nonLus = await nonLusParSignalement(signalements.map((x) => x.id));
+  return signalements.map((x) => ({ ...x.toJSON(), messagesNonLus: nonLus.get(x.id) ?? 0 }));
 }
 
 export async function updateSignalement(userId: number, signalementId: number, statut: 'vu' | 'traite') {
