@@ -12,10 +12,11 @@ export interface RendezVousAttributes {
   statut: StatutRDV;
   notes?: string | null;
   rappelEnvoyeLe?: Date | null;
+  rappelAuto: boolean;
 }
 
 type RendezVousCreation = Optional<RendezVousAttributes,
-  'id' | 'soignantId' | 'motif' | 'statut' | 'notes' | 'rappelEnvoyeLe'>;
+  'id' | 'soignantId' | 'motif' | 'statut' | 'notes' | 'rappelEnvoyeLe' | 'rappelAuto'>;
 
 export class RendezVous extends Model<RendezVousAttributes, RendezVousCreation> implements RendezVousAttributes {
   declare id: number;
@@ -26,6 +27,8 @@ export class RendezVous extends Model<RendezVousAttributes, RendezVousCreation> 
   declare statut: StatutRDV;
   declare notes?: string | null;
   declare rappelEnvoyeLe?: Date | null;
+  /** Rappel envoyé automatiquement au patient la veille */
+  declare rappelAuto: boolean;
 }
 
 RendezVous.init(
@@ -41,6 +44,7 @@ RendezVous.init(
     },
     notes: { type: DataTypes.TEXT, allowNull: true },
     rappelEnvoyeLe: { type: DataTypes.DATE, allowNull: true },
+    rappelAuto: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   },
   { sequelize, tableName: 'rendez_vous' }
 );

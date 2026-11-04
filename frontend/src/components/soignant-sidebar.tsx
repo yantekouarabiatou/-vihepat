@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Database, Globe, HeartPulse, LayoutDashboard, LogOut, Megaphone, MessagesSquare, Stethoscope, Users, UserPlus, UserCog } from "lucide-react";
+import { CalendarClock, CalendarDays, Database, Globe, HeartPulse, LayoutDashboard, LogOut, Megaphone, MessagesSquare, Stethoscope, Users, UserPlus, UserCog } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
@@ -58,6 +58,8 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
         ...(medecin ? [{ to: "/soignant/patients?action=nouveau", icon: UserPlus, label: t("sidebar.patients_nouveau") }] : []),
         { to: "/soignant/patients?view=gestion", icon: UserCog, label: t("sidebar.patients_gestion") },
         { to: "/soignant/signalements", icon: Stethoscope, label: t("sidebar.signalements") },
+        { to: "/soignant/agenda", icon: CalendarDays, label: t("sidebar.agenda") },
+        { to: "/soignant/rendez-vous", icon: CalendarClock, label: t("sidebar.rendez_vous") },
       ],
     },
     {

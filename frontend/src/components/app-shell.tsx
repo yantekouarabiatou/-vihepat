@@ -123,49 +123,10 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
         </Sheet>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <SoignantTopbar admin={estAdmin} onOpenSidebar={() => setSidebarOpen(true)} />
+          <SoignantTopbar admin={estAdmin} onOpenSidebar={() => setSidebarOpen(true)} onChangerMotDePasse={() => setMotDePasseOpen(true)} />
           <OfflineBanner enLigne={enLigne} enAttente={enAttente} />
           <main className="min-w-0 flex-1 px-4 pt-6 pb-32 sm:px-6 lg:px-8 lg:py-8">{children}</main>
         </div>
-
-        {/* Bouton flottant « paramètres » */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              aria-label={t("app_shell.parametres_tooltip")}
-              title={t("app_shell.parametres_tooltip")}
-              className="fixed bottom-[4.5rem] right-4 z-30 flex h-11 w-11 items-center sm:bottom-24 sm:right-6 sm:h-14 sm:w-14 justify-center rounded-full bg-primary text-primary-foreground shadow-dash transition-transform duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <Settings className="h-5 w-5 sm:h-6 sm:w-6" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-64 rounded-card p-3 shadow-dash">
-            <p className="px-1 pb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              {t("app_shell.parametres_tooltip")}
-            </p>
-            <button
-              type="button"
-              onClick={basculer}
-              className="flex w-full items-center gap-3 rounded-input px-3 py-2.5 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-secondary"
-            >
-              {sombre ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              {sombre ? t("app_shell.theme_clair") : t("app_shell.theme_sombre")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMotDePasseOpen(true)}
-              className="flex w-full items-center gap-3 rounded-input px-3 py-2.5 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-secondary"
-            >
-              <KeyRound className="h-4 w-4" />
-              {t("password.change_menu")}
-            </button>
-            <div className="mt-1 flex items-center justify-between rounded-input px-3 py-2">
-              <span className="text-sm font-medium text-foreground">{t("app_shell.langue_label")}</span>
-              <LanguageSwitcher />
-            </div>
-          </PopoverContent>
-        </Popover>
 
         <ChangePasswordDialog open={motDePasseOpen} onOpenChange={setMotDePasseOpen} />
 

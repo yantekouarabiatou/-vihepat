@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Bell, ExternalLink, Globe, History, Menu, Moon, Search, Sun } from "lucide-react";
+import { Bell, ExternalLink, Globe, History, KeyRound, Menu, Moon, Search, Sun } from "lucide-react";
 import { soignantApi } from "@/api/soignant.api";
 import { useAuthStore } from "@/store/auth.store";
 import { useTheme } from "@/hooks/use-theme";
@@ -17,7 +17,7 @@ function initiales(nom: string, prenom: string) {
   return `${prenom[0] ?? ""}${nom[0] ?? ""}`.toUpperCase();
 }
 
-export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpenSidebar: () => void }) {
+export function SoignantTopbar({ admin, onOpenSidebar, onChangerMotDePasse }: { admin: boolean; onOpenSidebar: () => void; onChangerMotDePasse: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -193,21 +193,39 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
 
           <LanguageSwitcher />
 
-          <div className="ml-1 hidden items-center gap-2 rounded-full border border-border bg-secondary/40 px-2 py-1 sm:flex">
-            <Avatar className="h-7 w-7">
-              <AvatarFallback className="bg-primary text-xs font-bold text-primary-foreground">
-                {user ? initiales(user.nom, user.prenom) : "?"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 pr-1">
-              <p className="truncate text-xs font-semibold leading-tight text-foreground">
-                {user ? `${user.prenom} ${user.nom}` : ""}
-              </p>
-              <p className="truncate text-[11px] leading-tight text-muted-foreground">
-                {admin ? t("sidebar.role_admin") : fonction ? t(`fonction.${fonction}`) : t("sidebar.role_soignant")}
-              </p>
-            </div>
-          </div>
+          {/* Compte : remplace l'ancien bouton flottant « paramètres », qui masquait le contenu */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label={t("app_shell.parametres_tooltip")}
+                className="ml-1 flex items-center gap-2 rounded-full border border-border bg-secondary/40 p-1 transition-colors hover:bg-secondary sm:px-2"
+              >
+                <Avatar className="h-7 w-7">
+                  <AvatarFallback className="bg-primary text-xs font-bold text-primary-foreground">
+                    {user ? initiales(user.nom, user.prenom) : "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden min-w-0 pr-1 text-left sm:block">
+                  <p className="truncate text-xs font-semibold leading-tight text-foreground">
+                    {user ? `${user.prenom} ${user.nom}` : ""}
+                  </p>
+                  <p className="truncate text-[11px] leading-tight text-muted-foreground">
+                    {admin ? t("sidebar.role_admin") : fonction ? t(`fonction.${fonction}`) : t("sidebar.role_soignant")}
+                  </p>
+                </div>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-60 rounded-2xl p-1.5">
+              <button
+                type="button"
+                onClick={onChangerMotDePasse}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+              >
+                <KeyRound className="h-4 w-4 text-primary" aria-hidden="true" /> {t("password.change_menu")}
+              </button>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
     </header>

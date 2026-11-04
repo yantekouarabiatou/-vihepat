@@ -30,6 +30,8 @@ const COLONNES = [
   { table: 'messages_groupe', colonne: 'alerte_traitee_par', definition: { type: DataTypes.INTEGER, allowNull: true } },
   { table: 'messages_groupe', colonne: 'reponse_a', definition: { type: DataTypes.INTEGER, allowNull: true } },
   { table: 'messages_groupe', colonne: 'alerte_traitee_le', definition: { type: DataTypes.DATE, allowNull: true } },
+  // Rappel automatique des rendez-vous la veille
+  { table: 'rendez_vous', colonne: 'rappel_auto', definition: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true } },
 ];
 
 export async function mettreAJourSchema() {

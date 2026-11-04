@@ -5,7 +5,7 @@
  * - Les écritures (POST/PATCH) ne sont jamais mises en cache : elles passent par la
  *   file d'attente de l'application, envoyée au retour du réseau.
  */
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE_APP = `vihepat-app-${VERSION}`;
 const CACHE_API = 'vihepat-api';
 const COQUILLE = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
@@ -84,10 +84,13 @@ self.addEventListener('push', (event) => {
         badge: '/icons/icon-192.png',
         vibrate: [200, 100, 200],
         data: { cle: d.cle, id: d.id, jeton: d.jeton, api: d.api },
-        actions: [
-          { action: 'fait', title: d.fait || 'OK' },
-          { action: 'plus_tard', title: d.plusTard || '…' },
-        ],
+        // Rappel de rendez-vous (sans jeton) : simple information, sans boutons
+        actions: d.jeton
+          ? [
+              { action: 'fait', title: d.fait || 'OK' },
+              { action: 'plus_tard', title: d.plusTard || '…' },
+            ]
+          : [],
       });
     })
   );
