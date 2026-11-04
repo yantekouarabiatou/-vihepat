@@ -29,6 +29,8 @@ export function AuthPage() {
   const setAuth = useAuthStore((s) => s.setAuth);
 
   const initialMode: Mode = searchParams.get("mode") === "register" ? "register" : "login";
+  // Arrivée après une déconnexion automatique (inactivité)
+  const deconnecteInactivite = searchParams.get("raison") === "inactivite";
   const [mode, setMode] = useState<Mode>(initialMode);
   const [loading, setLoading] = useState(false);
   const [oubliOpen, setOubliOpen] = useState(false);
@@ -188,6 +190,11 @@ export function AuthPage() {
             </div>
           )}
 
+          {deconnecteInactivite && (
+            <p role="status" className="mt-6 rounded-2xl bg-secondary px-4 py-3 text-sm text-foreground">
+              {t("inactivite.deconnecte")}
+            </p>
+          )}
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             {mode === "register" && (
               <>

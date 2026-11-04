@@ -12,6 +12,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { InstallButton } from "@/components/install-button";
 import { ChatWidget } from "@/components/chat-widget";
 import { EcranVerrou } from "@/components/ecran-verrou";
+import { Celebrations } from "@/components/celebration";
 import { ConfidentialiteDialog } from "@/features/patient/ConfidentialiteDialog";
 import { SoignantSidebar } from "@/components/soignant-sidebar";
 import { SoignantTopbar } from "@/components/soignant-topbar";
@@ -19,6 +20,8 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { useMoteurRappels } from "@/hooks/use-moteur-rappels";
+import { useDeconnexionInactivite } from "@/hooks/use-deconnexion-inactivite";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 /** Délai en arrière-plan au-delà duquel l'application se reverrouille. */
 const DELAI_VERROU_MS = 60_000;
@@ -58,6 +61,8 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
   const [confidentialiteOpen, setConfidentialiteOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [motDePasseOpen, setMotDePasseOpen] = useState(false);
+  // Soignants et administrateurs : déconnexion après 5 minutes d'inactivité (les patients ont le code PIN)
+  const inactivite = useDeconnexionInactivite({ actif: estSoignantOuAdmin });
   const cacheDepuis = useRef<number | null>(null);
 
   useEffect(() => {
@@ -164,6 +169,26 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
 
         <ChangePasswordDialog open={motDePasseOpen} onOpenChange={setMotDePasseOpen} />
 
+        {/* Avertissement avant la déconnexion pour inactivité */}
+        <Dialog open={inactivite.secondesRestantes !== null} onOpenChange={(o) => !o && inactivite.resterConnecte()}>
+          <DialogContent className="rounded-3xl sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{t("inactivite.titre")}</DialogTitle>
+              <DialogDescription>
+                {t("inactivite.message", { count: inactivite.secondesRestantes ?? 0 })}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" className="rounded-full" onClick={inactivite.deconnecter}>
+                {t("inactivite.se_deconnecter")}
+              </Button>
+              <Button className="rounded-full" onClick={inactivite.resterConnecte}>
+                {t("inactivite.rester")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <ChatWidget />
       </div>
     );
@@ -254,6 +279,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
       <main className="mx-auto w-full max-w-5xl px-4 pt-8 pb-28 sm:px-6 sm:pb-8">{children}</main>
 
       <ConfidentialiteDialog open={confidentialiteOpen} onOpenChange={setConfidentialiteOpen} />
+      {estPatient && <Celebrations />}
       <ChatWidget />
     </div>
   );

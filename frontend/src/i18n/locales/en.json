@@ -854,7 +854,14 @@
     "partage_erreur": "The setting could not be saved.",
     "tester": "Test a notification",
     "agenda_bouton": "Add to phone calendar",
-    "limites_aide": "On a phone, a browser cannot guarantee an alarm when the app is fully closed. For a reliable alarm, add your reminders to your phone calendar: they will show as “{{titre}}”."
+    "limites_aide": "Without the “Reminders even when the app is closed” option, a phone does not guarantee the alarm when the app is closed. You can also add your reminders to your phone calendar: they will show as “{{titre}}”.",
+    "serveur_label": "Reminders even when the app is closed",
+    "serveur_aide": "Your reminders also ring when the app is closed or you are signed out. For this, the server keeps the time, days and type of each reminder (dose or appointment), never their name. The notification keeps your discreet title.",
+    "serveur_ios": "On iPhone, first add the app to your home screen (Share > Add to Home Screen), then open it from its icon.",
+    "serveur_indisponible": "This browser cannot receive reminders while the app is closed.",
+    "serveur_toast_on": "Reminders enabled, even when the app is closed.",
+    "serveur_toast_off": "Closed-app reminders disabled: the server erased your times.",
+    "serveur_erreur": "This setting cannot be changed right now."
   },
   "verrou": {
     "entrez_code": "Enter your code",
@@ -1474,5 +1481,35 @@
     "toast_statut": "Report updated",
     "toast_rdv": "Appointment scheduled",
     "toast_rdv_erreur": "Could not schedule the appointment"
+  },
+  "inactivite": {
+    "titre": "Still there?",
+    "message_one": "Without any activity, you will be signed out in {{count}} second, to protect patient records.",
+    "message_other": "Without any activity, you will be signed out in {{count}} seconds, to protect patient records.",
+    "rester": "Stay signed in",
+    "se_deconnecter": "Sign out",
+    "deconnecte": "You were signed out after 5 minutes of inactivity, to protect patient records. Sign in again to continue."
+  },
+  "celebration": {
+    "fermer": "Close",
+    "ok": "OK",
+    "merci": "Thanks!",
+    "prise_titre": "Well done!",
+    "prise_message": "Dose recorded.",
+    "rappel_message": "Recorded, keep it up.",
+    "journee_titre": "Great day!",
+    "journee_message": "All of today's doses are done. Taking your treatment every day is what makes it work.",
+    "serie_titre_one": "{{count}} day without a miss!",
+    "serie_titre_other": "{{count}} days without a miss!",
+    "serie_message_one": "You took all your treatment {{count}} day in a row. Well done for your consistency!",
+    "serie_message_other": "You took all your treatment {{count}} days in a row. Well done for your consistency!",
+    "oubli_titre": "That's okay.",
+    "oubli_message": "Every dose counts: take the next one at the usual time, without doubling.",
+    "rdv_titre": "Appointment kept!",
+    "rdv_message": "Thank you for coming: this follow-up protects your health.",
+    "rdv_suite_one": "{{count}} appointment kept in a row. Thank you for your commitment!",
+    "rdv_suite_other": "{{count}} appointments kept in a row. Thank you for your commitment!",
+    "rdv_manque_titre": "A missed appointment happens.",
+    "rdv_manque_message": "Request a new appointment from your care team in the app: they are here to help."
   }
 }

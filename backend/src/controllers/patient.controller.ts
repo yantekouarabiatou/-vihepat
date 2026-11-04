@@ -68,6 +68,10 @@ export async function getRendezVous(req: Request, res: Response) {
   res.json(result);
 }
 
+export async function getRendezVousPasses(req: Request, res: Response) {
+  res.json(await patientService.getRendezVousPasses(req.user!.userId));
+}
+
 export async function createRendezVous(req: Request, res: Response) {
   const data = createRendezVousSchema.parse(req.body);
   const result = await patientService.createRendezVous(req.user!.userId, data);

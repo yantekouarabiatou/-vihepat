@@ -854,7 +854,14 @@
     "partage_erreur": "Le réglage n'a pas pu être enregistré.",
     "tester": "Tester une notification",
     "agenda_bouton": "Ajouter à l'agenda du téléphone",
-    "limites_aide": "Sur téléphone, un navigateur ne garantit pas une alarme quand l'application est complètement fermée. Pour une alarme sûre, ajoutez vos rappels à l'agenda du téléphone : ils y apparaîtront sous le nom « {{titre}} »."
+    "limites_aide": "Sans l'option « Rappels même application fermée », un téléphone ne garantit pas l'alarme quand l'application est fermée. Vous pouvez aussi ajouter vos rappels à l'agenda du téléphone : ils y apparaîtront sous le nom « {{titre}} ».",
+    "serveur_label": "Rappels même application fermée",
+    "serveur_aide": "Vos rappels sonnent aussi quand l'application est fermée ou que vous êtes déconnecté. Pour cela, le serveur garde l'heure, les jours et le type de chaque rappel (prise ou rendez-vous), jamais leur nom. La notification garde votre titre discret.",
+    "serveur_ios": "Sur iPhone, ajoutez d'abord l'application à l'écran d'accueil (Partager > Sur l'écran d'accueil), puis ouvrez-la depuis son icône.",
+    "serveur_indisponible": "Ce navigateur ne permet pas de recevoir des rappels application fermée.",
+    "serveur_toast_on": "Rappels activés, même application fermée.",
+    "serveur_toast_off": "Rappels application fermée désactivés : le serveur a effacé vos horaires.",
+    "serveur_erreur": "Impossible de modifier ce réglage pour le moment."
   },
   "verrou": {
     "entrez_code": "Entrez votre code",
@@ -1474,5 +1481,35 @@
     "toast_statut": "Signalement mis à jour",
     "toast_rdv": "Rendez-vous programmé",
     "toast_rdv_erreur": "Impossible de programmer le rendez-vous"
+  },
+  "inactivite": {
+    "titre": "Toujours là ?",
+    "message_one": "Sans activité de votre part, vous serez déconnecté dans {{count}} seconde, pour protéger les dossiers des patients.",
+    "message_other": "Sans activité de votre part, vous serez déconnecté dans {{count}} secondes, pour protéger les dossiers des patients.",
+    "rester": "Rester connecté",
+    "se_deconnecter": "Se déconnecter",
+    "deconnecte": "Vous avez été déconnecté après 5 minutes d'inactivité, pour protéger les dossiers des patients. Reconnectez-vous pour continuer."
+  },
+  "celebration": {
+    "fermer": "Fermer",
+    "ok": "D'accord",
+    "merci": "Merci !",
+    "prise_titre": "Bravo !",
+    "prise_message": "Prise bien notée.",
+    "rappel_message": "C'est noté, continuez comme ça.",
+    "journee_titre": "Journée réussie !",
+    "journee_message": "Toutes vos prises du jour sont faites. Prendre son traitement chaque jour, c'est ce qui le rend efficace.",
+    "serie_titre_one": "{{count}} jour sans oubli !",
+    "serie_titre_other": "{{count}} jours sans oubli !",
+    "serie_message_one": "Vous avez pris tout votre traitement {{count}} jour d'affilée. Bravo pour votre régularité !",
+    "serie_message_other": "Vous avez pris tout votre traitement {{count}} jours d'affilée. Bravo pour votre régularité !",
+    "oubli_titre": "Ce n'est pas grave.",
+    "oubli_message": "Chaque prise compte : on reprend à l'heure habituelle, sans doubler.",
+    "rdv_titre": "Rendez-vous honoré !",
+    "rdv_message": "Merci d'être venu(e) : ce suivi protège votre santé.",
+    "rdv_suite_one": "{{count}} rendez-vous honoré d'affilée. Merci pour votre engagement !",
+    "rdv_suite_other": "{{count}} rendez-vous honorés d'affilée. Merci pour votre engagement !",
+    "rdv_manque_titre": "Un rendez-vous manqué, ça arrive.",
+    "rdv_manque_message": "Demandez un nouveau rendez-vous à votre équipe soignante depuis l'application : elle est là pour vous aider."
   }
 }

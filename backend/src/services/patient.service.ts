@@ -66,6 +66,17 @@ export async function getRendezVous(userId: number) {
   });
 }
 
+/** Derniers rendez-vous passés et leur issue (honoré / manqué), pour les félicitations */
+export async function getRendezVousPasses(userId: number) {
+  const patient = await getPatientOrThrow(userId);
+  return RendezVous.findAll({
+    where: { patientId: patient.id, statut: ['effectue', 'manque'], dateHeure: { [Op.lt]: new Date() } },
+    attributes: ['id', 'dateHeure', 'statut'],
+    order: [['dateHeure', 'DESC']],
+    limit: 10,
+  });
+}
+
 export async function createRendezVous(userId: number, input: { motif?: string; dateHeure: string }) {
   const patient = await getPatientOrThrow(userId);
   return RendezVous.create({

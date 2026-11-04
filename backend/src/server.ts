@@ -5,6 +5,7 @@ import { verifySmtpConnection } from './services/mail.service';
 import { chargerPermissions } from './services/permissions.service';
 import { mettreAJourSchema } from './services/schema.service';
 import { verifierModelePerteSuivi } from './ia/perte-de-suivi';
+import { demarrerPlanificateur } from './services/rappels-serveur.service';
 
 async function main() {
   await connectDB();
@@ -12,6 +13,8 @@ async function main() {
   await chargerPermissions();
   verifierModelePerteSuivi();
   void verifySmtpConnection();
+  // Rappels envoyés par le serveur (application fermée)
+  demarrerPlanificateur();
 
   const app = createApp();
   app.listen(env.PORT, () => {

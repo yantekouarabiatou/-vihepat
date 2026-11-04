@@ -5,6 +5,7 @@ import soignantRoutes from './soignant.routes';
 import groupeRoutes from './groupe.routes';
 import adminRoutes from './admin.routes';
 import chatRoutes from './chat.routes';
+import pushRoutes from './push.routes';
 
 const r = Router();
 
@@ -14,5 +15,6 @@ r.use('/patients', patientRoutes);
 r.use('/soignant', soignantRoutes);
 r.use('/admin', adminRoutes);
 r.use('/chat', chatRoutes);
+r.use('/push', pushRoutes);
 
 export default r;

@@ -216,6 +216,9 @@ export const patientApi = {
       .post<{ transcription: string; langue: 'fr' | 'fon' | 'mixte' | 'autre'; utilisable: boolean }>('/chat/transcrire', input, { timeout: 45000 })
       .then((r) => r.data),
 
+  getRendezVousPasses: () =>
+    api.get<Pick<RendezVous, 'id' | 'dateHeure' | 'statut'>[]>('/patients/me/rendez-vous/passes').then((r) => r.data),
+
   getPartageRappels: () =>
     api.get<{ partageConfirmations: boolean }>('/patients/me/rappels/partage').then((r) => r.data),
 

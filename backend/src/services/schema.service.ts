@@ -2,6 +2,7 @@ import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database';
 import { FONCTIONS_SOIGNANT } from '../models/Soignant';
 import { BilanInclusion, ReactionMessage, SignalementMessage } from '../models';
+import { AbonnementPush, ParametreSysteme, RappelServeur } from '../models/RappelServeur';
 import { CATEGORIES_ALERTE } from './moderation.service';
 
 /**
@@ -45,7 +46,7 @@ export async function mettreAJourSchema() {
   }
 
   // Tables récentes : CREATE TABLE IF NOT EXISTS, sans toucher à une table existante
-  for (const modele of [BilanInclusion, ReactionMessage, SignalementMessage]) {
+  for (const modele of [BilanInclusion, ReactionMessage, SignalementMessage, AbonnementPush, RappelServeur, ParametreSysteme]) {
     try {
       await modele.sync();
     } catch (err) {

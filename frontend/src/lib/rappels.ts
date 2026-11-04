@@ -1,12 +1,15 @@
 import { create } from "zustand";
 import i18n from "@/i18n";
 import { mettreEnAttente, synchroniser } from "@/lib/offline-queue";
+import { planifierSynchroServeur, signalerReponseServeur } from "@/lib/rappels-serveur";
 
 /**
  * Rappels discrets du patient (prises et rendez-vous).
  *
  * Tout est conservé sur l'appareil, par compte : le libellé, l'heure, les jours et les
- * réglages ne quittent jamais le téléphone. Le serveur ne reçoit que :
+ * réglages ne quittent pas le téléphone, sauf si le patient active les rappels envoyés par le
+ * serveur (application fermée) : l'heure, les jours et le type, jamais le libellé (voir
+ * rappels-serveur.ts). Le serveur reçoit sinon seulement :
  * - les réponses (« C'est fait » / non confirmé), si le patient accepte le partage ;
  * - un journal d'audit de type « rappel créé / modifié / supprimé », sans aucun contenu.
  * Les alarmes se déclenchent sans réseau ; les réponses sont mises en file d'attente
@@ -38,6 +41,8 @@ export interface ReglagesRappels {
   delaiRelanceMin: number;
   /** Copie locale du consentement au partage (la référence est sur le serveur) */
   partage: boolean;
+  /** Rappels aussi envoyés par le serveur (application fermée), activés sur cet appareil */
+  serveur: boolean;
 }
 
 export type EtatOccurrence = "en_attente" | "confirmee" | "non_confirmee";
@@ -72,6 +77,7 @@ const REGLAGES_DEFAUT: ReglagesRappels = {
   modeSonore: "vibration",
   delaiRelanceMin: 15,
   partage: true,
+  serveur: false,
 };
 
 interface DonneesRappels {
@@ -139,6 +145,7 @@ export const useRappelsStore = create<RappelsState>((set, get) => {
     const { rappels, reglages, occurrences, userId } = { ...get(), ...partiel };
     sauver(userId, { rappels, reglages, occurrences });
     set(partiel);
+    if ((partiel.rappels || partiel.reglages) && reglages.serveur) planifierSynchroServeur();
   };
 
   /** Met une réponse en file d'envoi (seulement si le patient partage ses confirmations). */
@@ -211,6 +218,7 @@ export const useRappelsStore = create<RappelsState>((set, get) => {
     confirmer: (cle) => {
       const o = majOccurrence(cle, (x) => ({ ...x, etat: "confirmee", reponduLe: new Date().toISOString() }));
       if (o) transmettre(o);
+      signalerReponseServeur(cle);
     },
 
     reporter: (cle, minutes) => {

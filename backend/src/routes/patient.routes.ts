@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as patientController from '../controllers/patient.controller';
 import * as triageController from '../controllers/triage.controller';
+import * as rappelsServeurController from '../controllers/rappels-serveur.controller';
 import { authRequired, requireRole, requirePermission as perm } from '../middlewares/auth';
 import { catchAsync } from '../utils/catchAsync';
 
@@ -9,6 +10,7 @@ const r = Router();
 r.use(authRequired, requireRole('patient'));
 
 r.get('/me/rendez-vous', perm('patient:read_own'), catchAsync(patientController.getRendezVous));
+r.get('/me/rendez-vous/passes', perm('patient:read_own'), catchAsync(patientController.getRendezVousPasses));
 r.post('/me/rendez-vous', perm('rendez_vous:request'), catchAsync(patientController.createRendezVous));
 r.get('/me/synthese', perm('patient:read_own'), catchAsync(patientController.getSynthese));
 r.get('/me/traitements', perm('traitement:read'), catchAsync(patientController.getTraitements));
@@ -26,5 +28,10 @@ r.get('/me/rappels/partage', perm('patient:read_own'), catchAsync(patientControl
 r.put('/me/rappels/partage', perm('patient:read_own'), catchAsync(patientController.setPartageRappels));
 r.post('/me/rappels/confirmations', perm('observance:declare'), catchAsync(patientController.enregistrerConfirmations));
 r.post('/me/rappels/journal', catchAsync(patientController.journaliserRappel));
+// Rappels envoyés par le serveur (application fermée), activés par le patient
+r.put('/me/rappels-serveur', perm('patient:read_own'), catchAsync(rappelsServeurController.synchroniser));
+r.delete('/me/rappels-serveur', perm('patient:read_own'), catchAsync(rappelsServeurController.desactiver));
+r.get('/me/rappels-serveur/reponses', perm('patient:read_own'), catchAsync(rappelsServeurController.reponsesRecentes));
+r.post('/me/rappels-serveur/reponses', perm('patient:read_own'), catchAsync(rappelsServeurController.noterReponse));
 
 export default r;
