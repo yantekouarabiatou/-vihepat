@@ -3,6 +3,7 @@ import { Soignant, Patient, User, Affectation, Traitement, BilanInclusion } from
 import { evaluerRisquePatient } from './perte-de-suivi.service';
 import { getAlertesExamens, getResumeObservance } from './observance.service';
 import { getEtatAgrege } from './rappels.service';
+import { resumesSuivi } from './soignant-vue-globale.service';
 import type { FonctionSoignant } from '../models/Soignant';
 import { httpError, getContexte, assertMedecin, getPatientIds, assertPatientAffecte } from './soignant-contexte';
 
@@ -154,6 +155,7 @@ export async function getPatients(userId: number, search?: string) {
   });
 
   // Indicateurs de suivi pour repérer rapidement les patients qui décrochent
+  const suivis = await resumesSuivi(patients.map((p) => p.id));
   return Promise.all(
     patients.map(async (p) => {
       const [resume, alertes, rappels] = await Promise.all([
@@ -171,6 +173,8 @@ export async function getPatients(userId: number, search?: string) {
         examensEnRetard: alertes.filter((a) => a.statut === 'en_retard').length,
         // Aide à la priorisation seulement : aucune décision automatique
         rappelsARegarder: rappels.aRegarder,
+        // Vue globale : prochain et dernier rendez-vous, soignants attribués
+        ...suivis.get(p.id),
       };
     })
   );

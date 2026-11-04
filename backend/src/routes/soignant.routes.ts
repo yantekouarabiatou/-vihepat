@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as soignantController from '../controllers/soignant.controller';
+import * as planificationController from '../controllers/planification.controller';
 import * as groupeController from '../controllers/groupe.controller';
 import { authRequired, requireRole, requirePermission as perm } from '../middlewares/auth';
 import { catchAsync } from '../utils/catchAsync';
@@ -26,7 +27,15 @@ r.patch('/traitements/:id', perm('traitement:manage'), catchAsync(soignantContro
 r.get('/rendez-vous', perm('rendez_vous:manage'), catchAsync(soignantController.getRendezVous));
 r.post('/rendez-vous', perm('rendez_vous:manage'), catchAsync(soignantController.createRendezVous));
 r.patch('/rendez-vous/:id', perm('rendez_vous:manage'), catchAsync(soignantController.updateRendezVous));
-r.post('/rendez-vous/:id/rappel', perm('rendez_vous:manage'), catchAsync(soignantController.envoyerRappelRdv));
+// Rappel envoyé tout de suite au patient (e-mail neutre + notification s'il l'a activée)
+r.post('/rendez-vous/:id/rappel', perm('rendez_vous:manage'), catchAsync(planificationController.rappelerMaintenant));
+r.patch('/rendez-vous/:id/rappel-auto', perm('rendez_vous:manage'), catchAsync(planificationController.changerRappelAuto));
+// Agenda sur une période et planification en série
+r.get('/agenda', perm('rendez_vous:manage'), catchAsync(planificationController.getAgenda));
+// Tous les rendez-vous en cours et à venir (ou d'une période), pour la vue globale et les exports
+r.get('/rendez-vous/tous', perm('rendez_vous:manage'), catchAsync(planificationController.listeRendezVous));
+r.post('/rendez-vous/serie/apercu', perm('rendez_vous:manage'), catchAsync(planificationController.apercuSerie));
+r.post('/rendez-vous/serie', perm('rendez_vous:manage'), catchAsync(planificationController.creerSerie));
 r.get('/signalements', perm('signalement:manage'), catchAsync(soignantController.getSignalements));
 r.patch('/signalements/:id', perm('signalement:manage'), catchAsync(soignantController.updateSignalement));
 // Groupes de soutien : l'équipe lit les discussions et traite les signalements de mots sensibles

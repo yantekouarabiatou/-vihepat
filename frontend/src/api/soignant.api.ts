@@ -17,6 +17,10 @@ export interface SoignantPatient {
   rappelsARegarder?: boolean;
   /** Null tant qu'aucun bilan d'inclusion n'est saisi (ou hors VIH) */
   risquePerteSuivi?: { niveau: NiveauRisque; probabilite: number } | null;
+  /** Vue globale du suivi */
+  prochainRdv?: { dateHeure: string; motif: string | null; statut: StatutRDV } | null;
+  dernierRdv?: { dateHeure: string; statut: StatutRDV } | null;
+  equipe?: string[];
 }
 
 /* Groupes de soutien vus par l'équipe soignante */
@@ -113,7 +117,28 @@ export interface EtatRappels {
 }
 
 export interface SoignantRendezVous extends RendezVous {
-  patient: { id: number; codePatient: string; user: { nom: string; prenom: string } };
+  patient: { id: number; codePatient: string; pathologie?: string; user: { nom: string; prenom: string } };
+  rappelAuto?: boolean;
+}
+
+/** Rendez-vous de la vue globale : patient, soignant, motif */
+export interface RendezVousGlobal extends RendezVous {
+  rappelAuto?: boolean;
+  patient: { id: number; codePatient: string; pathologie: string; telephone: string | null; user: { nom: string; prenom: string } };
+  soignant: { id: number; fonction: FonctionSoignant; user: { nom: string; prenom: string } } | null;
+}
+
+export interface Agenda {
+  rendezVous: SoignantRendezVous[];
+  /** Patients suivis sans aucun rendez-vous à venir */
+  sansRendezVous: { id: number; codePatient: string; pathologie: string; nom: string; prenom: string }[];
+}
+
+export interface ApercuRendezVous {
+  dateHeure: string;
+  conflitPatient: boolean;
+  creneauOccupe: boolean;
+  chargeJour: number;
 }
 
 export type CibleCommunique = 'tous' | 'patient';
@@ -319,7 +344,28 @@ export const soignantApi = {
     api.post<SoignantRendezVous>('/soignant/rendez-vous', input).then((r) => r.data),
 
   envoyerRappelRdv: (id: number) =>
-    api.post<SoignantRendezVous>(`/soignant/rendez-vous/${id}/rappel`).then((r) => r.data),
+    api
+      .post<{ rendezVous: SoignantRendezVous; email: boolean; notification: number }>(`/soignant/rendez-vous/${id}/rappel`)
+      .then((r) => r.data),
+
+  changerRappelAuto: (id: number, rappelAuto: boolean) =>
+    api.patch<SoignantRendezVous>(`/soignant/rendez-vous/${id}/rappel-auto`, { rappelAuto }).then((r) => r.data),
+
+  getTousRendezVous: (du?: Date, au?: Date) =>
+    api
+      .get<RendezVousGlobal[]>('/soignant/rendez-vous/tous', {
+        params: { ...(du ? { du: du.toISOString() } : {}), ...(au ? { au: au.toISOString() } : {}) },
+      })
+      .then((r) => r.data),
+
+  getAgenda: (du: Date, au: Date) =>
+    api.get<Agenda>('/soignant/agenda', { params: { du: du.toISOString(), au: au.toISOString() } }).then((r) => r.data),
+
+  apercuSerie: (patientId: number, dates: string[]) =>
+    api.post<ApercuRendezVous[]>('/soignant/rendez-vous/serie/apercu', { patientId, dates }).then((r) => r.data),
+
+  creerSerie: (input: { patientId: number; dates: string[]; motif?: string; rappelAuto: boolean }) =>
+    api.post<{ crees: number }>('/soignant/rendez-vous/serie', input).then((r) => r.data),
 
   updateRendezVous: (id: number, input: { statut?: StatutRDV; notes?: string }) =>
     api.patch<SoignantRendezVous>(`/soignant/rendez-vous/${id}`, input).then((r) => r.data),

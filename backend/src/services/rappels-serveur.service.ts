@@ -195,22 +195,28 @@ async function reserver(id: number, colonne: 'envoiCle' | 'relanceCle', cle: str
 }
 
 async function envoyer(r: RappelServeur, cle: string, relance: boolean) {
-  const [abonnements, c] = await Promise.all([AbonnementPush.findAll({ where: { userId: r.userId } }), clesVapid()]);
+  await envoyerAUtilisateur(r.userId, (textes, ab) => ({ ...textes, cle, id: r.id, jeton: jeton(r.id, cle), api: ab.apiBase, relance }));
+}
+
+/**
+ * Envoie une notification à tous les appareils abonnés d'un utilisateur (rien s'il n'en a pas).
+ * Renvoie le nombre d'appareils qui l'ont acceptée.
+ */
+export async function envoyerAUtilisateur(userId: number, contenu: (textes: SynchroEntree['textes'], ab: AbonnementPush) => object) {
+  const [abonnements, c] = await Promise.all([AbonnementPush.findAll({ where: { userId } }), clesVapid()]);
+  let acceptes = 0;
   for (const ab of abonnements) {
     const textes = JSON.parse(ab.textes) as SynchroEntree['textes'];
     try {
-      const statut = await envoyerNotification(
-        ab,
-        { ...textes, cle, id: r.id, jeton: jeton(r.id, cle), api: ab.apiBase, relance },
-        c,
-        `mailto:${env.MAIL_FROM_ADDRESS}`
-      );
+      const statut = await envoyerNotification(ab, contenu(textes, ab), c, `mailto:${env.MAIL_FROM_ADDRESS}`);
+      if (statut < 300) acceptes++;
       if (statut === 404 || statut === 410) await ab.destroy();
       else if (statut >= 400) console.warn(`Rappel serveur : envoi refusé (${statut})`);
     } catch (err) {
       console.warn('Rappel serveur : envoi impossible :', (err as Error).message);
     }
   }
+  return acceptes;
 }
 
 export async function tic(t = Date.now()) {

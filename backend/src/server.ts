@@ -6,6 +6,7 @@ import { chargerPermissions } from './services/permissions.service';
 import { mettreAJourSchema } from './services/schema.service';
 import { verifierModelePerteSuivi } from './ia/perte-de-suivi';
 import { demarrerPlanificateur } from './services/rappels-serveur.service';
+import { demarrerRappelsRdv } from './services/rappel-rdv.service';
 
 async function main() {
   await connectDB();
@@ -15,6 +16,8 @@ async function main() {
   void verifySmtpConnection();
   // Rappels envoyés par le serveur (application fermée)
   demarrerPlanificateur();
+  // Rappel automatique des rendez-vous, la veille
+  demarrerRappelsRdv();
 
   const app = createApp();
   app.listen(env.PORT, () => {
