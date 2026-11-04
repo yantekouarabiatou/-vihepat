@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SimpleSelect } from "@/components/ui/simple-select";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -251,7 +252,6 @@ function BilanInclusionDialog({ open, onOpenChange, patient, onSaved }: {
     onError: (err) => toast.error(apiErrorMessage(err, t("perte_suivi.form.toast_erreur"))),
   });
 
-  const selectClass = "h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -277,30 +277,21 @@ function BilanInclusionDialog({ open, onOpenChange, patient, onSaved }: {
             </div>
             <div className="space-y-2">
               <Label htmlFor="bilan-stade">{t("perte_suivi.form.stade")}</Label>
-              <select id="bilan-stade" value={stade} onChange={(e) => setStade(e.target.value)} className={selectClass}>
-                <option value="">{t("perte_suivi.form.non_renseigne")}</option>
-                {[1, 2, 3, 4].map((n) => (
-                  <option key={n} value={n}>{t("perte_suivi.form.stade_n", { n })}</option>
-                ))}
-              </select>
+              <SimpleSelect id="bilan-stade" value={stade} onChange={setStade}
+                options={[{ value: "", label: t("perte_suivi.form.non_renseigne") },
+                  ...[1, 2, 3, 4].map((n) => ({ value: String(n), label: t("perte_suivi.form.stade_n", { n }) }))]} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="bilan-situation">{t("perte_suivi.form.situation")}</Label>
-              <select id="bilan-situation" value={situation} onChange={(e) => setSituation(e.target.value)} className={selectClass}>
-                <option value="">{t("perte_suivi.form.non_renseigne")}</option>
-                {SITUATIONS.map((s) => (
-                  <option key={s} value={s}>{t(`perte_suivi.form.situations.${s}`)}</option>
-                ))}
-              </select>
+              <SimpleSelect id="bilan-situation" value={situation} onChange={setSituation}
+                options={[{ value: "", label: t("perte_suivi.form.non_renseigne") },
+                  ...SITUATIONS.map((s) => ({ value: s, label: t(`perte_suivi.form.situations.${s}`) }))]} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="bilan-etudes">{t("perte_suivi.form.etudes")}</Label>
-              <select id="bilan-etudes" value={etudes} onChange={(e) => setEtudes(e.target.value)} className={selectClass}>
-                <option value="">{t("perte_suivi.form.non_renseigne")}</option>
-                {NIVEAUX_ETUDES.map((n) => (
-                  <option key={n} value={n}>{t(`perte_suivi.form.niveaux_etudes.${n}`)}</option>
-                ))}
-              </select>
+              <SimpleSelect id="bilan-etudes" value={etudes} onChange={setEtudes}
+                options={[{ value: "", label: t("perte_suivi.form.non_renseigne") },
+                  ...NIVEAUX_ETUDES.map((n) => ({ value: n, label: t(`perte_suivi.form.niveaux_etudes.${n}`) }))]} />
             </div>
           </div>
 

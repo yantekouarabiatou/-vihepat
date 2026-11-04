@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,13 +37,15 @@ export function SearchableSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between h-12 rounded-xl font-normal", !selected && "text-muted-foreground", className)}
+          className={cn("h-11 w-full justify-between gap-2 rounded-xl bg-background pl-3.5 pr-1.5 text-sm font-normal hover:bg-background hover:border-ring/60", !selected && "text-muted-foreground", className)}
         >
           <span className="truncate">{selected ? selected.label : placeholder}</span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <span className="flex h-6 shrink-0 items-center border-l border-input pl-2 pr-1.5 text-muted-foreground">
+            <ChevronDown className="h-4 w-4" />
+          </span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent className="w-[--radix-popover-trigger-width] rounded-xl p-1.5 shadow-lg" align="start">
         <Command>
           <CommandInput placeholder={searchPlaceholder ?? placeholder} className="h-11" />
           <CommandList>

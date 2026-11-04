@@ -89,7 +89,7 @@ export function DataTable<T>({
       <div className="relative mt-2 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+            <tr className="text-left text-xs text-muted-foreground">
               {columns.map((col) => (
                 <th
                   key={col.key}

@@ -24,13 +24,14 @@ import {
   Globe,
   SlidersHorizontal,
   ChevronRight,
-  KeyRound,
-} from "lucide-react";
+  KeyRound, CalendarX, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { soignantApi, type SoignantPatient, type CreatePatientResult } from "@/api/soignant.api";
 import { adminApi } from "@/api/admin.api";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { SimpleSelect } from "@/components/ui/simple-select";
+import { KpiCard } from "@/components/kpi-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -413,21 +414,22 @@ export function PatientsPage() {
       {/* ===================== EN-TÊTE DE LA PAGE ===================== */}
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 xl:flex-nowrap">
+            <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:whitespace-nowrap 2xl:text-3xl">
               {t("patients.titre")}
             </h1>
             <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
               {t("patients.nb_dossiers", { count: patients.length })}
             </span>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground 2xl:whitespace-nowrap">
             {t("patients.sous_titre")}
           </p>
         </div>
 
-        {/* Boutons d'action rapides */}
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
+        {/* Boutons d'action rapides (Nouveau patient sous Exporter, aligné à droite) */}
+        <div className="flex shrink-0 flex-col items-start gap-2.5 xl:items-end">
+          <div className="flex flex-wrap items-center gap-2.5 xl:justify-end">
           <Link
             to="/"
             className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-3.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
@@ -449,12 +451,12 @@ export function PatientsPage() {
           )}
 
           <BoutonsExport tableau={tableauPatients} disabled={!patientsFiltres || patientsFiltres.length === 0} />
+          </div>
 
           {medecin && (
             <Button
-              size="sm"
               onClick={() => setModalNouveauOpen(true)}
-              className="rounded-full gap-2 shadow-sm font-semibold"
+              className="h-11 rounded-full gap-2 px-6 shadow-sm font-semibold"
             >
               <UserPlus className="h-4 w-4" />
               {t("sidebar.patients_nouveau")}
@@ -465,57 +467,29 @@ export function PatientsPage() {
 
       {/* ===================== CARTES DE SYNTHÈSE / KPIS ===================== */}
       <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 shadow-[var(--shadow-card)] sm:p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase leading-tight tracking-wider text-muted-foreground sm:text-xs">{t("patients.kpi_total")}</span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Users className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-2">
-            <span className="text-2xl font-extrabold text-foreground">{stats.total}</span>
-            <span className="text-xs text-muted-foreground">{t("patients.kpi_total_sub")}</span>
-          </div>
-        </div>
-
-        <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 shadow-[var(--shadow-card)] sm:p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase leading-tight tracking-wider text-muted-foreground sm:text-xs">{t("patients.kpi_observance")}</span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <Activity className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-2">
-            <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{stats.bonneObservance}</span>
-            <span className="text-xs font-semibold text-muted-foreground">({stats.tauxBonneObservance} % ≥ 80%)</span>
-          </div>
-        </div>
-
-        <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 shadow-[var(--shadow-card)] sm:p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase leading-tight tracking-wider text-muted-foreground sm:text-xs">{t("patients.kpi_examens")}</span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <AlertCircle className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-2">
-            <span className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">{stats.alertesExamens}</span>
-            <span className="text-xs text-muted-foreground">{t("patients.kpi_examens_sub")}</span>
-          </div>
-        </div>
-
-        <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 shadow-[var(--shadow-card)] sm:p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase leading-tight tracking-wider text-muted-foreground sm:text-xs">{t("patients.kpi_securite")}</span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400">
-              <ShieldCheck className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-2">
-            <span className="text-sm font-bold text-sky-600 dark:text-sky-400">{t("patients.kpi_securite_valeur")}</span>
-            <span className="text-xs text-muted-foreground">{t("patients.kpi_securite_sub")}</span>
-          </div>
-        </div>
+        <KpiCard icon={Users} label={t("patients.kpi_total")} value={stats.total} etat="normal" contexte={t("patients.kpi_total_sub")} />
+        <KpiCard
+          icon={Activity}
+          label={t("patients.kpi_observance")}
+          value={stats.bonneObservance}
+          etat={stats.total === 0 ? "neutre" : stats.tauxBonneObservance >= 70 ? "bon" : stats.tauxBonneObservance >= 40 ? "attention" : "critique"}
+          contexte={`${stats.tauxBonneObservance} % ≥ 80 %`}
+        />
+        <KpiCard
+          icon={AlertCircle}
+          label={t("patients.kpi_examens")}
+          value={stats.alertesExamens}
+          etat={stats.alertesExamens > 0 ? "attention" : "bon"}
+          contexte={t("patients.kpi_examens_sub")}
+        />
+        <KpiCard
+          icon={ShieldCheck}
+          label={t("patients.kpi_securite")}
+          value={t("patients.kpi_securite_valeur")}
+          etat="normal"
+          valeurCompacte
+          contexte={t("patients.kpi_securite_sub")}
+        />
       </div>
 
       {/* ===================== BARRE DE RECHERCHE ET FILTRES ===================== */}
@@ -540,30 +514,30 @@ export function PatientsPage() {
               <span>{t("patients.filtres")}</span>
             </div>
 
-            <select
-              aria-label={t("patients.col_pathologie")}
+            <SimpleSelect
+              ariaLabel={t("patients.col_pathologie")}
               value={filtrePathologie}
-              onChange={(e) => setFiltrePathologie(e.target.value)}
-              className="h-10 rounded-xl border border-input bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="all">{t("patients.filtre_toutes_pathologies")}</option>
-              {PATHOLOGIE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+              onChange={setFiltrePathologie}
+              className="w-auto min-w-[12rem]"
+              options={[
+                { value: "all", label: t("patients.filtre_toutes_pathologies") },
+                ...PATHOLOGIE_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+              ]}
+            />
 
-            <select
-              aria-label={t("patients.col_observance")}
+            <SimpleSelect
+              ariaLabel={t("patients.col_observance")}
               value={filtreObservance}
-              onChange={(e) => setFiltreObservance(e.target.value)}
-              className="h-10 rounded-xl border border-input bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="all">{t("patients.filtre_obs_toutes")}</option>
-              <option value="good">{t("patients.filtre_obs_bonne")}</option>
-              <option value="moderate">{t("patients.filtre_obs_moderee")}</option>
-              <option value="low">{t("patients.filtre_obs_risque")}</option>
-              <option value="none">{t("patients.filtre_obs_aucune")}</option>
-            </select>
+              onChange={setFiltreObservance}
+              className="w-auto min-w-[12rem]"
+              options={[
+                { value: "all", label: t("patients.filtre_obs_toutes") },
+                { value: "good", label: t("patients.filtre_obs_bonne") },
+                { value: "moderate", label: t("patients.filtre_obs_moderee") },
+                { value: "low", label: t("patients.filtre_obs_risque") },
+                { value: "none", label: t("patients.filtre_obs_aucune") },
+              ]}
+            />
           </div>
         </div>
 
@@ -579,7 +553,7 @@ export function PatientsPage() {
                 setFiltrePathologie("all");
                 setFiltreObservance("all");
               }}
-              className="font-semibold text-primary hover:underline"
+              className="font-semibold text-primary"
             >
               {t("patients.reinit_filtres")}
             </button>
@@ -707,7 +681,7 @@ export function PatientsPage() {
                       <div>
                         <Link
                           to={`/soignant/patients/${p.id}`}
-                          className="block font-bold text-foreground transition-colors hover:text-primary hover:underline"
+                          className="block font-bold text-foreground transition-colors hover:text-primary"
                         >
                           {p.user.prenom} {p.user.nom}
                         </Link>
@@ -785,9 +759,20 @@ export function PatientsPage() {
                           {p.prochainRdv.motif && <p className="max-w-[160px] truncate text-muted-foreground">{p.prochainRdv.motif}</p>}
                         </>
                       ) : (
-                        <span className="rounded-full bg-[hsl(var(--gold)/0.18)] px-2 py-0.5 font-semibold text-foreground">{t("patients.aucun_rdv")}</span>
+                        <span
+                          className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-secondary px-2.5 py-0.5 font-medium text-muted-foreground"
+                          title={t("patients.aucun_rdv")}
+                        >
+                          <CalendarX className="h-3 w-3" />
+                          {t("patients.aucun_rdv_court")}
+                        </span>
                       )}
-                      {(p.equipe?.length ?? 0) > 0 && <p className="mt-0.5 max-w-[160px] truncate text-muted-foreground" title={p.equipe!.join(", ")}>{p.equipe!.join(", ")}</p>}
+                      {(p.equipe?.length ?? 0) > 0 && (
+                        <p className="mt-1 flex max-w-[160px] items-center gap-1 text-[11px] text-muted-foreground" title={p.equipe!.join(", ")}>
+                          <UserRound className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{p.equipe!.join(", ")}</span>
+                        </p>
+                      )}
                     </div>
                   ),
                 },

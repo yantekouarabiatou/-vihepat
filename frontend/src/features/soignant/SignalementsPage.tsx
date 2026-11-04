@@ -8,6 +8,7 @@ import { soignantApi, type SoignantSignalement } from "@/api/soignant.api";
 import type { Gravite, StatutSignalement } from "@/api/patient.api";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { SimpleSelect } from "@/components/ui/simple-select";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { apiErrorMessage } from "@/lib/api-error";
 import { localeAffichage } from "@/lib/date-locale";
@@ -99,7 +100,7 @@ export function SignalementsPage() {
       key: "patient",
       header: t("signalements_page.col_patient"),
       render: (s) => (
-        <Link to={`/soignant/patients/${s.patient.id}`} className="font-semibold text-foreground hover:text-primary hover:underline">
+        <Link to={`/soignant/patients/${s.patient.id}`} className="font-semibold text-foreground hover:text-primary">
           {s.patient.user.prenom} {s.patient.user.nom}
           <span className="block font-mono text-xs font-normal text-primary">{s.patient.codePatient}</span>
         </Link>
@@ -173,7 +174,6 @@ export function SignalementsPage() {
   ];
 
   const filtresStatut: FiltreStatut[] = ["a_traiter", "nouveau", "vu", "traite", "tous"];
-  const selectClass = "h-9 rounded-xl border border-input bg-background px-3 text-sm text-foreground";
 
   return (
     <AppShell title={t("sidebar.role_soignant")}>
@@ -205,18 +205,12 @@ export function SignalementsPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <label className="sr-only" htmlFor="filtre-statut">{t("signalements_page.col_statut")}</label>
-            <select id="filtre-statut" value={statut} onChange={(e) => setStatut(e.target.value as FiltreStatut)} className={selectClass}>
-              {filtresStatut.map((f) => (
-                <option key={f} value={f}>{t(`signalements_page.filtre.${f}`)}</option>
-              ))}
-            </select>
+            <SimpleSelect id="filtre-statut" value={statut} onChange={(v) => setStatut(v as FiltreStatut)} className="w-auto min-w-[12rem]"
+              options={filtresStatut.map((f) => ({ value: f, label: t(`signalements_page.filtre.${f}`) }))} />
             <label className="sr-only" htmlFor="filtre-gravite">{t("signalements_page.col_gravite")}</label>
-            <select id="filtre-gravite" value={gravite} onChange={(e) => setGravite(e.target.value as Gravite | "toutes")} className={selectClass}>
-              <option value="toutes">{t("signalements_page.toutes_gravites")}</option>
-              {(["severe", "modere", "leger"] as Gravite[]).map((g) => (
-                <option key={g} value={g}>{t(`shared.gravite.${g}`)}</option>
-              ))}
-            </select>
+            <SimpleSelect id="filtre-gravite" value={gravite} onChange={(v) => setGravite(v as Gravite | "toutes")} className="w-auto min-w-[12rem]"
+              options={[{ value: "toutes", label: t("signalements_page.toutes_gravites") },
+                ...(["severe", "modere", "leger"] as Gravite[]).map((g) => ({ value: g, label: t(`shared.gravite.${g}`) }))]} />
           </div>
         </div>
         <div className="mt-4">
