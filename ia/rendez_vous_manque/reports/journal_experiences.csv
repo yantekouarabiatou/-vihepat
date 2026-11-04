@@ -1,0 +1,15 @@
+﻿ID,Expérience,Résultat,Décision
+E01,Population : rendez-vous pris au moins la veille,"71955 rendez-vous, 28.5% d'absents (jour même : 4.6%)",Retenue
+E02,Historique strictement antérieur (anti-fuite),58.6% des rendez-vous sans historique observé,Retenu
+E03,Référence naïve,PR-AUC val = 0.274,Plancher
+E04,Régression logistique + splines (C = 0.01),"PR-AUC val = 0.363, ROC-AUC = 0.608",Référence interprétable
+E05,"Random Forest (15 combinaisons, CV groupée)","PR-AUC val = 0.357, ROC-AUC = 0.602",Comparé
+E06,"XGBoost (30 combinaisons, CV groupée)","PR-AUC val = 0.354, ROC-AUC = 0.605",Comparé
+E07,"MLP 32-16 (alpha = 1.0, arrêt epoch 4)","PR-AUC val = 0.362, ROC-AUC = 0.606",Comparé
+E08,Sélection (règle 7.1),Régression logistique : meilleur modèle,Modèle final
+E09,Seuils par capacité (20 % / 50 %),élevé ≥ 0.385 ; modéré ≥ 0.312,Retenus
+E10,Évaluation test,"ROC-AUC = 0.602, PR-AUC = 0.342, sensibilité (appel) = 0.240",Résultat final
+E11,S1 : fuite volontaire,ROC-AUC val = 0.990,"Démontre la fuite, rejeté"
+E12,"S3 / S4 : + SMS, + quartier",ROC-AUC val = 0.611 / 0.607 (réf. 0.608),"Non retenus (circularité, transposabilité)"
+E13,S5 : sans historique,ROC-AUC val = 0.596,Borne basse au démarrage
+E14,S6 : jour même inclus,"ROC-AUC = 0.736 sur tous, 0.607 sur les pris à l'avance",Rejeté : AUC gonflée sans valeur opérationnelle

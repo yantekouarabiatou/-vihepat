@@ -1,0 +1,127 @@
+{
+  "modele": "Régression logistique",
+  "version": "1.0.0",
+  "date": "2026-10-28",
+  "usage": "Aide à l'organisation des rappels ; ne doit jamais servir à refuser ou surréserver un rendez-vous.",
+  "cible": "Absence au rendez-vous (No-show = Yes), rendez-vous pris au moins la veille",
+  "moment_prediction": "Veille du rendez-vous (J-1)",
+  "donnees": {
+    "source": "Kaggle, Medical Appointment No Shows (joniarroba/noshowappointments, v5), CC BY-NC-SA 4.0",
+    "sha256_csv": "9132d3e7d0246617df9041d3764f20ad6f08e7b0d9f0997fa254fc5e52eda27d",
+    "rendez_vous_modelises": 71955,
+    "absents": 20519,
+    "decoupage": {
+      "entrainement": "2016-04-29 -> 2016-05-20",
+      "validation": "2016-05-24 -> 2016-06-01",
+      "test": "2016-06-02 -> 2016-06-08"
+    }
+  },
+  "licence_modele": "Dérivé de données CC BY-NC-SA 4.0 : démonstration non commerciale uniquement",
+  "variables_entree": [
+    "age",
+    "delai_jours",
+    "nb_rdv_anterieurs",
+    "nb_absences_anterieures",
+    "nb_rdv_jour",
+    "heure_prise",
+    "taux_absence_anterieur",
+    "bolsa_familia",
+    "hypertension",
+    "diabete",
+    "alcoolisme",
+    "handicap",
+    "premier_rdv",
+    "sexe",
+    "jour_semaine"
+  ],
+  "pretraitement_requis": "nettoyer() puis creer_variables() (sections 4.4 et 5) sur l'ensemble des rendez-vous connus du patient, pour reconstruire l'historique",
+  "hyperparametres": {
+    "C": 0.01
+  },
+  "seuils": {
+    "eleve_appel_top20": 0.38546213307043525,
+    "modere_rappel_renforce_top50": 0.31223165221545696
+  },
+  "performances_test": {
+    "ROC-AUC": {
+      "valeur": 0.6017362582736477,
+      "ic95": [
+        0.590219022661859,
+        0.6129270030882907
+      ]
+    },
+    "PR-AUC": {
+      "valeur": 0.34214662826216413,
+      "ic95": [
+        0.32671246206872523,
+        0.35855416347545965
+      ]
+    },
+    "Brier": {
+      "valeur": 0.19026552052323487,
+      "ic95": [
+        0.18736805449242488,
+        0.1934576961393022
+      ]
+    },
+    "Log-loss": {
+      "valeur": 0.566972789502249,
+      "ic95": [
+        0.5604277862910697,
+        0.5741230761133055
+      ]
+    },
+    "Sensibilité": {
+      "valeur": 0.2402442261746748,
+      "ic95": [
+        0.2256347681813672,
+        0.25547285835453776
+      ]
+    },
+    "Spécificité": {
+      "valeur": 0.8588478526454281,
+      "ic95": [
+        0.8511984855616842,
+        0.8659877975335818
+      ]
+    },
+    "VPP": {
+      "valeur": 0.3759867054424595,
+      "ic95": [
+        0.3539025048860557,
+        0.3976168781344509
+      ]
+    },
+    "VPN": {
+      "valeur": 0.761519873343888,
+      "ic95": [
+        0.7533286578229723,
+        0.7695891158290248
+      ]
+    },
+    "F1": {
+      "valeur": 0.2931648850016197,
+      "ic95": [
+        0.27667506427551714,
+        0.3094458841502228
+      ]
+    },
+    "% signalés": {
+      "valeur": 0.1670599666851749,
+      "ic95": [
+        0.16065451995697724,
+        0.17413347236478782
+      ]
+    }
+  },
+  "environnement": {
+    "python": "3.10.7",
+    "numpy": "2.2.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.6.1",
+    "xgboost": "3.2.0",
+    "shap": "0.49.1",
+    "matplotlib": "3.10.0",
+    "seaborn": "0.13.2"
+  }
+}
