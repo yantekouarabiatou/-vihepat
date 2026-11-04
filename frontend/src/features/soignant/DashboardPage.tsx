@@ -248,24 +248,24 @@ export function DashboardPage() {
         <div className="pointer-events-none absolute -bottom-20 right-28 h-40 w-40 rounded-full bg-white/10" />
         <div className="relative flex flex-wrap items-end justify-between gap-6">
           <div>
-            <h1 className="text-2xl font-extrabold text-primary-foreground sm:text-3xl">
+            <h1 className="text-2xl font-extrabold text-white sm:text-3xl">
               {t("dashboard_soignant.greeting", { prenom: user?.prenom })}
             </h1>
-            <p className="mt-2 max-w-md text-primary-foreground/85">{t("dashboard_soignant.subtitle")}</p>
+            <p className="mt-2 max-w-md text-white/85">{t("dashboard_soignant.subtitle")}</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
               to="/"
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
-                "h-11 rounded-full border-white/40 bg-white/10 text-primary-foreground hover:bg-white/20 gap-2 font-semibold",
+                "h-11 rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 gap-2 font-semibold",
               )}
             >
               <Globe className="h-4 w-4" /> {t("app_shell.site_public")}
             </Link>
             {medecin && (
               <Button
-                className="h-11 rounded-full bg-white px-5 text-primary hover:bg-white/90 font-semibold"
+                className="h-11 rounded-full bg-white px-5 text-[hsl(var(--brand))] hover:bg-white/90 font-semibold"
                 onClick={() => setNouveauPatientOpen(true)}
               >
                 <UserPlus className="mr-2 h-4 w-4" /> {t("dashboard_soignant.hero_nouveau_patient")}
@@ -275,7 +275,7 @@ export function DashboardPage() {
               href="#patients-section"
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
-                "h-11 rounded-full border-white/40 bg-white/10 text-primary-foreground hover:bg-white/20",
+                "h-11 rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20",
               )}
             >
               {t("dashboard_soignant.hero_liste_complete")}

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { SimpleSelect } from "@/components/ui/simple-select";
 import { ListenButton } from "@/components/listen-button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { patientApi } from "@/api/patient.api";
@@ -432,16 +433,12 @@ function Reglages() {
       {/* Relance */}
       <div className="space-y-2">
         <Label htmlFor="delai-relance" className="text-sm font-semibold">{t("rappels.relance_label")}</Label>
-        <select
+        <SimpleSelect
           id="delai-relance"
-          value={reglages.delaiRelanceMin}
-          onChange={(e) => reglerAvec({ delaiRelanceMin: Number(e.target.value) })}
-          className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {DELAIS_RELANCE.map((m) => (
-            <option key={m} value={m}>{t("rappels.dans_minutes", { count: m })}</option>
-          ))}
-        </select>
+          value={String(reglages.delaiRelanceMin)}
+          onChange={(v) => reglerAvec({ delaiRelanceMin: Number(v) })}
+          options={DELAIS_RELANCE.map((m) => ({ value: String(m), label: t("rappels.dans_minutes", { count: m }) }))}
+        />
         <p className="text-xs text-muted-foreground">{t("rappels.relance_aide")}</p>
       </div>
 

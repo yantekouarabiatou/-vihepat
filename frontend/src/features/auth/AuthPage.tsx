@@ -94,28 +94,28 @@ export function AuthPage() {
     <div className="flex min-h-screen bg-background font-sans">
       {/* Panneau visuel latéral */}
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-[linear-gradient(160deg,hsl(var(--brand))_0%,hsl(var(--brand-deep))_100%)] p-12 lg:flex">
-        <Link to="/" className="text-2xl font-extrabold tracking-tight text-primary-foreground">
+        <Link to="/" className="text-2xl font-extrabold tracking-tight text-white">
           VIHEPAT
         </Link>
         <div className="max-w-md">
-          <HeartPulse className="mb-6 h-12 w-12 text-primary-foreground" strokeWidth={1.5} />
-          <h2 className="text-4xl font-extrabold leading-tight text-primary-foreground">
+          <HeartPulse className="mb-6 h-12 w-12 text-white" strokeWidth={1.5} />
+          <h2 className="text-4xl font-extrabold leading-tight text-white">
             {t("hero.title_part1")} {t("hero.title_part2")}
           </h2>
-          <p className="mt-4 text-lg text-primary-foreground/85">
+          <p className="mt-4 text-lg text-white/85">
             {t("hero.subtitle")}
           </p>
-          <div className="mt-8 space-y-3 rounded-2xl bg-white/10 p-5 backdrop-blur-md text-sm text-primary-foreground/90">
+          <div className="mt-8 space-y-3 rounded-2xl bg-white/10 p-5 backdrop-blur-md text-sm text-white/90">
             <div className="flex items-center gap-2.5 font-semibold text-white">
               <ShieldCheck className="h-5 w-5 text-emerald-300 shrink-0" />
               <span>{t("auth.governance_title")}</span>
             </div>
-            <p className="text-xs text-primary-foreground/75 leading-relaxed">
+            <p className="text-xs text-white/75 leading-relaxed">
               {t("auth.governance_desc")}
             </p>
           </div>
         </div>
-        <p className="text-sm text-primary-foreground/60">
+        <p className="text-sm text-white/60">
           {t("hero.trust2")} · {t("hero.trust3")}
         </p>
       </div>
@@ -171,7 +171,7 @@ export function AuthPage() {
                     type="button"
                     variant="link"
                     size="sm"
-                    className="p-0 h-auto font-semibold text-sky-700 dark:text-sky-300 hover:underline"
+                    className="p-0 h-auto font-semibold text-sky-700 dark:text-sky-300"
                     onClick={() => setMode("login")}
                   >
                     {t("auth.patient_have_credentials")}
@@ -308,7 +308,7 @@ export function AuthPage() {
                   <button
                     type="button"
                     onClick={() => setOubliOpen(true)}
-                    className="min-h-11 rounded-md px-1 text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="min-h-11 rounded-md px-1 text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {t("password.forgot_link")}
                   </button>
@@ -365,7 +365,7 @@ export function AuthPage() {
                 <button
                   type="button"
                   onClick={() => setMode("login")}
-                  className="font-semibold text-primary hover:underline"
+                  className="font-semibold text-primary"
                 >
                   {t("auth.back_to_login")}
                 </button>

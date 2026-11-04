@@ -114,7 +114,7 @@ function ActionsMessage({ m }: { m: MessageGroupeEquipe }) {
         {m.masque ? t("communautes.reafficher") : t("communautes.masquer")}
       </Button>
       {m.patient && (
-        <Link to={`/soignant/patients/${m.patient.id}`} className="inline-flex h-8 items-center rounded-full px-2 text-xs font-semibold text-primary hover:underline">
+        <Link to={`/soignant/patients/${m.patient.id}`} className="inline-flex h-8 items-center rounded-full px-2 text-xs font-semibold text-primary">
           {t("communautes.voir_dossier", { code: m.patient.codePatient })}
         </Link>
       )}
@@ -174,7 +174,7 @@ export function CommunautesPage() {
                   {m.alerte && <BadgeAlerte categorie={m.alerte.categorie} />}
                   <span className="font-semibold text-foreground">{m.auteur}</span>
                   <span>·</span>
-                  <button type="button" className="hover:text-primary hover:underline" onClick={() => setGroupeId(m.groupeId)}>{m.groupe}</button>
+                  <button type="button" className="hover:text-primary" onClick={() => setGroupeId(m.groupeId)}>{m.groupe}</button>
                   <span>·</span>
                   <span>{dateHeure(m.createdAt)}</span>
                 </div>

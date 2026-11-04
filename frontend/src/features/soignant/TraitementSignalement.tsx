@@ -147,7 +147,7 @@ export function TraitementSignalement({ signalement, onClose }: { signalement: S
           </Button>
           <Link
             to={`/soignant/patients/${s.patient.id}`}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-primary hover:underline"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-primary"
           >
             <ExternalLink className="h-4 w-4" /> {t("traitement_signalement.dossier_complet")}
           </Link>
@@ -196,7 +196,7 @@ export function TraitementSignalement({ signalement, onClose }: { signalement: S
                 {dossier.sexe && <> · {dossier.sexe === "F" ? t("patient_detail.femme") : t("patient_detail.homme")}</>}
               </p>
               {dossier.telephone && (
-                <a href={`tel:${dossier.telephone.replace(/\s/g, "")}`} className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline">
+                <a href={`tel:${dossier.telephone.replace(/\s/g, "")}`} className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
                   <Phone className="h-4 w-4" /> {dossier.telephone}
                 </a>
               )}

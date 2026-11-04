@@ -111,7 +111,7 @@ export function EcranVerrou() {
         <button
           type="button"
           onClick={() => seDeconnecter()}
-          className="mt-8 text-sm font-medium text-muted-foreground underline-offset-4 hover:underline"
+          className="mt-8 text-sm font-medium text-muted-foreground underline-offset-4"
         >
           {t("verrou.code_oublie")}
         </button>

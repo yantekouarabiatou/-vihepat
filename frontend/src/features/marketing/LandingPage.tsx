@@ -60,7 +60,7 @@ export function LandingPage() {
         <div className="relative mx-auto flex min-h-[92vh] w-full max-w-6xl flex-col px-4 py-6 sm:px-6 sm:py-8">
           {/* Nav glass */}
           <nav className="glass-dark flex items-center justify-between gap-2 rounded-full px-2 py-2 shadow-lg sm:px-4 sm:py-2.5">
-            <Link to="/" className="shrink-0 px-2 text-lg font-extrabold tracking-tight text-primary-foreground sm:px-3 sm:text-xl">
+            <Link to="/" className="shrink-0 px-2 text-lg font-extrabold tracking-tight text-white sm:px-3 sm:text-xl">
               VIHEPAT
             </Link>
             <div className="flex min-w-0 items-center gap-1 sm:gap-1.5">
@@ -79,14 +79,14 @@ export function LandingPage() {
           </nav>
 
           <div className="flex flex-1 flex-col justify-center py-12 sm:py-16">
-            <h1 className="animate-fade-up max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight text-primary-foreground sm:text-6xl md:text-7xl">
+            <h1 className="animate-fade-up max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-6xl md:text-7xl">
               {t("hero.title_part1")}
               <br />
               <span className="bg-gradient-to-r from-white via-white to-[hsl(var(--brand-light))] bg-clip-text text-transparent">
                 {t("hero.title_part2")}
               </span>
             </h1>
-            <p className="animate-fade-up delay-200 mt-6 max-w-xl text-lg leading-relaxed text-primary-foreground/90">
+            <p className="animate-fade-up delay-200 mt-6 max-w-xl text-lg leading-relaxed text-white/90">
               {t("hero.subtitle")}
             </p>
             <div className="animate-fade-up delay-300 mt-10 flex flex-wrap gap-4">
@@ -103,14 +103,14 @@ export function LandingPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="glass-dark h-14 rounded-full border-white/40 px-9 text-base font-semibold text-primary-foreground transition-all hover:bg-white/15"
+                  className="glass-dark h-14 rounded-full border-white/40 px-9 text-base font-semibold text-white transition-all hover:bg-white/15"
                 >
                   {t("hero.cta_secondary")}
                 </Button>
               </Link>
             </div>
 
-            <div className="animate-fade-up delay-400 mt-12 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-primary-foreground/85">
+            <div className="animate-fade-up delay-400 mt-12 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-white/85">
               {[t("hero.trust1"), t("hero.trust2"), t("hero.trust3")].map((txt) => (
                 <span key={txt} className="inline-flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4" /> {txt}
@@ -233,7 +233,7 @@ export function LandingPage() {
             </div>
 
             <div className="glass-dark rounded-3xl p-6">
-              <div className="rounded-2xl bg-white p-5 text-foreground shadow-xl">
+              <div className="rounded-2xl bg-white p-5 text-foreground shadow-xl dark:bg-card">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase text-muted-foreground">
                     {t("landing.mock_patient")}

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Database, Globe, HeartPulse, LayoutDashboard, LogOut, Megaphone, MessagesSquare, Stethoscope, Users, UserPlus, UserCog } from "lucide-react";
@@ -33,6 +34,14 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const { medecin, fonction } = useProfilSoignant();
+  const navRef = useRef<HTMLElement>(null);
+
+  // Chaque page rend son propre AppShell : la barre est recréée à chaque navigation et son
+  // défilement revient en haut. On remet donc le menu actif en vue après chaque changement.
+  useEffect(() => {
+    const actif = navRef.current?.querySelector<HTMLElement>('[data-active="true"]');
+    actif?.scrollIntoView({ block: "nearest" });
+  }, [location.pathname, location.search]);
 
   const groups: NavGroup[] = [
     {
@@ -91,21 +100,21 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
         className="group flex items-center gap-3 bg-[linear-gradient(160deg,hsl(var(--brand))_0%,hsl(var(--brand-deep))_100%)] px-5 py-6 transition-all hover:brightness-105"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 transition-transform group-hover:scale-105">
-          <HeartPulse className="h-5 w-5 text-primary-foreground" />
+          <HeartPulse className="h-5 w-5 text-white" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <p className="truncate text-base font-extrabold tracking-tight text-primary-foreground">VIHEPAT</p>
-            <Globe className="h-3 w-3 text-primary-foreground/50 transition-colors group-hover:text-primary-foreground" />
+            <p className="truncate text-base font-extrabold tracking-tight text-white">VIHEPAT</p>
+            <Globe className="h-3 w-3 text-white/50 transition-colors group-hover:text-white" />
           </div>
-          <p className="truncate text-xs text-primary-foreground/70">
+          <p className="truncate text-xs text-white/70">
             {admin ? t("sidebar.role_admin") : t("sidebar.role_soignant")}
           </p>
         </div>
       </Link>
 
       {/* Navigation groupée */}
-      <nav className="flex-1 overflow-y-auto px-3 py-5">
+      <nav ref={navRef} className="flex-1 overflow-y-auto px-3 py-5">
         {groups.map((g) => (
           <div key={g.title} className="mb-6">
             <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -117,6 +126,7 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
                   key={item.to}
                   to={item.to}
                   onClick={onNavigate}
+                  data-active={isItemActive(item.to)}
                   className={() =>
                     cn(
                       "flex items-center gap-3 rounded-full px-3.5 py-2.5 text-sm font-semibold transition-colors duration-150",
@@ -140,21 +150,21 @@ export function SoignantSidebar({ admin, onNavigate }: { admin: boolean; onNavig
       {/* Bloc utilisateur */}
       <div className="m-3 rounded-card bg-[linear-gradient(160deg,hsl(var(--brand))_0%,hsl(var(--brand-deep))_100%)] p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-bold text-primary-foreground">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-bold text-white">
             {user ? initiales(user.nom, user.prenom) : "?"}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-primary-foreground">
+            <p className="truncate text-sm font-semibold text-white">
               {user ? `${user.prenom} ${user.nom}` : ""}
             </p>
-            <p className="truncate text-xs text-primary-foreground/70">
+            <p className="truncate text-xs text-white/70">
               {admin ? t("sidebar.role_admin") : fonction ? t(`fonction.${fonction}`) : t("sidebar.role_soignant")}
             </p>
           </div>
           <Button
             size="icon"
             variant="ghost"
-            className="h-9 w-9 shrink-0 rounded-input bg-white/10 text-primary-foreground hover:bg-white/20"
+            className="h-9 w-9 shrink-0 rounded-input bg-white/10 text-white hover:bg-white/20"
             onClick={handleLogout}
             aria-label={t("app_shell.deconnexion")}
             title={t("app_shell.deconnexion")}

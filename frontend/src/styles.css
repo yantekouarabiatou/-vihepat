@@ -151,6 +151,28 @@
     border: 1px solid rgba(255, 255, 255, 0.6);
   }
 
+  /* Mode sombre : les surfaces « verre » claires rendaient le texte (clair) illisible.
+     On les remplace par un verre sombre, pour que les couleurs du thème gardent leur contraste. */
+  .dark .glass {
+    background: rgba(15, 32, 48, 0.6);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .dark .glass-card {
+    background: linear-gradient(
+      135deg,
+      rgba(18, 40, 58, 0.82) 0%,
+      rgba(12, 28, 44, 0.68) 100%
+    );
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+  }
+
+  .dark .glass-strong {
+    background: rgba(15, 32, 48, 0.9);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
   /* ============ GRADIENTS ============ */
   .gradient-brand {
     background: linear-gradient(135deg, hsl(var(--brand)) 0%, hsl(var(--brand-deep)) 100%);

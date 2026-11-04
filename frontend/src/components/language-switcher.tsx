@@ -35,7 +35,7 @@ export function LanguageSwitcher({ variant = 'ghost' }: { variant?: 'ghost' | 'g
             size="sm"
             className={
               variant === 'glass'
-                ? 'h-9 rounded-full glass-dark text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground focus-visible:ring-2 focus-visible:ring-primary-foreground/70'
+                ? 'h-9 rounded-full glass-dark text-white hover:bg-white/15 hover:text-white focus-visible:ring-2 focus-visible:ring-white/70'
                 : 'h-9 rounded-full border border-border/70 bg-background/60 px-2.5 text-foreground hover:bg-secondary hover:text-secondary-foreground focus-visible:ring-2 focus-visible:ring-ring aria-expanded:bg-secondary aria-expanded:text-secondary-foreground'
             }
             aria-label={t('language.change', { langue: current.label })}

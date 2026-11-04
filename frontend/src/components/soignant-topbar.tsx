@@ -160,7 +160,7 @@ export function SoignantTopbar({ admin, onOpenSidebar }: { admin: boolean; onOpe
                       </li>
                     ))}
                   </ul>
-                  <Link to="/soignant/signalements" className="block px-4 pb-3 text-xs font-semibold text-primary hover:underline">
+                  <Link to="/soignant/signalements" className="block px-4 pb-3 text-xs font-semibold text-primary">
                     {t("signalements_page.voir_tous")}
                   </Link>
                 </div>

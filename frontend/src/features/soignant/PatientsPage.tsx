@@ -32,6 +32,7 @@ import { soignantApi, type SoignantPatient, type CreatePatientResult } from "@/a
 import { adminApi } from "@/api/admin.api";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { SimpleSelect } from "@/components/ui/simple-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -435,23 +436,24 @@ export function PatientsPage() {
   return (
     <AppShell title={t("sidebar.section_patients")}>
       {/* ===================== EN-TÊTE DE LA PAGE ===================== */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 xl:flex-nowrap">
+            <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:whitespace-nowrap 2xl:text-3xl">
               {t("patients.titre")}
             </h1>
-            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+            <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
               {t("patients.nb_dossiers", { count: patients.length })}
             </span>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground 2xl:whitespace-nowrap">
             {t("patients.sous_titre")}
           </p>
         </div>
 
-        {/* Boutons d'action rapides */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        {/* Boutons d'action rapides (Nouveau patient sous Exporter, aligné à droite) */}
+        <div className="flex shrink-0 flex-col items-start gap-2.5 xl:items-end">
+          <div className="flex flex-wrap items-center gap-2.5 xl:justify-end">
           <Link
             to="/"
             className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-3.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
@@ -482,12 +484,12 @@ export function PatientsPage() {
             <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
             {t("patients.exporter")}
           </Button>
+          </div>
 
           {medecin && (
             <Button
-              size="sm"
               onClick={() => setModalNouveauOpen(true)}
-              className="rounded-full gap-2 shadow-sm font-semibold"
+              className="h-11 rounded-full gap-2 px-6 shadow-sm font-semibold"
             >
               <UserPlus className="h-4 w-4" />
               {t("sidebar.patients_nouveau")}
@@ -573,30 +575,30 @@ export function PatientsPage() {
               <span>{t("patients.filtres")}</span>
             </div>
 
-            <select
-              aria-label={t("patients.col_pathologie")}
+            <SimpleSelect
+              ariaLabel={t("patients.col_pathologie")}
               value={filtrePathologie}
-              onChange={(e) => setFiltrePathologie(e.target.value)}
-              className="h-10 rounded-xl border border-input bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="all">{t("patients.filtre_toutes_pathologies")}</option>
-              {PATHOLOGIE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+              onChange={setFiltrePathologie}
+              className="w-auto min-w-[12rem]"
+              options={[
+                { value: "all", label: t("patients.filtre_toutes_pathologies") },
+                ...PATHOLOGIE_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+              ]}
+            />
 
-            <select
-              aria-label={t("patients.col_observance")}
+            <SimpleSelect
+              ariaLabel={t("patients.col_observance")}
               value={filtreObservance}
-              onChange={(e) => setFiltreObservance(e.target.value)}
-              className="h-10 rounded-xl border border-input bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="all">{t("patients.filtre_obs_toutes")}</option>
-              <option value="good">{t("patients.filtre_obs_bonne")}</option>
-              <option value="moderate">{t("patients.filtre_obs_moderee")}</option>
-              <option value="low">{t("patients.filtre_obs_risque")}</option>
-              <option value="none">{t("patients.filtre_obs_aucune")}</option>
-            </select>
+              onChange={setFiltreObservance}
+              className="w-auto min-w-[12rem]"
+              options={[
+                { value: "all", label: t("patients.filtre_obs_toutes") },
+                { value: "good", label: t("patients.filtre_obs_bonne") },
+                { value: "moderate", label: t("patients.filtre_obs_moderee") },
+                { value: "low", label: t("patients.filtre_obs_risque") },
+                { value: "none", label: t("patients.filtre_obs_aucune") },
+              ]}
+            />
           </div>
         </div>
 
@@ -612,7 +614,7 @@ export function PatientsPage() {
                 setFiltrePathologie("all");
                 setFiltreObservance("all");
               }}
-              className="font-semibold text-primary hover:underline"
+              className="font-semibold text-primary"
             >
               {t("patients.reinit_filtres")}
             </button>
@@ -740,7 +742,7 @@ export function PatientsPage() {
                       <div>
                         <Link
                           to={`/soignant/patients/${p.id}`}
-                          className="block font-bold text-foreground transition-colors hover:text-primary hover:underline"
+                          className="block font-bold text-foreground transition-colors hover:text-primary"
                         >
                           {p.user.prenom} {p.user.nom}
                         </Link>

@@ -23,7 +23,7 @@ export function InstallButton({ variant = "default" }: { variant?: "default" | "
       title={t("install.cta")}
       className={
         variant === "glass"
-          ? "rounded-full glass-dark text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground"
+          ? "rounded-full glass-dark text-white hover:bg-white/15 hover:text-white"
           : "rounded-full"
       }
     >
