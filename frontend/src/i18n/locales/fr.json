@@ -523,6 +523,13 @@
     "stat_patients": "Patients suivis",
     "stat_rdv": "RDV à venir",
     "stat_signalements": "Signalements nouveaux",
+    "ctx_patients": "Dossiers actifs",
+    "ctx_rdv_agenda": "Dans l'agenda",
+    "ctx_rdv_aucun": "Rien de planifié",
+    "ctx_graves_one": "{{count}} signalement grave",
+    "ctx_graves_other": "{{count}} signalements graves",
+    "ctx_aucun_grave": "Aucun grave",
+    "ctx_observance_objectif": "Objectif : 80 % ou plus",
     "stat_observance": "Observance moyenne (30j)",
     "patients_title": "Patients",
     "patients_search_placeholder": "Rechercher…",
@@ -1157,7 +1164,8 @@
     "col_prochain_rdv": "Prochain rendez-vous",
     "col_dernier_rdv": "Dernier rendez-vous",
     "col_equipe": "Équipe soignante",
-    "aucun_rdv": "Aucun rendez-vous"
+    "aucun_rdv": "Aucun rendez-vous",
+    "aucun_rdv_court": "Aucun RDV"
   },
   "rappels_soignant": {
     "titre_one": "Rappels du patient ({{count}} dernier jour)",

@@ -24,14 +24,14 @@ import {
   Globe,
   SlidersHorizontal,
   ChevronRight,
-  KeyRound,
-} from "lucide-react";
+  KeyRound, CalendarX, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { soignantApi, type SoignantPatient, type CreatePatientResult } from "@/api/soignant.api";
 import { adminApi } from "@/api/admin.api";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { SimpleSelect } from "@/components/ui/simple-select";
+import { KpiCard } from "@/components/kpi-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -467,57 +467,29 @@ export function PatientsPage() {
 
       {/* ===================== CARTES DE SYNTHÈSE / KPIS ===================== */}
       <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 shadow-[var(--shadow-card)] sm:p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase leading-tight tracking-wider text-muted-foreground sm:text-xs">{t("patients.kpi_total")}</span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Users className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-2">
-            <span className="text-2xl font-extrabold text-foreground">{stats.total}</span>
-            <span className="text-xs text-muted-foreground">{t("patients.kpi_total_sub")}</span>
-          </div>
-        </div>
-
-        <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 shadow-[var(--shadow-card)] sm:p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase leading-tight tracking-wider text-muted-foreground sm:text-xs">{t("patients.kpi_observance")}</span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <Activity className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-2">
-            <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{stats.bonneObservance}</span>
-            <span className="text-xs font-semibold text-muted-foreground">({stats.tauxBonneObservance} % ≥ 80%)</span>
-          </div>
-        </div>
-
-        <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 shadow-[var(--shadow-card)] sm:p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase leading-tight tracking-wider text-muted-foreground sm:text-xs">{t("patients.kpi_examens")}</span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <AlertCircle className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-2">
-            <span className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">{stats.alertesExamens}</span>
-            <span className="text-xs text-muted-foreground">{t("patients.kpi_examens_sub")}</span>
-          </div>
-        </div>
-
-        <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 shadow-[var(--shadow-card)] sm:p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase leading-tight tracking-wider text-muted-foreground sm:text-xs">{t("patients.kpi_securite")}</span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400">
-              <ShieldCheck className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-2">
-            <span className="text-sm font-bold text-sky-600 dark:text-sky-400">{t("patients.kpi_securite_valeur")}</span>
-            <span className="text-xs text-muted-foreground">{t("patients.kpi_securite_sub")}</span>
-          </div>
-        </div>
+        <KpiCard icon={Users} label={t("patients.kpi_total")} value={stats.total} etat="normal" contexte={t("patients.kpi_total_sub")} />
+        <KpiCard
+          icon={Activity}
+          label={t("patients.kpi_observance")}
+          value={stats.bonneObservance}
+          etat={stats.total === 0 ? "neutre" : stats.tauxBonneObservance >= 70 ? "bon" : stats.tauxBonneObservance >= 40 ? "attention" : "critique"}
+          contexte={`${stats.tauxBonneObservance} % ≥ 80 %`}
+        />
+        <KpiCard
+          icon={AlertCircle}
+          label={t("patients.kpi_examens")}
+          value={stats.alertesExamens}
+          etat={stats.alertesExamens > 0 ? "attention" : "bon"}
+          contexte={t("patients.kpi_examens_sub")}
+        />
+        <KpiCard
+          icon={ShieldCheck}
+          label={t("patients.kpi_securite")}
+          value={t("patients.kpi_securite_valeur")}
+          etat="normal"
+          valeurCompacte
+          contexte={t("patients.kpi_securite_sub")}
+        />
       </div>
 
       {/* ===================== BARRE DE RECHERCHE ET FILTRES ===================== */}
@@ -787,9 +759,20 @@ export function PatientsPage() {
                           {p.prochainRdv.motif && <p className="max-w-[160px] truncate text-muted-foreground">{p.prochainRdv.motif}</p>}
                         </>
                       ) : (
-                        <span className="rounded-full bg-[hsl(var(--gold)/0.18)] px-2 py-0.5 font-semibold text-foreground">{t("patients.aucun_rdv")}</span>
+                        <span
+                          className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-secondary px-2.5 py-0.5 font-medium text-muted-foreground"
+                          title={t("patients.aucun_rdv")}
+                        >
+                          <CalendarX className="h-3 w-3" />
+                          {t("patients.aucun_rdv_court")}
+                        </span>
                       )}
-                      {(p.equipe?.length ?? 0) > 0 && <p className="mt-0.5 max-w-[160px] truncate text-muted-foreground" title={p.equipe!.join(", ")}>{p.equipe!.join(", ")}</p>}
+                      {(p.equipe?.length ?? 0) > 0 && (
+                        <p className="mt-1 flex max-w-[160px] items-center gap-1 text-[11px] text-muted-foreground" title={p.equipe!.join(", ")}>
+                          <UserRound className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{p.equipe!.join(", ")}</span>
+                        </p>
+                      )}
                     </div>
                   ),
                 },

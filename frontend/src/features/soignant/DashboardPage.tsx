@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
   Users, CalendarDays, AlertCircle, Loader2, Search, Check, UserPlus, ChevronRight, Plus, BellRing, BellOff,
-  Activity, Copy, Globe, FileDown, Printer, type LucideIcon,
+  Activity, Copy, Globe, FileDown, Printer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { soignantApi, type CreatePatientResult } from "@/api/soignant.api";
@@ -27,35 +27,12 @@ import { formatTaux, tauxStyle } from "@/lib/observance";
 import { telechargerFichePatientPdf, imprimerFichePatient, type PatientCredentialsDoc } from "@/lib/patient-pdf";
 import { localeAffichage } from "@/lib/date-locale";
 import { BadgeRisquePerteSuivi } from "./RisquePerteSuivi";
+import { KpiCard } from "@/components/kpi-card";
 
 const PATHOLOGIE_VALUES: Pathologie[] = ["vih", "vhb", "vhc", "vih_vhb", "vih_vhc", "vhb_vhc"];
 
 function initials(nom: string, prenom: string) {
   return `${prenom[0] ?? ""}${nom[0] ?? ""}`.toUpperCase();
-}
-
-const KPI_TINTS = {
-  brand: { chip: "bg-secondary", icon: "text-primary", blob: "from-primary/10" },
-  success: { chip: "bg-success/10", icon: "text-success", blob: "from-success/10" },
-  gold: { chip: "bg-gold/15", icon: "text-gold", blob: "from-gold/10" },
-  violet: { chip: "bg-violet/10", icon: "text-violet", blob: "from-violet/10" },
-} as const;
-
-function KpiCard({
-  icon: Icon, label, value, tint,
-}: { icon: LucideIcon; label: string; value: string | number; tint: keyof typeof KPI_TINTS }) {
-  const c = KPI_TINTS[tint];
-  return (
-    <div className="relative overflow-hidden rounded-card bg-card p-4 shadow-dash sm:p-5">
-      <Icon className={`pointer-events-none absolute -bottom-4 -right-4 h-20 w-20 sm:h-24 sm:w-24 ${c.icon} opacity-[0.07]`} />
-      <div className={`relative flex h-9 w-9 items-center justify-center rounded-2xl sm:h-11 sm:w-11 ${c.chip}`}>
-        <Icon className={`h-5 w-5 ${c.icon}`} />
-      </div>
-      <p className="relative mt-3 text-xs font-medium leading-snug text-muted-foreground sm:mt-4 sm:text-sm">{label}</p>
-      <p className="relative mt-1 text-2xl font-extrabold text-foreground sm:text-3xl">{value}</p>
-      <div className={`absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t ${c.blob} to-transparent`} />
-    </div>
-  );
 }
 
 export function DashboardPage() {
@@ -179,6 +156,10 @@ export function DashboardPage() {
     return Math.round(valeurs.reduce((a, b) => a + b, 0) / valeurs.length);
   }, [patients]);
 
+  const nbRdv = rendezVous?.length ?? 0;
+  const nbSignalements = signalements?.filter((x) => x.statut === "nouveau").length ?? 0;
+  const nbGraves = signalements?.filter((x) => x.statut === "nouveau" && x.gravite === "severe").length ?? 0;
+
   const { mutate: confirmRdv } = useMutation({
     mutationFn: (id: number) => soignantApi.updateRendezVous(id, { statut: "confirme" }),
     onSuccess: () => {
@@ -286,19 +267,33 @@ export function DashboardPage() {
 
       {/* KPI */}
       <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <KpiCard icon={Users} label={t("dashboard_soignant.stat_patients")} value={patients?.length ?? 0} tint="brand" />
-        <KpiCard icon={CalendarDays} label={t("dashboard_soignant.stat_rdv")} value={rendezVous?.length ?? 0} tint="success" />
+        <KpiCard
+          icon={Users}
+          label={t("dashboard_soignant.stat_patients")}
+          value={patients?.length ?? 0}
+          etat="normal"
+          contexte={t("dashboard_soignant.ctx_patients")}
+        />
+        <KpiCard
+          icon={CalendarDays}
+          label={t("dashboard_soignant.stat_rdv")}
+          value={nbRdv}
+          etat={nbRdv > 0 ? "bon" : "neutre"}
+          contexte={nbRdv > 0 ? t("dashboard_soignant.ctx_rdv_agenda") : t("dashboard_soignant.ctx_rdv_aucun")}
+        />
         <KpiCard
           icon={AlertCircle}
           label={t("dashboard_soignant.stat_signalements")}
-          value={signalements?.filter((s) => s.statut === "nouveau").length ?? 0}
-          tint="gold"
+          value={nbSignalements}
+          etat={nbGraves > 0 ? "critique" : nbSignalements > 0 ? "attention" : "neutre"}
+          contexte={nbGraves > 0 ? t("dashboard_soignant.ctx_graves", { count: nbGraves }) : t("dashboard_soignant.ctx_aucun_grave")}
         />
         <KpiCard
           icon={Activity}
           label={t("dashboard_soignant.stat_observance")}
           value={observanceMoyenne === null ? "—" : `${observanceMoyenne} %`}
-          tint="violet"
+          etat={observanceMoyenne === null ? "neutre" : observanceMoyenne >= 80 ? "bon" : observanceMoyenne >= 50 ? "attention" : "critique"}
+          contexte={t("dashboard_soignant.ctx_observance_objectif")}
         />
       </div>
 

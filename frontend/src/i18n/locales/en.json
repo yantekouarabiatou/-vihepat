@@ -523,6 +523,13 @@
     "stat_patients": "Patients followed",
     "stat_rdv": "Upcoming appointments",
     "stat_signalements": "New reports",
+    "ctx_patients": "Active records",
+    "ctx_rdv_agenda": "In the schedule",
+    "ctx_rdv_aucun": "Nothing scheduled",
+    "ctx_graves_one": "{{count}} severe report",
+    "ctx_graves_other": "{{count}} severe reports",
+    "ctx_aucun_grave": "None severe",
+    "ctx_observance_objectif": "Target: 80% or more",
     "stat_observance": "Average adherence (30d)",
     "patients_title": "Patients",
     "patients_search_placeholder": "Search…",
@@ -1157,7 +1164,8 @@
     "col_prochain_rdv": "Next appointment",
     "col_dernier_rdv": "Last appointment",
     "col_equipe": "Care team",
-    "aucun_rdv": "No appointment"
+    "aucun_rdv": "No appointment",
+    "aucun_rdv_court": "No appt."
   },
   "rappels_soignant": {
     "titre_one": "Patient reminders (last {{count}} day)",
