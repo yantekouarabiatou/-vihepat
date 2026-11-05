@@ -9,6 +9,7 @@ import { AppShell } from "@/components/app-shell";
 import { BoutonsExport } from "@/components/boutons-export";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
+import { SimpleSelect } from "@/components/ui/simple-select";
 import { localeAffichage } from "@/lib/date-locale";
 import type { Tableau } from "@/lib/export-tableau";
 
@@ -105,7 +106,7 @@ export function RendezVousPage() {
     ]),
   });
 
-  const selectClass = "h-10 rounded-full border border-input bg-background px-3 text-sm";
+  const selectClass = "h-10 w-auto min-w-[12rem]";
 
   return (
     <AppShell title={t("sidebar.role_soignant")}>
@@ -118,31 +119,44 @@ export function RendezVousPage() {
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
-        <select aria-label={t("vue_rdv.periode")} value={periode} onChange={(e) => setPeriode(e.target.value as Periode)} className={selectClass}>
-          {(["a_venir", "aujourdhui", "7j", "30j", "passes30", "perso"] as Periode[]).map((p) => (
-            <option key={p} value={p}>{t(`vue_rdv.periode_${p}`)}</option>
-          ))}
-        </select>
+        <SimpleSelect
+          ariaLabel={t("vue_rdv.periode")}
+          value={periode}
+          onChange={(v) => setPeriode(v as Periode)}
+          className={selectClass}
+          options={(["a_venir", "aujourdhui", "7j", "30j", "passes30", "perso"] as Periode[]).map((p) => ({
+            value: p,
+            label: t(`vue_rdv.periode_${p}`),
+          }))}
+        />
         {periode === "perso" && (
           <>
             <Input type="date" aria-label={t("vue_rdv.du")} value={du} onChange={(e) => setDu(e.target.value)} className="h-10 w-auto rounded-full" />
             <Input type="date" aria-label={t("vue_rdv.au")} value={au} min={du} onChange={(e) => setAu(e.target.value)} className="h-10 w-auto rounded-full" />
           </>
         )}
-        <select aria-label={t("vue_rdv.col_statut")} value={statut} onChange={(e) => setStatut(e.target.value as typeof statut)} className={selectClass}>
-          <option value="actifs">{t("vue_rdv.statut_actifs")}</option>
-          <option value="tous">{t("vue_rdv.statut_tous")}</option>
-          {STATUTS.map((s) => (
-            <option key={s} value={s}>{libelleStatut(s)}</option>
-          ))}
-        </select>
+        <SimpleSelect
+          ariaLabel={t("vue_rdv.col_statut")}
+          value={statut}
+          onChange={(v) => setStatut(v as typeof statut)}
+          className={selectClass}
+          options={[
+            { value: "actifs", label: t("vue_rdv.statut_actifs") },
+            { value: "tous", label: t("vue_rdv.statut_tous") },
+            ...STATUTS.map((st) => ({ value: st, label: libelleStatut(st) })),
+          ]}
+        />
         {soignants.length > 1 && (
-          <select aria-label={t("vue_rdv.col_soignant")} value={soignant} onChange={(e) => setSoignant(e.target.value)} className={selectClass}>
-            <option value="tous">{t("vue_rdv.soignant_tous")}</option>
-            {soignants.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+          <SimpleSelect
+            ariaLabel={t("vue_rdv.col_soignant")}
+            value={soignant}
+            onChange={setSoignant}
+            className={selectClass}
+            options={[
+              { value: "tous", label: t("vue_rdv.soignant_tous") },
+              ...soignants.map((so) => ({ value: so, label: so })),
+            ]}
+          />
         )}
         <Input
           type="search"
@@ -189,7 +203,7 @@ export function RendezVousPage() {
                 sortValue: (r) => `${r.patient.user.nom} ${r.patient.user.prenom}`,
                 render: (r) => (
                   <div>
-                    <Link to={`/soignant/patients/${r.patient.id}`} className="font-semibold text-foreground hover:text-primary hover:underline">
+                    <Link to={`/soignant/patients/${r.patient.id}`} className="font-semibold text-foreground hover:text-primary">
                       {r.patient.user.prenom} {r.patient.user.nom}
                     </Link>
                     <p className="text-xs text-muted-foreground">
@@ -239,7 +253,7 @@ export function RendezVousPage() {
         )}
       </section>
       <p className="mt-3 text-xs text-muted-foreground">
-        {t("vue_rdv.gerer")} <Link to="/soignant/agenda" className="font-semibold text-primary hover:underline">{t("sidebar.agenda")}</Link>
+        {t("vue_rdv.gerer")} <Link to="/soignant/agenda" className="font-semibold text-primary">{t("sidebar.agenda")}</Link>
       </p>
     </AppShell>
   );

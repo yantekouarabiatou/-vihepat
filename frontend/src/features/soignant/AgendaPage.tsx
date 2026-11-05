@@ -8,6 +8,7 @@ import { soignantApi, type SoignantRendezVous } from "@/api/soignant.api";
 import type { StatutRDV } from "@/api/patient.api";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { SimpleSelect } from "@/components/ui/simple-select";
 import { Switch } from "@/components/ui/switch";
 import { apiErrorMessage } from "@/lib/api-error";
 import { localeAffichage } from "@/lib/date-locale";
@@ -204,7 +205,7 @@ export function AgendaPage() {
                     <li key={r.id} className="rounded-2xl bg-secondary/60 p-3">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                         <span className="text-sm font-bold tabular-nums text-foreground">{heure(r.dateHeure)}</span>
-                        <Link to={`/soignant/patients/${r.patient.id}`} className="text-sm font-semibold text-primary hover:underline">
+                        <Link to={`/soignant/patients/${r.patient.id}`} className="text-sm font-semibold text-primary">
                           {r.patient.user.prenom} {r.patient.user.nom}
                         </Link>
                         <span className="text-xs text-muted-foreground">{r.patient.codePatient}</span>
@@ -212,16 +213,13 @@ export function AgendaPage() {
                         {r.motif && <span className="text-xs text-muted-foreground">· {r.motif}</span>}
                       </div>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <select
+                        <SimpleSelect
                           value={r.statut}
-                          aria-label={t("agenda.statut")}
-                          onChange={(e) => changerStatut({ id: r.id, statut: e.target.value as StatutRDV })}
-                          className={`h-8 rounded-full border-0 px-3 text-xs font-semibold ${STYLE_STATUT[r.statut]}`}
-                        >
-                          {STATUTS.map((s) => (
-                            <option key={s} value={s}>{t(`shared.statut_rdv.${s}`, { defaultValue: s })}</option>
-                          ))}
-                        </select>
+                          ariaLabel={t("agenda.statut")}
+                          onChange={(v) => changerStatut({ id: r.id, statut: v as StatutRDV })}
+                          className={`h-8 w-auto gap-1.5 rounded-full border-0 px-3 text-xs font-semibold ${STYLE_STATUT[r.statut]}`}
+                          options={STATUTS.map((s) => ({ value: s, label: t(`shared.statut_rdv.${s}`, { defaultValue: s }) }))}
+                        />
                         {r.rappelEnvoyeLe ? (
                           <span className="flex items-center gap-1 rounded-full bg-background px-2.5 py-1 text-xs text-muted-foreground">
                             <CheckCircle2 className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
@@ -281,7 +279,7 @@ export function AgendaPage() {
               <ul className="mt-3 max-h-[420px] space-y-2 overflow-y-auto">
                 {data!.sansRendezVous.map((p) => (
                   <li key={p.id} className="flex items-center justify-between gap-2 rounded-xl bg-secondary/60 px-3 py-2">
-                    <Link to={`/soignant/patients/${p.id}`} className="min-w-0 text-sm hover:underline">
+                    <Link to={`/soignant/patients/${p.id}`} className="min-w-0 text-sm">
                       <span className="block truncate font-semibold text-foreground">{p.prenom} {p.nom}</span>
                       <span className="text-xs text-muted-foreground">
                         {p.codePatient} · {t(`shared.pathologie.${p.pathologie}`, { defaultValue: p.pathologie })}

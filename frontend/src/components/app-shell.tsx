@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LogOut, CloudOff, RefreshCw, Leaf, Lock, Settings, Shield, Sun, Moon, Users, Globe, AlarmClock, KeyRound } from "lucide-react";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { useMoteurRappels } from "@/hooks/use-moteur-rappels";
 import { useDeconnexionInactivite } from "@/hooks/use-deconnexion-inactivite";
+import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 /** Délai en arrière-plan au-delà duquel l'application se reverrouille. */
@@ -50,6 +51,7 @@ function OfflineBanner({ enLigne, enAttente }: { enLigne: boolean; enAttente: nu
 export function AppShell({ children, title }: { children: ReactNode; title: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
   const estPatient = user?.role === "patient";
@@ -87,6 +89,9 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
     document.addEventListener("visibilitychange", surVisibilite);
     return () => document.removeEventListener("visibilitychange", surVisibilite);
   }, [estPatient, verrouiller]);
+
+  /** Entrée du header correspondant à la page courante (y compris ses sous-pages). */
+  const actif = (route: string) => pathname === route || pathname.startsWith(`${route}/`);
 
   function handleSignOut() {
     logout();
@@ -187,7 +192,11 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               variant="ghost"
               size="icon"
               onClick={() => navigate("/rappels")}
-              className="h-9 w-9 rounded-full text-muted-foreground sm:h-10 sm:w-10"
+              aria-current={actif("/rappels") ? "page" : undefined}
+              className={cn(
+                "h-9 w-9 rounded-full text-muted-foreground sm:h-10 sm:w-10",
+                actif("/rappels") && "bg-secondary text-primary hover:bg-secondary hover:text-primary",
+              )}
               aria-label={t("app_shell.rappels_tooltip")}
               title={t("app_shell.rappels_tooltip")}
             >
@@ -197,7 +206,11 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
               variant="ghost"
               size="icon"
               onClick={() => navigate("/groupes")}
-              className="h-9 w-9 rounded-full text-muted-foreground sm:h-10 sm:w-10"
+              aria-current={actif("/groupes") ? "page" : undefined}
+              className={cn(
+                "h-9 w-9 rounded-full text-muted-foreground sm:h-10 sm:w-10",
+                actif("/groupes") && "bg-secondary text-primary hover:bg-secondary hover:text-primary",
+              )}
               aria-label={t("app_shell.groupes_tooltip")}
               title={t("app_shell.groupes_tooltip")}
             >
